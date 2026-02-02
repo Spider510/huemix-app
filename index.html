@@ -17,23 +17,24 @@
     label {
       display: block;
       margin-top: 10px;
+      font-weight: bold;
     }
     input, select, button {
       width: 100%;
       padding: 8px;
       margin-top: 4px;
-      font-size: 16px;
     }
     button {
       background: #2e7d32;
       color: white;
       border: none;
       margin-top: 15px;
+      font-size: 16px;
     }
     pre {
       background: white;
       padding: 10px;
-      margin-top: 20px;
+      margin-top: 15px;
       white-space: pre-wrap;
     }
   </style>
@@ -83,7 +84,7 @@
 <pre id="ausgabe">GPS wird ermittelt…</pre>
 
 <script>
-const name = document.getElementById("name");
+const nameF = document.getElementById("name");
 const telefon = document.getElementById("telefon");
 const strasse = document.getElementById("strasse");
 const hausnummer = document.getElementById("hausnummer");
@@ -102,8 +103,7 @@ navigator.geolocation.getCurrentPosition(
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
     ausgabe.textContent =
-      "GPS OK:\n" +
-      lat.toFixed(6) + ", " + lon.toFixed(6);
+      "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
   },
   err => {
     ausgabe.textContent = "GPS-Fehler: " + err.message;
@@ -118,14 +118,14 @@ navigator.geolocation.getCurrentPosition(
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
 
-  const mapsLink = lat && lon
+  const mapsLink = (lat && lon)
     ? `https://maps.google.com/?q=${lat},${lon}`
     : "kein GPS";
 
   const text = `
 🌱 HÜMIX Einsatz
 
-👤 Name: ${name.value}
+👤 Name: ${nameF.value}
 📞 Telefon: ${telefon.value}
 
 📍 Adresse:
@@ -141,19 +141,18 @@ ${mapsLink}
 🕒 Datum/Zeit:
 ${jetzt}
 
-🧺 Dünger:
+🧪 Dünger:
 HÜMIX Rasen Spezial: ${rasen.value} Säcke
 HÜMIX Bio-Volldünger: ${bio.value} Säcke
 
 🚜 Ausgestreut: ${ausgestreut.value}
 `;
 
-  // lokal speichern
+  ausgabe.textContent = text;
+
   let liste = JSON.parse(localStorage.getItem("huemix")) || [];
   liste.push(text);
   localStorage.setItem("huemix", JSON.stringify(liste));
-
-  ausgabe.textContent = text;
 }
 </script>
 
