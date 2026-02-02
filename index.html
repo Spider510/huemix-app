@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>HÜMIX Einsatzprotokoll</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f4;
+    padding: 15px;
+}
+h1 { color: #2e7d32; }
+label { display: block; margin-top: 10px; }
+input, select, button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+}
+button {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    margin-top: 15px;
+    font-size: 16px;
+}
+pre {
+    background: white;
+    padding: 10px;
+    margin-top: 20px;
+    white-space: pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🌱 HÜMIX Einsatz</h1>
+
+<label>Name
+<input id="name">
+</label>
+
+<label>Telefon
+<input id="telefon">
+</label>
+
+<label>Straße
+<input id="strasse">
+</label>
+
+<label>Hausnummer
+<input id="hausnummer">
+</label>
+
+<label>Ort
+<input id="ort">
+</label>
+
+<label>HÜMIX Rasen Spezial – Säcke
+<input type="number" id="rasen" value="0">
+</label>
+
+<label>HÜMIX Bio-Volldünger – Säcke
+<input type="number" id="bio" value="0">
+</label>
+
+<label>Ausgestreut
+<select id="ausgestreut">
+<option>Ja</option>
+<option>Nein</option>
+</select>
+</label>
+
+<button onclick="speichern()">Speichern</button>
+
+<pre id="ausgabe">GPS wird ermittelt…</pre>
+
+<script>
+let lat = "";
+let lon = "";
+
+navigator.geolocation.getCurrentPosition(
+    pos => {
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+    },
+    err => {
+        alert("GPS nicht verfügbar");
+    }
+);
+
+function speichern() {
+    const jetzt = new Date().toLocaleString("de-DE");
+
+    const mapsLink = lat && lon
+        ? `https://maps.google.com/?q=${lat},${lon}`
+        : "kein GPS";
+
+    const text = `
+🌱 HÜMIX Einsatz
+
+👤 Name: ${name.value}
+📞 Telefon: ${telefon.value}
+
+📍 Adresse:
+${strasse.value} ${hausnummer.value}
+${ort.value}
+
+🧭 GPS:
+${lat}, ${lon}
+
+🗺 Karte:
+${mapsLink}
+
+🕒 Datum/Zeit:
+${jetzt}
+
+🧴 Dünger:
+HÜMIX Rasen Spezial: ${rasen.value} Säcke
+HÜMIX Bio-Volldünger: ${bio.value} Säcke
+
+🚜 Ausgestreut: ${ausgestreut.value}
+`;
+
+    let liste = JSON.parse(localStorage.getItem("huemix")) || [];
+    liste.push(text);
+    localStorage.setItem("huemix", JSON.stringify(liste));
+
+    ausgabe.textContent = text;
+}
+</script>
+
+</body>
+</html>
