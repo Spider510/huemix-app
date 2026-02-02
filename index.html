@@ -109,10 +109,20 @@ navigator.geolocation.getCurrentPosition(
     maximumAge: 0
   }
 );
+
+navigator.geolocation.getCurrentPosition(
+  ...
+);
+
+function speichern() {
+  ...
+}
+
+</script>
 </script>
 
 
-function speichern() {
+
     const jetzt = new Date().toLocaleString("de-DE");
 
     const mapsLink = lat && lon
