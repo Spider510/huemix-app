@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>HÜMIX Einsatz</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>HÜMIX Einsatz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f4;
-      padding: 15px;
-    }
-    h1 {
-      color: #2e7d32;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-    }
-    button {
-      background: #2e7d32;
-      color: white;
-      border: none;
-      margin-top: 15px;
-      font-size: 16px;
-    }
-    pre {
-      background: white;
-      padding: 10px;
-      margin-top: 15px;
-      white-space: pre-wrap;
-    }
-  </style>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f4;
+  padding: 15px;
+}
+h1 {
+  color: #2e7d32;
+}
+label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+input, select, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  font-size: 16px;
+}
+button {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  margin-top: 15px;
+}
+pre {
+  background: white;
+  padding: 10px;
+  margin-top: 15px;
+  white-space: pre-wrap;
+}
+</style>
 </head>
 
 <body>
@@ -45,38 +45,38 @@
 <h1>🌱 HÜMIX Einsatz</h1>
 
 <label>Name
-  <input id="name">
+<input id="name">
 </label>
 
 <label>Telefon
-  <input id="telefon">
+<input id="telefon">
 </label>
 
 <label>Straße
-  <input id="strasse">
+<input id="strasse">
 </label>
 
 <label>Hausnummer
-  <input id="hausnummer">
+<input id="hausnummer">
 </label>
 
 <label>Ort
-  <input id="ort">
+<input id="ort">
 </label>
 
 <label>HÜMIX Rasen Spezial – Säcke
-  <input id="rasen" type="number" value="0">
+<input id="rasen" type="number" value="0">
 </label>
 
 <label>HÜMIX Bio-Volldünger – Säcke
-  <input id="bio" type="number" value="0">
+<input id="bio" type="number" value="0">
 </label>
 
 <label>Ausgestreut
-  <select id="ausgestreut">
-    <option>Ja</option>
-    <option>Nein</option>
-  </select>
+<select id="ausgestreut">
+  <option>Ja</option>
+  <option>Nein</option>
+</select>
 </label>
 
 <button onclick="speichern()">Speichern</button>
@@ -97,15 +97,14 @@ const ausgabe = document.getElementById("ausgabe");
 let lat = "";
 let lon = "";
 
-// GPS holen
 navigator.geolocation.getCurrentPosition(
-  pos => {
+  function(pos) {
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
     ausgabe.textContent =
       "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
   },
-  err => {
+  function(err) {
     ausgabe.textContent = "GPS-Fehler: " + err.message;
   },
   {
@@ -117,13 +116,12 @@ navigator.geolocation.getCurrentPosition(
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
-
   const mapsLink = (lat && lon)
-    ? `https://maps.google.com/?q=${lat},${lon}`
+    ? "https://maps.google.com/?q=" + lat + "," + lon
     : "kein GPS";
 
-  const text = `
-🌱 HÜMIX Einsatz
+  const text =
+`🌱 HÜMIX Einsatz
 
 👤 Name: ${nameF.value}
 📞 Telefon: ${telefon.value}
@@ -145,12 +143,11 @@ ${jetzt}
 HÜMIX Rasen Spezial: ${rasen.value} Säcke
 HÜMIX Bio-Volldünger: ${bio.value} Säcke
 
-🚜 Ausgestreut: ${ausgestreut.value}
-`;
+🚜 Ausgestreut: ${ausgestreut.value}`;
 
   ausgabe.textContent = text;
 
-  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
+  const liste = JSON.parse(localStorage.getItem("huemix")) || [];
   liste.push(text);
   localStorage.setItem("huemix", JSON.stringify(liste));
 }
