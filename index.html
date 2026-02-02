@@ -80,15 +80,28 @@ pre {
 let lat = "";
 let lon = "";
 
+
 navigator.geolocation.getCurrentPosition(
-    pos => {
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-    },
-    err => {
-        alert("GPS nicht verfügbar");
-    }
+  pos => {
+    lat = pos.coords.latitude;
+    lon = pos.coords.longitude;
+
+    document.getElementById("ausgabe").textContent =
+      "GPS OK:\n" +
+      lat.toFixed(6) + ", " + lon.toFixed(6);
+  },
+  err => {
+    document.getElementById("ausgabe").textContent =
+      "GPS-Fehler: " + err.message;
+  },
+  {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+  }
 );
+</script>
+
 
 function speichern() {
     const jetzt = new Date().toLocaleString("de-DE");
