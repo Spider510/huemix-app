@@ -5,32 +5,16 @@
 <title>HÜMIX Einsatz</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f7f4;
-  padding: 20px;
-}
-h1 { color: #2e7d32; }
+body { font-family: Arial, sans-serif; background:#f4f7f4; padding:20px; }
+h1 { color:#2e7d32; }
 label { display:block; margin-top:12px; }
-input, select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-}
-button {
-  margin-top: 12px;
-  padding: 10px;
-  width: 100%;
-  font-size: 16px;
-}
+input, select { width:100%; padding:8px; margin-top:4px; }
+button { margin-top:12px; padding:10px; width:100%; font-size:16px; }
 .save { background:#2e7d32; color:white; border:none; }
 .new { background:#1976d2; color:white; border:none; }
 .delete { background:#c62828; color:white; border:none; }
-pre {
-  background:white;
-  padding:10px;
-  margin-top:15px;
-}
+.csv { background:#455a64; color:white; border:none; }
+pre { background:white; padding:10px; margin-top:15px; }
 </style>
 </head>
 
@@ -38,72 +22,58 @@ pre {
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name
-<input id="name">
-</label>
-
-<label>Telefon
-<input id="telefon">
-</label>
-
-<label>Straße
-<input id="strasse">
-</label>
-
-<label>Hausnummer
-<input id="hausnummer">
-</label>
-
-<label>PLZ
-<input id="plz">
-</label>
-
-<label>Ort
-<input id="ort">
-</label>
+<label>Name <input id="name"></label>
+<label>Telefon <input id="telefon"></label>
+<label>Straße <input id="strasse"></label>
+<label>Hausnummer <input id="hausnummer"></label>
+<label>PLZ <input id="plz"></label>
+<label>Ort <input id="ort"></label>
 
 <label>HÜMIX Rasen Spezial – Säcke
-<input id="rasen" type="number" value="0">
-</label>
+<input id="rasen" type="number" value="0"></label>
 
 <label>HÜMIX Bio-Volldünger – Säcke
-<input id="bio" type="number" value="0">
-</label>
+<input id="bio" type="number" value="0"></label>
 
 <label>Ausgestreut
 <select id="ausgestreut">
-  <option>Ja</option>
-  <option>Nein</option>
-</select>
-</label>
+<option>Ja</option>
+<option>Nein</option>
+</select></label>
 
 <button class="save" onclick="speichern()">💾 Speichern</button>
 <button class="new" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+<button class="csv" onclick="csvExport()">📄 Tages-CSV exportieren</button>
 <button class="delete" onclick="alleLoeschen()">🗑️ Alle Daten löschen</button>
 
 <pre id="ausgabe">GPS wird ermittelt…</pre>
 
 <script>
-let lat = "", lon = "";
+let lat="", lon="";
 
-navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude;
-    lon = pos.coords.longitude;
-    ausgabe.textContent =
-      "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
-  },
-  err => {
-    ausgabe.textContent = "GPS-Fehler: " + err.message;
-  },
-  { enableHighAccuracy:true }
-);
+navigator.geolocation.getCurrentPosition(async pos=>{
+  lat = pos.coords.latitude;
+  lon = pos.coords.longitude;
+  ausgabe.textContent = "GPS OK: "+lat.toFixed(6)+", "+lon.toFixed(6);
 
-function speichern() {
-  const jetzt = new Date().toLocaleString("de-DE");
+  // Adresse holen
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const a = data.address || {};
 
+  strasse.value = a.road || "";
+  hausnummer.value = a.house_number || "";
+  plz.value = a.postcode || "";
+  ort.value = a.city || a.town || a.village || "";
+
+}, err=>{
+  ausgabe.textContent = "GPS-Fehler: "+err.message;
+},{enableHighAccuracy:true});
+
+function speichern(){
   const eintrag = {
-    datum: jetzt,
+    datum: new Date().toLocaleString("de-DE"),
     name: name.value,
     telefon: telefon.value,
     strasse: strasse.value,
@@ -119,30 +89,37 @@ function speichern() {
   liste.push(eintrag);
   localStorage.setItem("huemix", JSON.stringify(liste));
 
-  ausgabe.textContent =
-`🌱 HÜMIX Einsatz
-Name: ${eintrag.name}
-Telefon: ${eintrag.telefon}
-Adresse: ${eintrag.strasse} ${eintrag.hausnr}, ${eintrag.plz} ${eintrag.ort}
-Datum/Zeit: ${eintrag.datum}
-Rasen: ${eintrag.rasen} Säcke
-Bio: ${eintrag.bio} Säcke
-Ausgestreut: ${eintrag.ausgestreut}`;
+  ausgabe.textContent = "Eintrag gespeichert.";
 }
 
-function neuerEintrag() {
-  document.querySelectorAll("input").forEach(i => {
-    if (i.type === "number") i.value = 0;
-    else i.value = "";
+function neuerEintrag(){
+  document.querySelectorAll("input").forEach(i=>{
+    if(i.type==="number") i.value=0; else i.value="";
   });
-  ausgabe.textContent = "Neuer Eintrag – bereit.";
+  ausgabe.textContent = "Neuer Eintrag bereit.";
 }
 
-function alleLoeschen() {
-  if (confirm("⚠️ Wirklich ALLE gespeicherten Daten löschen?")) {
+function alleLoeschen(){
+  if(confirm("Wirklich ALLE Daten löschen?")){
     localStorage.removeItem("huemix");
-    ausgabe.textContent = "Alle Daten wurden gelöscht.";
+    ausgabe.textContent = "Alle Daten gelöscht.";
   }
+}
+
+function csvExport(){
+  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
+  if(!liste.length){ alert("Keine Daten vorhanden"); return; }
+
+  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut\n";
+  liste.forEach(e=>{
+    csv += `${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut}\n`;
+  });
+
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "huemix_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
 }
 </script>
 
