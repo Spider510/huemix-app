@@ -8,16 +8,13 @@
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f4; padding:15px; }
 h1 { color:#2e7d32; }
-label { display:block; margin-top:10px; }
+label { display:block; margin-top:10px; font-weight:bold; }
 input, select, button {
-  width:100%; padding:10px; margin-top:5px; font-size:16px;
+  width:100%; padding:8px; margin-top:4px;
+  border-radius:4px; border:1px solid #ccc;
 }
-button {
-  background:#2e7d32; color:white; border:none; margin-top:15px;
-}
-pre {
-  background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap;
-}
+button { background:#2e7d32; color:white; font-size:16px; margin-top:15px; }
+pre { background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap; }
 </style>
 </head>
 
@@ -27,96 +24,104 @@ pre {
 
 <label>Name<input id="name"></label>
 <label>Telefon<input id="telefon"></label>
-
 <label>Straße<input id="strasse"></label>
 <label>Hausnummer<input id="hausnummer"></label>
 <label>PLZ<input id="plz"></label>
 <label>Ort<input id="ort"></label>
 
-<label>HÜMIX Rasen Spezial – Säcke
-<input id="rasen" type="number" value="0"></label>
-
-<label>HÜMIX Bio-Volldünger – Säcke
-<input id="bio" type="number" value="0"></label>
+<label>HÜMIX Rasen Spezial – Säcke<input id="rasen" type="number" value="0"></label>
+<label>HÜMIX Bio-Volldünger – Säcke<input id="bio" type="number" value="0"></label>
 
 <label>Ausgestreut
 <select id="ausgestreut">
-<option>Ja</option>
-<option>Nein</option>
+  <option>Ja</option>
+  <option>Nein</option>
 </select>
 </label>
 
 <button onclick="speichern()">Speichern</button>
-<button onclick="exportCSV()">📁 Tages-CSV exportieren</button>
+<button onclick="exportCSV()">📥 Tages-CSV exportieren</button>
 
 <pre id="ausgabe">GPS wird ermittelt…</pre>
 
 <script>
-let lat = "", lon = "";
+const f = id => document.getElementById(id);
+let lat="", lon="";
 
-// GPS + Adresse holen
 navigator.geolocation.getCurrentPosition(
-  async pos => {
+  pos => {
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
-
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const a = data.address || {};
-
-    document.getElementById("strasse").value = a.road || "";
-    document.getElementById("hausnummer").value = a.house_number || "";
-    document.getElementById("plz").value = a.postcode || "";
-    document.getElementById("ort").value =
-      a.city || a.town || a.village || "";
-
-    ausgabe.textContent =
-      "GPS OK:\n" +
-      lat.toFixed(6) + ", " + lon.toFixed(6);
+    f("ausgabe").textContent =
+      `GPS OK:\n${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+    reverseGeocode();
   },
-  err => {
-    ausgabe.textContent = "GPS Fehler: " + err.message;
-  },
+  err => f("ausgabe").textContent = "GPS-Fehler: " + err.message,
   { enableHighAccuracy:true, timeout:10000 }
 );
 
-// Speichern
-function speichern() {
+// Adresse + PLZ automatisch holen
+function reverseGeocode(){
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+  .then(r=>r.json())
+  .then(d=>{
+    const a = d.address || {};
+    if(!f("strasse").value) f("strasse").value = a.road || "";
+    if(!f("hausnummer").value) f("hausnummer").value = a.house_number || "";
+    if(!f("plz").value) f("plz").value = a.postcode || "";
+    if(!f("ort").value) f("ort").value = a.city || a.town || a.village || "";
+  });
+}
+
+function speichern(){
   const jetzt = new Date().toLocaleString("de-DE");
+  const maps = lat && lon ? `https://maps.google.com/?q=${lat},${lon}` : "";
 
   const eintrag = [
     jetzt,
-    name.value,
-    telefon.value,
-    strasse.value,
-    hausnummer.value,
-    plz.value,
-    ort.value,
+    f("name").value,
+    f("telefon").value,
+    f("strasse").value,
+    f("hausnummer").value,
+    f("plz").value,
+    f("ort").value,
     lat,
     lon,
-    rasen.value,
-    bio.value,
-    ausgestreut.value
+    f("rasen").value,
+    f("bio").value,
+    f("ausgestreut").value,
+    maps
   ].join(";");
 
-  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
+  const liste = JSON.parse(localStorage.getItem("huemix")) || [];
   liste.push(eintrag);
   localStorage.setItem("huemix", JSON.stringify(liste));
 
-  ausgabe.textContent = "Gespeichert:\n" + eintrag;
+  f("ausgabe").textContent =
+`🌱 HÜMIX Einsatz
+Name: ${f("name").value}
+Telefon: ${f("telefon").value}
+Adresse: ${f("strasse").value} ${f("hausnummer").value}, ${f("plz").value} ${f("ort").value}
+GPS: ${lat}, ${lon}
+Karte: ${maps}
+Datum/Zeit: ${jetzt}
+
+Dünger:
+- Rasen Spezial: ${f("rasen").value} Säcke
+- Bio-Volldünger: ${f("bio").value} Säcke
+🚜 Ausgestreut: ${f("ausgestreut").value}`;
 }
 
-// CSV Export
-function exportCSV() {
-  const liste = JSON.parse(localStorage.getItem("huemix")) || [];
-  if (!liste.length) return alert("Keine Daten");
+function exportCSV(){
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  if(!daten.length){ alert("Keine Daten vorhanden"); return; }
 
   const header =
-    "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Lat;Lon;Rasen;Bio;Ausgestreut\n";
+"Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Lat;Lon;Rasen;Bio;Ausgestreut;Karte\n";
 
-  const blob = new Blob([header + liste.join("\n")],
-    { type:"text/csv;charset=utf-8;" });
+  const bom = "\uFEFF"; // wichtig für Excel-Umlaute
+  const blob = new Blob([bom + header + daten.join("\n")],
+    {type:"text/csv;charset=utf-8;"});
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
