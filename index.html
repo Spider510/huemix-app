@@ -10,14 +10,8 @@
       background: #f4f6f4;
       padding: 15px;
     }
-    h1 {
-      color: #2e7d32;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    h1 { color: #2e7d32; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
     input, select, button {
       width: 100%;
       padding: 8px;
@@ -85,16 +79,13 @@
 <script>
 const f = id => document.getElementById(id);
 
-// gespeicherte Formulardaten laden
+// gespeicherte Daten laden
 const saved = JSON.parse(localStorage.getItem("huemix_form") || "{}");
-["name","telefon","strasse","hausnummer","ort"].forEach(k => {
-  if (saved[k]) f(k).value = saved[k];
-});
+Object.keys(saved).forEach(k => f(k).value = saved[k]);
 
-let lat = "";
-let lon = "";
+let lat = "", lon = "";
 
-// GPS holen + Ort automatisch setzen
+// GPS + Adresse holen
 navigator.geolocation.getCurrentPosition(
   pos => {
     lat = pos.coords.latitude;
@@ -103,32 +94,26 @@ navigator.geolocation.getCurrentPosition(
     f("ausgabe").textContent =
       "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
 
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`)
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
       .then(r => r.json())
       .then(d => {
-        if (!f("ort").value) {
-          f("ort").value =
-            d.address.city ||
-            d.address.town ||
-            d.address.village ||
-            "";
-        }
+        const a = d.address || {};
+
+        if (!f("strasse").value) f("strasse").value = a.road || "";
+        if (!f("hausnummer").value) f("hausnummer").value = a.house_number || "";
+        if (!f("ort").value)
+          f("ort").value = a.city || a.town || a.village || "";
       });
   },
   err => {
     f("ausgabe").textContent = "GPS-Fehler: " + err.message;
   },
-  {
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0
-  }
+  { enableHighAccuracy: true }
 );
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
 
-  // Formular merken
   localStorage.setItem("huemix_form", JSON.stringify({
     name: f("name").value,
     telefon: f("telefon").value,
@@ -137,18 +122,18 @@ function speichern() {
     ort: f("ort").value
   }));
 
-  const mapsLink = lat && lon
+  const maps = lat && lon
     ? `https://maps.google.com/?q=${lat},${lon}`
     : "kein GPS";
 
-  const text = `
+  f("ausgabe").textContent = `
 🌱 HÜMIX Einsatz
 👤 Name: ${f("name").value}
 📞 Telefon: ${f("telefon").value}
 📍 Adresse: ${f("strasse").value} ${f("hausnummer").value}, ${f("ort").value}
 
 🧭 GPS: ${lat}, ${lon}
-🗺 Karte: ${mapsLink}
+🗺 Karte: ${maps}
 🕒 Datum/Zeit: ${jetzt}
 
 🧴 Dünger:
@@ -157,8 +142,6 @@ function speichern() {
 
 🚜 Ausgestreut: ${f("ausgestreut").value}
 `.trim();
-
-  f("ausgabe").textContent = text;
 }
 </script>
 
