@@ -1,29 +1,67 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>HÜMIX Einsatz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body { font-family: Arial, sans-serif; background:#f4f6f4; padding:15px; }
-h1 { color:#2e7d32; }
-label { display:block; margin-top:10px; }
-input, select, button { width:100%; padding:8px; margin-top:4px; }
-button { background:#2e7d32; color:#fff; border:none; margin-top:15px; font-size:16px; }
-pre { background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap; }
-</style>
+  <meta charset="UTF-8">
+  <title>HÜMIX Einsatz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f4;
+      padding: 15px;
+    }
+    h1 {
+      color: #2e7d32;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      font-size: 16px;
+    }
+    button {
+      background: #2e7d32;
+      color: white;
+      border: none;
+      margin-top: 15px;
+    }
+    pre {
+      background: white;
+      padding: 10px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 
 <body>
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name <input id="name"></label>
-<label>Telefon <input id="telefon"></label>
-<label>Straße <input id="strasse" placeholder="automatisch / manuell"></label>
-<label>Hausnummer <input id="hausnummer"></label>
-<label>Ort <input id="ort"></label>
+<label>Name
+  <input id="name">
+</label>
+
+<label>Telefon
+  <input id="telefon">
+</label>
+
+<label>Straße
+  <input id="strasse">
+</label>
+
+<label>Hausnummer
+  <input id="hausnummer">
+</label>
+
+<label>Ort
+  <input id="ort">
+</label>
 
 <label>HÜMIX Rasen Spezial – Säcke
   <input id="rasen" type="number" value="0">
@@ -42,67 +80,85 @@ pre { background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap; }
 
 <button onclick="speichern()">Speichern</button>
 
-<pre id="ausgabe">📡 GPS wird ermittelt…</pre>
+<pre id="ausgabe">GPS wird ermittelt…</pre>
 
 <script>
 const f = id => document.getElementById(id);
-let lat="", lon="";
 
-navigator.geolocation.getCurrentPosition(pos => {
-  lat = pos.coords.latitude;
-  lon = pos.coords.longitude;
+// gespeicherte Formulardaten laden
+const saved = JSON.parse(localStorage.getItem("huemix_form") || "{}");
+["name","telefon","strasse","hausnummer","ort"].forEach(k => {
+  if (saved[k]) f(k).value = saved[k];
+});
 
-  f("ausgabe").textContent =
-    "📍 GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6) +
-    "\n\n🗺️ Karte:\nhttps://maps.google.com/?q=" + lat + "," + lon;
+let lat = "";
+let lon = "";
 
-  // Ortsname aus Koordinaten (fallback-sicher)
-  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`)
-    .then(r => r.json())
-    .then(d => {
-      if (d.address) {
-        f("ort").value =
-          d.address.city ||
-          d.address.town ||
-          d.address.village ||
-          d.address.county ||
-          "";
-      }
-    })
-    .catch(()=>{});
-}, err => {
-  f("ausgabe").textContent = "GPS-Fehler: " + err.message;
-}, { enableHighAccuracy:true, timeout:10000 });
+// GPS holen + Ort automatisch setzen
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    lat = pos.coords.latitude;
+    lon = pos.coords.longitude;
+
+    f("ausgabe").textContent =
+      "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`)
+      .then(r => r.json())
+      .then(d => {
+        if (!f("ort").value) {
+          f("ort").value =
+            d.address.city ||
+            d.address.town ||
+            d.address.village ||
+            "";
+        }
+      });
+  },
+  err => {
+    f("ausgabe").textContent = "GPS-Fehler: " + err.message;
+  },
+  {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+  }
+);
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
-  const maps = lat ? `https://maps.google.com/?q=${lat},${lon}` : "kein GPS";
 
-  f("ausgabe").textContent = `
+  // Formular merken
+  localStorage.setItem("huemix_form", JSON.stringify({
+    name: f("name").value,
+    telefon: f("telefon").value,
+    strasse: f("strasse").value,
+    hausnummer: f("hausnummer").value,
+    ort: f("ort").value
+  }));
+
+  const mapsLink = lat && lon
+    ? `https://maps.google.com/?q=${lat},${lon}`
+    : "kein GPS";
+
+  const text = `
 🌱 HÜMIX Einsatz
-
 👤 Name: ${f("name").value}
 📞 Telefon: ${f("telefon").value}
+📍 Adresse: ${f("strasse").value} ${f("hausnummer").value}, ${f("ort").value}
 
-📍 Adresse:
-${f("strasse").value} ${f("hausnummer").value}
-${f("ort").value}
-
-🧭 GPS:
-${lat}, ${lon}
-
-🗺️ Karte:
-${maps}
-
-🕒 Datum/Zeit:
-${jetzt}
+🧭 GPS: ${lat}, ${lon}
+🗺 Karte: ${mapsLink}
+🕒 Datum/Zeit: ${jetzt}
 
 🧴 Dünger:
 - Rasen Spezial: ${f("rasen").value} Säcke
 - Bio-Volldünger: ${f("bio").value} Säcke
 
 🚜 Ausgestreut: ${f("ausgestreut").value}
-`;
+`.trim();
+
+  f("ausgabe").textContent = text;
 }
 </script>
 
