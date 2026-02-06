@@ -11,28 +11,21 @@ body {
   background: #f4f6f4;
   padding: 15px;
 }
-h1 {
-  color: #2e7d32;
-}
-label {
-  display: block;
-  margin-top: 10px;
-  font-weight: bold;
-}
+h1 { color: #2e7d32; }
+label { display: block; margin-top: 10px; }
 input, select, button {
   width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  font-size: 16px;
+  padding: 10px;
+  margin-top: 5px;
 }
 button {
   background: #2e7d32;
   color: white;
   border: none;
-  margin-top: 15px;
+  font-size: 16px;
 }
 pre {
-  background: white;
+  background: #fff;
   padding: 10px;
   margin-top: 15px;
   white-space: pre-wrap;
@@ -45,38 +38,38 @@ pre {
 <h1>🌱 HÜMIX Einsatz</h1>
 
 <label>Name
-<input id="name">
+  <input id="name">
 </label>
 
 <label>Telefon
-<input id="telefon">
+  <input id="telefon">
 </label>
 
 <label>Straße
-<input id="strasse">
+  <input id="strasse">
 </label>
 
 <label>Hausnummer
-<input id="hausnummer">
+  <input id="hausnummer">
 </label>
 
 <label>Ort
-<input id="ort">
+  <input id="ort">
 </label>
 
 <label>HÜMIX Rasen Spezial – Säcke
-<input id="rasen" type="number" value="0">
+  <input id="rasen" type="number" value="0">
 </label>
 
 <label>HÜMIX Bio-Volldünger – Säcke
-<input id="bio" type="number" value="0">
+  <input id="bio" type="number" value="0">
 </label>
 
 <label>Ausgestreut
-<select id="ausgestreut">
-  <option>Ja</option>
-  <option>Nein</option>
-</select>
+  <select id="ausgestreut">
+    <option>Ja</option>
+    <option>Nein</option>
+  </select>
 </label>
 
 <button onclick="speichern()">Speichern</button>
@@ -98,58 +91,37 @@ let lat = "";
 let lon = "";
 
 navigator.geolocation.getCurrentPosition(
-  function(pos) {
-    lat = pos.coords.latitude;
-    lon = pos.coords.longitude;
-    ausgabe.textContent =
-      "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
+  pos => {
+    lat = pos.coords.latitude.toFixed(6);
+    lon = pos.coords.longitude.toFixed(6);
+    ausgabe.textContent = `GPS OK:\n${lat}, ${lon}`;
   },
-  function(err) {
-    ausgabe.textContent = "GPS-Fehler: " + err.message;
+  err => {
+    ausgabe.textContent = "GPS nicht verfügbar";
   },
-  {
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0
-  }
+  { enableHighAccuracy: true }
 );
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
-  const mapsLink = (lat && lon)
-    ? "https://maps.google.com/?q=" + lat + "," + lon
+  const mapsLink = lat && lon
+    ? `https://maps.google.com/?q=${lat},${lon}`
     : "kein GPS";
 
   const text =
 `🌱 HÜMIX Einsatz
-
 👤 Name: ${nameF.value}
 📞 Telefon: ${telefon.value}
-
-📍 Adresse:
-${strasse.value} ${hausnummer.value}
-${ort.value}
-
-🧭 GPS:
-${lat}, ${lon}
-
-🗺 Karte:
-${mapsLink}
-
-🕒 Datum/Zeit:
-${jetzt}
-
+📍 Adresse: ${strasse.value} ${hausnummer.value}, ${ort.value}
+🧭 GPS: ${lat}, ${lon}
+🗺️ Karte: ${mapsLink}
+⏰ Datum/Zeit: ${jetzt}
 🧪 Dünger:
-HÜMIX Rasen Spezial: ${rasen.value} Säcke
-HÜMIX Bio-Volldünger: ${bio.value} Säcke
-
+- Rasen Spezial: ${rasen.value} Säcke
+- Bio-Volldünger: ${bio.value} Säcke
 🚜 Ausgestreut: ${ausgestreut.value}`;
 
   ausgabe.textContent = text;
-
-  const liste = JSON.parse(localStorage.getItem("huemix")) || [];
-  liste.push(text);
-  localStorage.setItem("huemix", JSON.stringify(liste));
 }
 </script>
 
