@@ -3,21 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { font-family: Arial, sans-serif; background:#f3f7f2; padding:20px; }
-h1 { color:#2e7d32; }
-label { font-weight:bold; display:block; margin-top:12px; }
-input, select, button, textarea {
-  width:100%; padding:10px; margin-top:4px; font-size:16px;
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f8f4;
+  padding: 20px;
 }
-button { color:white; border:none; margin-top:10px; }
-.save { background:#2e7d32; }
-.new { background:#1976d2; }
-.csv { background:#455a64; }
-.del { background:#c62828; }
-pre { background:white; padding:10px; white-space:pre-wrap; }
+h1 { color: #2e7d32; }
+label { display:block; margin-top:10px; }
+input, select {
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+}
+button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:16px;
+  border:none;
+  cursor:pointer;
+}
+.save { background:#2e7d32; color:#fff; }
+.new { background:#1976d2; color:#fff; }
+.csv { background:#455a64; color:#fff; }
+.del { background:#c62828; color:#fff; }
+
+pre {
+  background:#fff;
+  padding:10px;
+  margin-top:15px;
+  white-space:pre-wrap;
+}
 </style>
 </head>
 
@@ -53,8 +71,7 @@ pre { background:white; padding:10px; white-space:pre-wrap; }
 
 <button class="save" onclick="speichern()">💾 Speichern</button>
 <button class="new" onclick="neu()">➕ Neuer Eintrag</button>
-<button class="csv" onclick="exportCSV()">📄 Tages-CSV</button>
-<button class="csv" onclick="exportSummaryCSV()">📊 Tages-Zusammenfassung CSV</button>
+<button class="csv" onclick="exportCSV()">📄 Tages-CSV exportieren</button>
 <button class="del" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
 <pre id="status">GPS wird ermittelt…</pre>
@@ -62,133 +79,112 @@ pre { background:white; padding:10px; white-space:pre-wrap; }
 <script>
 const PREIS_RASEN = 45;
 const PREIS_BIO = 30;
+let lat="", lon="";
 
-/* ========= GPS + ADRESSE ========= */
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    gpsOK,
-    gpsFail,
-    { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
-  );
-} else {
-  status.textContent = "GPS nicht unterstützt";
-}
+/* GPS nur anzeigen */
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    lat = pos.coords.latitude.toFixed(6);
+    lon = pos.coords.longitude.toFixed(6);
+    status.textContent = "GPS OK: " + lat + ", " + lon;
+  },
+  () => status.textContent = "GPS nicht verfügbar"
+);
 
-async function gpsOK(pos) {
-  const lat = pos.coords.latitude;
-  const lon = pos.coords.longitude;
-
-  status.textContent = "GPS OK – Adresse wird geladen…";
-
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de`,
-      { headers: { "User-Agent": "huemix-app" } }
-    );
-
-    if (!res.ok) throw new Error("Adresse nicht erreichbar");
-
-    const data = await res.json();
-    const a = data.address || {};
-
-    if (!strasse.value && a.road) strasse.value = a.road;
-    if (!hausnr.value && a.house_number) hausnr.value = a.house_number;
-    if (!plz.value && a.postcode) plz.value = a.postcode;
-    if (!ort.value) ort.value = a.city || a.town || a.village || "";
-
-    status.textContent = "Adresse automatisch übernommen";
-  } catch {
-    status.textContent = "GPS OK – Adresse bitte manuell ergänzen";
-  }
-}
-
-function gpsFail() {
-  status.textContent = "GPS nicht verfügbar – manuelle Eingabe";
-}
-
-/* ========= SPEICHERN ========= */
-function heuteKey() {
-  return new Date().toISOString().slice(0,10);
-}
-
+/* SPEICHERN */
 function speichern() {
-  const rasen = Number(rasen.value || 0);
-  const bio = Number(bio.value || 0);
-  const gesamt = rasen*PREIS_RASEN + bio*PREIS_BIO;
+  const jetzt = new Date();
+  const datum =
+    jetzt.toLocaleDateString("de-DE") + ", " +
+    jetzt.toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
 
-  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  daten.push({
-    isoDate: heuteKey(),
-    datum: new Date().toLocaleString("de-DE"),
+  const rasen = Number(rasenEl.value || 0);
+  const bio = Number(bioEl.value || 0);
+  const summe = rasen * PREIS_RASEN + bio * PREIS_BIO;
+
+  const eintrag = {
+    datum,
     name: name.value,
     telefon: telefon.value,
     strasse: strasse.value,
     hausnr: hausnr.value,
     plz: plz.value,
     ort: ort.value,
-    rasen, bio,
+    rasen,
+    bio,
     ausgestreut: ausgestreut.value,
     zahlung: zahlung.value,
-    gesamt
-  });
+    summe
+  };
 
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  daten.push(eintrag);
   localStorage.setItem("huemix", JSON.stringify(daten));
-  status.textContent = `Gespeichert – Gesamt ${gesamt} €`;
+
+  status.textContent = "Gespeichert: " + datum + " | Summe: " + summe + " €";
 }
 
+/* NEUER EINTRAG */
 function neu() {
-  document.querySelectorAll("input").forEach(i=>{
-    if (i.type==="number") i.value=0; else i.value="";
-  });
+  document.querySelectorAll("input").forEach(i => i.value = "");
+  rasenEl.value = 0;
+  bioEl.value = 0;
 }
 
-/* ========= CSV EINZEL ========= */
+/* CSV EXPORT + TAGESZUSAMMENFASSUNG */
 function exportCSV() {
   const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  const heute = daten.filter(e=>e.isoDate===heuteKey());
-  if (!heute.length) return alert("Keine Daten");
+  if (!daten.length) return alert("Keine Daten");
 
-  let csv="\uFEFFDatum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
-  heute.forEach(e=>{
-    csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.gesamt}\n`;
-  });
-  download(csv, "huemix_"+heuteKey()+".csv");
-}
+  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
 
-/* ========= CSV ZUSAMMENFASSUNG ========= */
-function exportSummaryCSV() {
-  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  const heute = daten.filter(e=>e.isoDate===heuteKey());
+  let sum = { Bar:0, EC:0, Rechnung:0 };
+  let sack = { Bar:0, EC:0, Rechnung:0 };
 
-  const sum = {Bar:[0,0,0],EC:[0,0,0],Rechnung:[0,0,0]};
-  heute.forEach(e=>{
-    sum[e.zahlung][0]+=e.rasen;
-    sum[e.zahlung][1]+=e.bio;
-    sum[e.zahlung][2]+=e.gesamt;
+  daten.forEach(d => {
+    csv += [
+      d.datum,d.name,d.telefon,d.strasse,d.hausnr,
+      d.plz,d.ort,d.rasen,d.bio,
+      d.ausgestreut,d.zahlung,d.summe
+    ].join(";") + "\n";
+
+    sum[d.zahlung] += d.summe;
+    sack[d.zahlung] += d.rasen + d.bio;
   });
 
-  let csv="\uFEFFZahlung;Rasen_Säcke;Bio_Säcke;Summe_EUR\n";
-  Object.keys(sum).forEach(z=>{
-    csv+=`${z};${sum[z][0]};${sum[z][1]};${sum[z][2]}\n`;
+  csv += "\nZUSAMMENFASSUNG\n";
+  csv += "Zahlung;Säcke;Summe\n";
+  ["Bar","EC","Rechnung"].forEach(z=>{
+    csv += `${z};${sack[z]};${sum[z]}\n`;
   });
-  download(csv, "huemix_zusammenfassung_"+heuteKey()+".csv");
-}
 
-function download(text,name){
-  const blob=new Blob([text],{type:"text/csv;charset=utf-8;"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "huemix_" + new Date().toISOString().slice(0,10) + ".csv";
   a.click();
 }
 
-/* ========= LÖSCHEN ========= */
+/* ALLES LÖSCHEN */
 function allesLoeschen() {
-  if (confirm("Wirklich ALLE Daten löschen?")) {
+  if (confirm("Wirklich alle Daten löschen?")) {
     localStorage.removeItem("huemix");
-    status.textContent="Alle Daten gelöscht";
+    status.textContent = "Alle Daten gelöscht";
   }
 }
+
+/* Shortcuts */
+const name = document.getElementById("name");
+const telefon = document.getElementById("telefon");
+const strasse = document.getElementById("strasse");
+const hausnr = document.getElementById("hausnr");
+const plz = document.getElementById("plz");
+const ort = document.getElementById("ort");
+const rasenEl = document.getElementById("rasen");
+const bioEl = document.getElementById("bio");
+const ausgestreut = document.getElementById("ausgestreut");
+const zahlung = document.getElementById("zahlung");
+const status = document.getElementById("status");
 </script>
 
 </body>
