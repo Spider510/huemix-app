@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
@@ -15,17 +15,18 @@ h1 { color: #2e7d32; }
 label { display: block; margin-top: 10px; }
 input, select, button {
   width: 100%;
-  padding: 10px;
-  margin-top: 5px;
+  padding: 8px;
+  margin-top: 4px;
 }
 button {
   background: #2e7d32;
   color: white;
   border: none;
+  margin-top: 15px;
   font-size: 16px;
 }
 pre {
-  background: #fff;
+  background: white;
   padding: 10px;
   margin-top: 15px;
   white-space: pre-wrap;
@@ -87,20 +88,35 @@ const bio = document.getElementById("bio");
 const ausgestreut = document.getElementById("ausgestreut");
 const ausgabe = document.getElementById("ausgabe");
 
-let lat = "";
-let lon = "";
+let lat = "", lon = "";
 
-navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude.toFixed(6);
-    lon = pos.coords.longitude.toFixed(6);
-    ausgabe.textContent = `GPS OK:\n${lat}, ${lon}`;
-  },
-  err => {
-    ausgabe.textContent = "GPS nicht verfügbar";
-  },
-  { enableHighAccuracy: true }
-);
+/* GPS + Adresse holen */
+navigator.geolocation.getCurrentPosition(async pos => {
+  lat = pos.coords.latitude;
+  lon = pos.coords.longitude;
+
+  ausgabe.textContent = "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+    );
+    const data = await res.json();
+    const addr = data.address || {};
+
+    strasse.value = addr.road || "";
+    hausnummer.value = addr.house_number || "";
+    ort.value = addr.city || addr.town || addr.village || "";
+
+  } catch (e) {
+    console.log("Adresse konnte nicht geladen werden");
+  }
+}, err => {
+  ausgabe.textContent = "GPS-Fehler: " + err.message;
+}, {
+  enableHighAccuracy: true,
+  timeout: 10000
+});
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
@@ -108,18 +124,31 @@ function speichern() {
     ? `https://maps.google.com/?q=${lat},${lon}`
     : "kein GPS";
 
-  const text =
-`🌱 HÜMIX Einsatz
+  const text = `
+🌱 HÜMIX Einsatz
+
 👤 Name: ${nameF.value}
 📞 Telefon: ${telefon.value}
-📍 Adresse: ${strasse.value} ${hausnummer.value}, ${ort.value}
-🧭 GPS: ${lat}, ${lon}
-🗺️ Karte: ${mapsLink}
-⏰ Datum/Zeit: ${jetzt}
-🧪 Dünger:
+
+📍 Adresse:
+${strasse.value} ${hausnummer.value}
+${ort.value}
+
+🧭 GPS:
+${lat}, ${lon}
+
+🗺️ Karte:
+${mapsLink}
+
+🕒 Datum/Zeit:
+${jetzt}
+
+🧴 Dünger:
 - Rasen Spezial: ${rasen.value} Säcke
 - Bio-Volldünger: ${bio.value} Säcke
-🚜 Ausgestreut: ${ausgestreut.value}`;
+
+🚜 Ausgestreut: ${ausgestreut.value}
+`;
 
   ausgabe.textContent = text;
 }
