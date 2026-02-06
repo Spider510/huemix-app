@@ -3,18 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { font-family: Arial, sans-serif; background:#f4f7f4; padding:20px; }
-h1 { color:#2e7d32; }
-label { display:block; margin-top:12px; }
-input, select { width:100%; padding:8px; margin-top:4px; }
-button { margin-top:12px; padding:12px; width:100%; font-size:16px; border:none; }
-.save { background:#2e7d32; color:white; }
-.new { background:#1976d2; color:white; }
-.csv { background:#455a64; color:white; }
-.delete { background:#c62828; color:white; }
-.box { background:white; padding:12px; margin-top:15px; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f4;
+  padding: 15px;
+}
+h1 { color: #2e7d32; }
+label { display: block; margin-top: 10px; }
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  font-size: 16px;
+}
+button {
+  border: none;
+  color: white;
+  font-weight: bold;
+  margin-top: 10px;
+}
+.btn-save { background: #2e7d32; }
+.btn-new { background: #1976d2; }
+.btn-csv { background: #455a64; }
+.btn-del { background: #c62828; }
+pre {
+  background: #fff;
+  padding: 10px;
+  margin-top: 10px;
+  white-space: pre-wrap;
+}
 </style>
 </head>
 
@@ -22,12 +42,12 @@ button { margin-top:12px; padding:12px; width:100%; font-size:16px; border:none;
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name <input id="name"></label>
-<label>Telefon <input id="telefon"></label>
-<label>Straße <input id="strasse"></label>
-<label>Hausnummer <input id="hausnr"></label>
-<label>PLZ <input id="plz"></label>
-<label>Ort <input id="ort"></label>
+<label>Name<input id="name"></label>
+<label>Telefon<input id="telefon"></label>
+<label>Straße<input id="strasse"></label>
+<label>Hausnummer<input id="hausnr"></label>
+<label>PLZ<input id="plz"></label>
+<label>Ort<input id="ort"></label>
 
 <label>HÜMIX Rasen Spezial – Säcke (45 €)
 <input id="rasen" type="number" value="0"></label>
@@ -37,135 +57,136 @@ button { margin-top:12px; padding:12px; width:100%; font-size:16px; border:none;
 
 <label>Ausgestreut
 <select id="ausgestreut">
-<option>Ja</option>
-<option>Nein</option>
-</select></label>
+  <option>Ja</option>
+  <option>Nein</option>
+</select>
+</label>
 
 <label>Zahlungsart
 <select id="zahlung">
-<option>Bar</option>
-<option>EC-Karte</option>
-<option>Rechnung</option>
-</select></label>
+  <option>Bar</option>
+  <option>EC</option>
+  <option>Rechnung</option>
+</select>
+</label>
 
-<button class="save" onclick="speichern()">💾 Speichern</button>
-<button class="new" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
-<button class="csv" onclick="csvExport()">📄 Tages-CSV exportieren</button>
-<button class="delete" onclick="alleLoeschen()">🗑️ Alle Daten löschen</button>
+<button class="btn-save" onclick="speichern()">💾 Speichern</button>
+<button class="btn-new" onclick="neu()">➕ Neuer Eintrag</button>
+<button class="btn-csv" onclick="exportCSV()">📄 Tages-CSV exportieren</button>
+<button class="btn-del" onclick="allesLoeschen()">🗑️ Alle Daten löschen</button>
 
-<div class="box" id="status">GPS wird ermittelt…</div>
-<div class="box" id="statistik"></div>
+<pre id="status">GPS wird ermittelt…</pre>
+<pre id="ausgabe"></pre>
 
 <script>
-// Feste Preise
-const PREIS_RASEN = 45;
-const PREIS_BIO = 30;
+const status = document.getElementById("status");
+let lat = "";
+let lon = "";
 
-// Adresse per GPS
-navigator.geolocation.getCurrentPosition(async pos=>{
-  const lat = pos.coords.latitude;
-  const lon = pos.coords.longitude;
-
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const a = data.address || {};
-
-  strasse.value = a.road || "";
-  hausnr.value = a.house_number || "";
-  plz.value = a.postcode || "";
-  ort.value = a.city || a.town || a.village || "";
-
-  status.textContent = "Adresse automatisch übernommen";
-},{enableHighAccuracy:true});
-
-function speichern(){
-  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
-
-  const rasenAnz = Number(rasen.value);
-  const bioAnz = Number(bio.value);
-
-  const preisRasen = rasenAnz * PREIS_RASEN;
-  const preisBio = bioAnz * PREIS_BIO;
-  const gesamt = preisRasen + preisBio;
-
-  const eintrag = {
-    nr: liste.length + 1,
-    datum: new Date().toLocaleString("de-DE"),
-    name: name.value,
-    telefon: telefon.value,
-    strasse: strasse.value,
-    hausnr: hausnr.value,
-    plz: plz.value,
-    ort: ort.value,
-    rasen: rasenAnz,
-    bio: bioAnz,
-    preisRasen: preisRasen,
-    preisBio: preisBio,
-    gesamt: gesamt,
-    ausgestreut: ausgestreut.value,
-    zahlung: zahlung.value
-  };
-
-  liste.push(eintrag);
-  localStorage.setItem("huemix", JSON.stringify(liste));
-
-  status.textContent = `Gespeichert – Gesamt: ${gesamt.toFixed(2)} €`;
-  statistikAnzeigen();
-}
-
-function neuerEintrag(){
-  document.querySelectorAll("input").forEach(i=>{
-    if(i.type==="number") i.value=0; else i.value="";
+/* ================= GPS ================= */
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(gpsOK, gpsFail, {
+    enableHighAccuracy: true,
+    timeout: 8000,
+    maximumAge: 60000
   });
-  zahlung.value="Bar";
-  status.textContent = "Neuer Eintrag";
+} else {
+  status.textContent = "GPS nicht unterstützt";
 }
 
-function alleLoeschen(){
-  if(confirm("Wirklich alle Daten löschen?")){
-    localStorage.removeItem("huemix");
-    statistik.textContent="";
-    status.textContent="Alle Daten gelöscht";
+async function gpsOK(pos) {
+  lat = pos.coords.latitude;
+  lon = pos.coords.longitude;
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de`,
+      { headers: { "User-Agent": "huemix-app" } }
+    );
+    const data = await res.json();
+    const a = data.address || {};
+
+    if (a.road) strasse.value = a.road;
+    if (a.house_number) hausnr.value = a.house_number;
+    if (a.postcode) plz.value = a.postcode;
+    if (a.city || a.town || a.village)
+      ort.value = a.city || a.town || a.village;
+
+    status.textContent = "GPS OK – Adresse übernommen";
+  } catch {
+    status.textContent = "GPS OK – Adresse bitte ergänzen";
   }
 }
 
-function statistikAnzeigen(){
-  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
-  let rasenSum=0, bioSum=0, umsatz=0;
-
-  liste.forEach(e=>{
-    rasenSum+=e.preisRasen;
-    bioSum+=e.preisBio;
-    umsatz+=e.gesamt;
-  });
-
-  statistik.innerHTML = `
-<b>📊 Tagesumsatz</b><br>
-Rasen: ${rasenSum.toFixed(2)} €<br>
-Bio: ${bioSum.toFixed(2)} €<br>
-<b>Gesamt: ${umsatz.toFixed(2)} €</b>
-`;
+function gpsFail() {
+  status.textContent = "GPS nicht verfügbar – manuelle Eingabe";
 }
 
-function csvExport(){
-  let liste = JSON.parse(localStorage.getItem("huemix")) || [];
-  if(!liste.length){ alert("Keine Daten"); return; }
+/* ================= SPEICHERN ================= */
+function speichern() {
+  const jetzt = new Date().toLocaleString("de-DE");
+  const rasenPreis = rasen.value * 45;
+  const bioPreis = bio.value * 30;
+  const gesamt = rasenPreis + bioPreis;
 
-  let csv = "Nr;Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Preis Rasen €;Preis Bio €;Gesamt €;Ausgestreut;Zahlung\n";
+  const zeile = [
+    jetzt,
+    name.value,
+    telefon.value,
+    strasse.value,
+    hausnr.value,
+    plz.value,
+    ort.value,
+    rasen.value,
+    bio.value,
+    ausgestreut.value,
+    zahlung.value,
+    gesamt
+  ];
 
-  liste.forEach(e=>{
-    csv += `${e.nr};${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.preisRasen.toFixed(2)};${e.preisBio.toFixed(2)};${e.gesamt.toFixed(2)};${e.ausgestreut};${e.zahlung}\n`;
+  let daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  daten.push(zeile);
+  localStorage.setItem("huemix", JSON.stringify(daten));
+
+  ausgabe.textContent =
+    `Gespeichert:\n${jetzt}\n${strasse.value} ${hausnr.value}, ${plz.value} ${ort.value}\nGesamt: ${gesamt} €`;
+}
+
+/* ================= NEU ================= */
+function neu() {
+  document.querySelectorAll("input").forEach(i => {
+    if (i.type === "number") i.value = 0;
+    else i.value = "";
   });
+}
 
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+/* ================= CSV ================= */
+function exportCSV() {
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  if (!daten.length) return alert("Keine Daten");
+
+  const kopf = [
+    "Datum","Name","Telefon","Straße","Hausnr","PLZ","Ort",
+    "Rasen","Bio","Ausgestreut","Zahlung","Gesamt €"
+  ];
+
+  let csv = "\uFEFF" + kopf.join(";") + "\n";
+  daten.forEach(z => csv += z.join(";") + "\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "huemix_"+new Date().toISOString().slice(0,10)+".csv";
+  a.download = "huemix_" + new Date().toISOString().slice(0,10) + ".csv";
   a.click();
 }
 
-statistikAnzeigen();
+/* ================= LÖSCHEN ================= */
+function allesLoeschen() {
+  if (confirm("Wirklich alle Daten löschen?")) {
+    localStorage.removeItem("huemix");
+    ausgabe.textContent = "";
+  }
+}
 </script>
 
 </body>
