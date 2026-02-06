@@ -5,37 +5,16 @@
 <title>HÜMIX Einsatz</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f8f4;
-  padding: 20px;
-}
-h1 { color: #2e7d32; }
-label { display:block; margin-top:10px; }
-input, select {
-  width:100%;
-  padding:8px;
-  margin-top:4px;
-}
-button {
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  font-size:16px;
-  border:none;
-  cursor:pointer;
-}
-.save { background:#2e7d32; color:#fff; }
-.new { background:#1976d2; color:#fff; }
-.csv { background:#455a64; color:#fff; }
-.del { background:#c62828; color:#fff; }
-
-pre {
-  background:#fff;
-  padding:10px;
-  margin-top:15px;
-  white-space:pre-wrap;
-}
+body{font-family:Arial;background:#f4f8f4;padding:20px}
+h1{color:#2e7d32}
+label{display:block;margin-top:10px}
+input,select{width:100%;padding:8px}
+button{width:100%;padding:12px;margin-top:10px;font-size:16px;border:none}
+.save{background:#2e7d32;color:#fff}
+.new{background:#1976d2;color:#fff}
+.csv{background:#455a64;color:#fff}
+.del{background:#c62828;color:#fff}
+pre{background:#fff;padding:10px;margin-top:15px}
 </style>
 </head>
 
@@ -50,23 +29,20 @@ pre {
 <label>PLZ<input id="plz"></label>
 <label>Ort<input id="ort"></label>
 
-<label>HÜMIX Rasen Spezial – Säcke (45 €)
+<label>Rasen Spezial – Säcke (45 €)
 <input id="rasen" type="number" value="0"></label>
 
-<label>HÜMIX Bio-Volldünger – Säcke (30 €)
+<label>Bio-Volldünger – Säcke (30 €)
 <input id="bio" type="number" value="0"></label>
 
 <label>Ausgestreut
-<select id="ausgestreut">
-  <option>Ja</option>
-  <option>Nein</option>
-</select></label>
+<select id="ausgestreut"><option>Ja</option><option>Nein</option></select></label>
 
 <label>Zahlungsart
 <select id="zahlung">
-  <option>Bar</option>
-  <option>EC</option>
-  <option>Rechnung</option>
+<option>Bar</option>
+<option>EC</option>
+<option>Rechnung</option>
 </select></label>
 
 <button class="save" onclick="speichern()">💾 Speichern</button>
@@ -77,114 +53,104 @@ pre {
 <pre id="status">GPS wird ermittelt…</pre>
 
 <script>
-const PREIS_RASEN = 45;
-const PREIS_BIO = 30;
-let lat="", lon="";
+const PREIS_RASEN=45, PREIS_BIO=30;
+let lat="",lon="";
 
-/* GPS nur anzeigen */
+const $=id=>document.getElementById(id);
+const status=$("status");
+
+/* GPS + Adresse */
 navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude.toFixed(6);
-    lon = pos.coords.longitude.toFixed(6);
-    status.textContent = "GPS OK: " + lat + ", " + lon;
-  },
-  () => status.textContent = "GPS nicht verfügbar"
+ pos=>{
+  lat=pos.coords.latitude;
+  lon=pos.coords.longitude;
+  status.textContent="GPS OK – Adresse wird ermittelt…";
+  ladeAdresse(lat,lon);
+ },
+ err=>status.textContent="GPS Fehler: "+err.message,
+ {enableHighAccuracy:true,timeout:10000}
 );
 
-/* SPEICHERN */
-function speichern() {
-  const jetzt = new Date();
-  const datum =
-    jetzt.toLocaleDateString("de-DE") + ", " +
-    jetzt.toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
-
-  const rasen = Number(rasenEl.value || 0);
-  const bio = Number(bioEl.value || 0);
-  const summe = rasen * PREIS_RASEN + bio * PREIS_BIO;
-
-  const eintrag = {
-    datum,
-    name: name.value,
-    telefon: telefon.value,
-    strasse: strasse.value,
-    hausnr: hausnr.value,
-    plz: plz.value,
-    ort: ort.value,
-    rasen,
-    bio,
-    ausgestreut: ausgestreut.value,
-    zahlung: zahlung.value,
-    summe
-  };
-
-  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  daten.push(eintrag);
-  localStorage.setItem("huemix", JSON.stringify(daten));
-
-  status.textContent = "Gespeichert: " + datum + " | Summe: " + summe + " €";
+function ladeAdresse(lat,lon){
+ fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+ .then(r=>r.json())
+ .then(d=>{
+  const a=d.address||{};
+  $("strasse").value=a.road||"";
+  $("hausnr").value=a.house_number||"";
+  $("plz").value=a.postcode||"";
+  $("ort").value=a.city||a.town||a.village||"";
+  status.textContent="Adresse automatisch übernommen ✔";
+ })
+ .catch(()=>status.textContent="Adresse konnte nicht geladen werden");
 }
 
-/* NEUER EINTRAG */
-function neu() {
-  document.querySelectorAll("input").forEach(i => i.value = "");
-  rasenEl.value = 0;
-  bioEl.value = 0;
+function speichern(){
+ const now=new Date();
+ const datum=now.toLocaleDateString("de-DE")+" "+now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+
+ const r=+rasen.value||0, b=+bio.value||0;
+ const sum=r*PREIS_RASEN+b*PREIS_BIO;
+
+ const eintrag={
+  datum,
+  name:name.value,
+  telefon:telefon.value,
+  strasse:strasse.value,
+  hausnr:hausnr.value,
+  plz:plz.value,
+  ort:ort.value,
+  rasen:r,
+  bio:b,
+  ausgestreut:ausgestreut.value,
+  zahlung:zahlung.value,
+  summe:sum
+ };
+
+ const d=JSON.parse(localStorage.getItem("huemix"))||[];
+ d.push(eintrag);
+ localStorage.setItem("huemix",JSON.stringify(d));
+
+ status.textContent="Gespeichert ✔ Summe "+sum+" €";
 }
 
-/* CSV EXPORT + TAGESZUSAMMENFASSUNG */
-function exportCSV() {
-  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  if (!daten.length) return alert("Keine Daten");
-
-  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
-
-  let sum = { Bar:0, EC:0, Rechnung:0 };
-  let sack = { Bar:0, EC:0, Rechnung:0 };
-
-  daten.forEach(d => {
-    csv += [
-      d.datum,d.name,d.telefon,d.strasse,d.hausnr,
-      d.plz,d.ort,d.rasen,d.bio,
-      d.ausgestreut,d.zahlung,d.summe
-    ].join(";") + "\n";
-
-    sum[d.zahlung] += d.summe;
-    sack[d.zahlung] += d.rasen + d.bio;
-  });
-
-  csv += "\nZUSAMMENFASSUNG\n";
-  csv += "Zahlung;Säcke;Summe\n";
-  ["Bar","EC","Rechnung"].forEach(z=>{
-    csv += `${z};${sack[z]};${sum[z]}\n`;
-  });
-
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "huemix_" + new Date().toISOString().slice(0,10) + ".csv";
-  a.click();
+function neu(){
+ document.querySelectorAll("input").forEach(i=>i.value="");
+ rasen.value=0; bio.value=0;
 }
 
-/* ALLES LÖSCHEN */
-function allesLoeschen() {
-  if (confirm("Wirklich alle Daten löschen?")) {
-    localStorage.removeItem("huemix");
-    status.textContent = "Alle Daten gelöscht";
-  }
+function exportCSV(){
+ const d=JSON.parse(localStorage.getItem("huemix"))||[];
+ if(!d.length)return alert("Keine Daten");
+
+ let csv="Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
+ let sum={Bar:0,EC:0,Rechnung:0}, sack={Bar:0,EC:0,Rechnung:0};
+
+ d.forEach(e=>{
+  csv+=[
+   e.datum,e.name,e.telefon,e.strasse,e.hausnr,e.plz,e.ort,
+   e.rasen,e.bio,e.ausgestreut,e.zahlung,e.summe
+  ].join(";")+"\n";
+  sum[e.zahlung]+=e.summe;
+  sack[e.zahlung]+=e.rasen+e.bio;
+ });
+
+ csv+="\nZUSAMMENFASSUNG\nZahlung;Säcke;Summe\n";
+ ["Bar","EC","Rechnung"].forEach(z=>csv+=`${z};${sack[z]};${sum[z]}\n`);
+
+ const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="huemix_"+new Date().toISOString().slice(0,10)+".csv";
+ a.click();
 }
 
-/* Shortcuts */
-const name = document.getElementById("name");
-const telefon = document.getElementById("telefon");
-const strasse = document.getElementById("strasse");
-const hausnr = document.getElementById("hausnr");
-const plz = document.getElementById("plz");
-const ort = document.getElementById("ort");
-const rasenEl = document.getElementById("rasen");
-const bioEl = document.getElementById("bio");
-const ausgestreut = document.getElementById("ausgestreut");
-const zahlung = document.getElementById("zahlung");
-const status = document.getElementById("status");
+function allesLoeschen(){
+ if(confirm("Alle Daten löschen?")){
+  localStorage.removeItem("huemix");
+  status.textContent="Alle Daten gelöscht";
+ }
+}
 </script>
 
 </body>
