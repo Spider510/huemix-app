@@ -6,35 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f4;
-  padding: 15px;
+body { font-family: Arial, sans-serif; background:#f4f6f4; padding:15px; }
+h1 { color:#2e7d32; }
+label { display:block; margin-top:10px; }
+input, select, button, textarea {
+  width:100%; padding:10px; margin-top:4px; font-size:16px;
 }
-h1 { color: #2e7d32; }
-label { display: block; margin-top: 10px; }
-input, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 4px;
-  font-size: 16px;
+button { border:none; color:white; font-weight:bold; margin-top:10px; }
+.btn-save { background:#2e7d32; }
+.btn-new  { background:#1976d2; }
+.btn-csv  { background:#455a64; }
+.btn-sum  { background:#6a1b9a; }
+.btn-del  { background:#c62828; }
+pre, textarea {
+  background:#fff; padding:10px; margin-top:10px; white-space:pre-wrap;
+  border:1px solid #ddd; border-radius:6px;
 }
-button {
-  border: none;
-  color: white;
-  font-weight: bold;
-  margin-top: 10px;
-}
-.btn-save { background: #2e7d32; }
-.btn-new { background: #1976d2; }
-.btn-csv { background: #455a64; }
-.btn-del { background: #c62828; }
-pre {
-  background: #fff;
-  padding: 10px;
-  margin-top: 10px;
-  white-space: pre-wrap;
-}
+.small { font-size:13px; color:#444; }
 </style>
 </head>
 
@@ -50,10 +38,10 @@ pre {
 <label>Ort<input id="ort"></label>
 
 <label>HÜMIX Rasen Spezial – Säcke (45 €)
-<input id="rasen" type="number" value="0"></label>
+<input id="rasen" type="number" value="0" min="0"></label>
 
 <label>HÜMIX Bio-Volldünger – Säcke (30 €)
-<input id="bio" type="number" value="0"></label>
+<input id="bio" type="number" value="0" min="0"></label>
 
 <label>Ausgestreut
 <select id="ausgestreut">
@@ -72,18 +60,41 @@ pre {
 
 <button class="btn-save" onclick="speichern()">💾 Speichern</button>
 <button class="btn-new" onclick="neu()">➕ Neuer Eintrag</button>
+<button class="btn-sum" onclick="tagesZusammenfassung()">🧾 Tages-Zusammenfassung</button>
 <button class="btn-csv" onclick="exportCSV()">📄 Tages-CSV exportieren</button>
 <button class="btn-del" onclick="allesLoeschen()">🗑️ Alle Daten löschen</button>
 
 <pre id="status">GPS wird ermittelt…</pre>
 <pre id="ausgabe"></pre>
 
+<div class="small">Falls iOS den Download blockt: CSV steht unten im Feld und kann kopiert/geteilt werden.</div>
+<textarea id="csvbox" rows="8" placeholder="Hier erscheint die CSV zum Kopieren…"></textarea>
+
 <script>
-const status = document.getElementById("status");
+/* ====== Elemente ====== */
+const status  = document.getElementById("status");
+const ausgabe = document.getElementById("ausgabe");
+const csvbox  = document.getElementById("csvbox");
+
+const nameEl     = document.getElementById("name");
+const telEl      = document.getElementById("telefon");
+const strEl      = document.getElementById("strasse");
+const hausEl     = document.getElementById("hausnr");
+const plzEl      = document.getElementById("plz");
+const ortEl      = document.getElementById("ort");
+const rasenEl    = document.getElementById("rasen");
+const bioEl      = document.getElementById("bio");
+const ausgEl     = document.getElementById("ausgestreut");
+const zahlEl     = document.getElementById("zahlung");
+
+/* ====== Preise ====== */
+const PREIS_RASEN = 45;
+const PREIS_BIO   = 30;
+
+/* ====== GPS & Adresse ====== */
 let lat = "";
 let lon = "";
 
-/* ================= GPS ================= */
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(gpsOK, gpsFail, {
     enableHighAccuracy: true,
@@ -106,85 +117,230 @@ async function gpsOK(pos) {
     const data = await res.json();
     const a = data.address || {};
 
-    if (a.road) strasse.value = a.road;
-    if (a.house_number) hausnr.value = a.house_number;
-    if (a.postcode) plz.value = a.postcode;
-    if (a.city || a.town || a.village)
-      ort.value = a.city || a.town || a.village;
+    if (a.road)        strEl.value  = a.road;
+    if (a.house_number)hausEl.value = a.house_number;
+    if (a.postcode)    plzEl.value  = a.postcode;
 
-    status.textContent = "GPS OK – Adresse übernommen";
+    const city = a.city || a.town || a.village || a.hamlet || "";
+    if (city) ortEl.value = city;
+
+    status.textContent = "GPS OK – Adresse übernommen (ggf. ergänzen)";
   } catch {
-    status.textContent = "GPS OK – Adresse bitte ergänzen";
+    status.textContent = "GPS OK – Adresse bitte manuell ergänzen";
   }
 }
 
-function gpsFail() {
+function gpsFail(err) {
   status.textContent = "GPS nicht verfügbar – manuelle Eingabe";
 }
 
-/* ================= SPEICHERN ================= */
-function speichern() {
-  const jetzt = new Date().toLocaleString("de-DE");
-  const rasenPreis = rasen.value * 45;
-  const bioPreis = bio.value * 30;
-  const gesamt = rasenPreis + bioPreis;
+/* ====== Helfer: Heute ====== */
+function heuteKey() {
+  // Lokales Datum YYYY-MM-DD
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const t = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${t}`;
+}
 
-  const zeile = [
-    jetzt,
-    name.value,
-    telefon.value,
-    strasse.value,
-    hausnr.value,
-    plz.value,
-    ort.value,
-    rasen.value,
-    bio.value,
-    ausgestreut.value,
-    zahlung.value,
+/* ====== Datenformat ======
+   Wir speichern ein Objekt pro Eintrag:
+   {
+     isoDate: "2026-02-06",
+     datetime: "06.02.2026, 13:58:08",
+     name, telefon, strasse, hausnr, plz, ort,
+     rasen, bio, ausgestreut, zahlung,
+     gesamt
+   }
+================================= */
+
+function speichern() {
+  const dt = new Date();
+  const iso = heuteKey();
+  const datetime = dt.toLocaleString("de-DE");
+
+  const rasen = Number(rasenEl.value || 0);
+  const bio   = Number(bioEl.value || 0);
+
+  const gesamt = rasen * PREIS_RASEN + bio * PREIS_BIO;
+
+  const eintrag = {
+    isoDate: iso,
+    datetime,
+    name: nameEl.value.trim(),
+    telefon: telEl.value.trim(),
+    strasse: strEl.value.trim(),
+    hausnr: hausEl.value.trim(),
+    plz: plzEl.value.trim(),
+    ort: ortEl.value.trim(),
+    rasen,
+    bio,
+    ausgestreut: ausgEl.value,
+    zahlung: zahlEl.value,
     gesamt
-  ];
+  };
 
   let daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  daten.push(zeile);
+  daten.push(eintrag);
   localStorage.setItem("huemix", JSON.stringify(daten));
 
   ausgabe.textContent =
-    `Gespeichert:\n${jetzt}\n${strasse.value} ${hausnr.value}, ${plz.value} ${ort.value}\nGesamt: ${gesamt} €`;
+`Gespeichert:
+${datetime}
+Adresse: ${eintrag.strasse} ${eintrag.hausnr}, ${eintrag.plz} ${eintrag.ort}
+Rasen: ${rasen} | Bio: ${bio}
+Zahlung: ${eintrag.zahlung}
+Gesamt: ${gesamt} €`;
+
+  csvbox.value = ""; // optional leeren
 }
 
-/* ================= NEU ================= */
 function neu() {
-  document.querySelectorAll("input").forEach(i => {
-    if (i.type === "number") i.value = 0;
-    else i.value = "";
-  });
+  // Felder leeren – Mengen auf 0
+  nameEl.value = "";
+  telEl.value = "";
+  // Adresse bewusst NICHT komplett löschen? -> doch, nach Wunsch:
+  strEl.value = "";
+  hausEl.value = "";
+  plzEl.value = "";
+  ortEl.value = "";
+
+  rasenEl.value = 0;
+  bioEl.value = 0;
+  ausgEl.value = "Ja";
+  zahlEl.value = "Bar";
+
+  ausgabe.textContent = "";
 }
 
-/* ================= CSV ================= */
+/* ====== Tages-Zusammenfassung ====== */
+function tagesZusammenfassung() {
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  const tag = heuteKey();
+  const heute = daten.filter(e => e.isoDate === tag);
+
+  if (!heute.length) {
+    ausgabe.textContent = "Heute noch keine Einträge gespeichert.";
+    return;
+  }
+
+  const gruppen = {
+    "Bar":      { rasen:0, bio:0, sum:0 },
+    "EC":       { rasen:0, bio:0, sum:0 },
+    "Rechnung": { rasen:0, bio:0, sum:0 }
+  };
+
+  heute.forEach(e => {
+    const g = gruppen[e.zahlung] || (gruppen[e.zahlung] = {rasen:0,bio:0,sum:0});
+    g.rasen += Number(e.rasen || 0);
+    g.bio   += Number(e.bio || 0);
+    g.sum   += Number(e.gesamt || 0);
+  });
+
+  const totalRasen = heute.reduce((a,e)=>a+Number(e.rasen||0),0);
+  const totalBio   = heute.reduce((a,e)=>a+Number(e.bio||0),0);
+  const totalSum   = heute.reduce((a,e)=>a+Number(e.gesamt||0),0);
+
+  ausgabe.textContent =
+`🧾 Tages-Zusammenfassung (${tag})
+Einträge: ${heute.length}
+
+BAR:
+- Rasen Säcke: ${gruppen["Bar"].rasen}
+- Bio Säcke:   ${gruppen["Bar"].bio}
+- Summe €:     ${gruppen["Bar"].sum}
+
+EC:
+- Rasen Säcke: ${gruppen["EC"].rasen}
+- Bio Säcke:   ${gruppen["EC"].bio}
+- Summe €:     ${gruppen["EC"].sum}
+
+RECHNUNG:
+- Rasen Säcke: ${gruppen["Rechnung"].rasen}
+- Bio Säcke:   ${gruppen["Rechnung"].bio}
+- Summe €:     ${gruppen["Rechnung"].sum}
+
+GESAMT:
+- Rasen Säcke: ${totalRasen}
+- Bio Säcke:   ${totalBio}
+- Summe €:     ${totalSum}`;
+}
+
+/* ====== Tages-CSV Export ====== */
 function exportCSV() {
   const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-  if (!daten.length) return alert("Keine Daten");
+  const tag = heuteKey();
+  const heute = daten.filter(e => e.isoDate === tag);
 
-  const kopf = [
-    "Datum","Name","Telefon","Straße","Hausnr","PLZ","Ort",
-    "Rasen","Bio","Ausgestreut","Zahlung","Gesamt €"
+  if (!heute.length) {
+    alert("Heute keine Daten.");
+    return;
+  }
+
+  const header = [
+    "Datum/Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort",
+    "Rasen_Säcke","Bio_Säcke","Ausgestreut","Zahlung","Gesamt_EUR"
   ];
 
-  let csv = "\uFEFF" + kopf.join(";") + "\n";
-  daten.forEach(z => csv += z.join(";") + "\n");
+  // BOM für Excel + UTF-8
+  let csv = "\uFEFF" + header.join(";") + "\n";
 
+  heute.forEach(e => {
+    const row = [
+      e.datetime,
+      e.name,
+      e.telefon,
+      e.strasse,
+      e.hausnr,
+      e.plz,
+      e.ort,
+      e.rasen,
+      e.bio,
+      e.ausgestreut,
+      e.zahlung,
+      e.gesamt
+    ].map(v => String(v ?? "").replaceAll(";", ","));
+    csv += row.join(";") + "\n";
+  });
+
+  // Immer auch anzeigen (falls Download blockt)
+  csvbox.value = csv;
+
+  // Download versuchen
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "huemix_" + new Date().toISOString().slice(0,10) + ".csv";
-  a.click();
+  const filename = "huemix_" + tag + ".csv";
+
+  // iOS Workaround: erst teilen, wenn verfügbar
+  if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, {type:"text/csv"})] })) {
+    const file = new File([blob], filename, { type: "text/csv" });
+    navigator.share({ files: [file], title: filename })
+      .catch(() => {
+        // falls Teilen abgebrochen -> fallback Download
+        downloadBlob(blob, filename);
+      });
+  } else {
+    downloadBlob(blob, filename);
+  }
 }
 
-/* ================= LÖSCHEN ================= */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* ====== Alles löschen ====== */
 function allesLoeschen() {
   if (confirm("Wirklich alle Daten löschen?")) {
     localStorage.removeItem("huemix");
     ausgabe.textContent = "";
+    csvbox.value = "";
   }
 }
 </script>
