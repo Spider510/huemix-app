@@ -3,34 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f4;
-  padding: 15px;
-}
-h1 { color: #2e7d32; }
-label { display: block; margin-top: 10px; }
-input, select, button {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-}
-button {
-  background: #2e7d32;
-  color: white;
-  border: none;
-  margin-top: 15px;
-  font-size: 16px;
-}
-pre {
-  background: white;
-  padding: 10px;
-  margin-top: 15px;
-  white-space: pre-wrap;
-}
+body { font-family: Arial, sans-serif; background:#f4f6f4; padding:15px; }
+h1 { color:#2e7d32; }
+label { display:block; margin-top:10px; }
+input, select, button { width:100%; padding:8px; margin-top:4px; }
+button { background:#2e7d32; color:#fff; border:none; margin-top:15px; font-size:16px; }
+pre { background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap; }
 </style>
 </head>
 
@@ -38,25 +19,11 @@ pre {
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name
-  <input id="name">
-</label>
-
-<label>Telefon
-  <input id="telefon">
-</label>
-
-<label>Straße
-  <input id="strasse">
-</label>
-
-<label>Hausnummer
-  <input id="hausnummer">
-</label>
-
-<label>Ort
-  <input id="ort">
-</label>
+<label>Name <input id="name"></label>
+<label>Telefon <input id="telefon"></label>
+<label>Straße <input id="strasse" placeholder="automatisch / manuell"></label>
+<label>Hausnummer <input id="hausnummer"></label>
+<label>Ort <input id="ort"></label>
 
 <label>HÜMIX Rasen Spezial – Säcke
   <input id="rasen" type="number" value="0">
@@ -75,82 +42,67 @@ pre {
 
 <button onclick="speichern()">Speichern</button>
 
-<pre id="ausgabe">GPS wird ermittelt…</pre>
+<pre id="ausgabe">📡 GPS wird ermittelt…</pre>
 
 <script>
-const nameF = document.getElementById("name");
-const telefon = document.getElementById("telefon");
-const strasse = document.getElementById("strasse");
-const hausnummer = document.getElementById("hausnummer");
-const ort = document.getElementById("ort");
-const rasen = document.getElementById("rasen");
-const bio = document.getElementById("bio");
-const ausgestreut = document.getElementById("ausgestreut");
-const ausgabe = document.getElementById("ausgabe");
+const f = id => document.getElementById(id);
+let lat="", lon="";
 
-let lat = "", lon = "";
-
-/* GPS + Adresse holen */
-navigator.geolocation.getCurrentPosition(async pos => {
+navigator.geolocation.getCurrentPosition(pos => {
   lat = pos.coords.latitude;
   lon = pos.coords.longitude;
 
-  ausgabe.textContent = "GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6);
+  f("ausgabe").textContent =
+    "📍 GPS OK:\n" + lat.toFixed(6) + ", " + lon.toFixed(6) +
+    "\n\n🗺️ Karte:\nhttps://maps.google.com/?q=" + lat + "," + lon;
 
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-    );
-    const data = await res.json();
-    const addr = data.address || {};
-
-    strasse.value = addr.road || "";
-    hausnummer.value = addr.house_number || "";
-    ort.value = addr.city || addr.town || addr.village || "";
-
-  } catch (e) {
-    console.log("Adresse konnte nicht geladen werden");
-  }
+  // Ortsname aus Koordinaten (fallback-sicher)
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.address) {
+        f("ort").value =
+          d.address.city ||
+          d.address.town ||
+          d.address.village ||
+          d.address.county ||
+          "";
+      }
+    })
+    .catch(()=>{});
 }, err => {
-  ausgabe.textContent = "GPS-Fehler: " + err.message;
-}, {
-  enableHighAccuracy: true,
-  timeout: 10000
-});
+  f("ausgabe").textContent = "GPS-Fehler: " + err.message;
+}, { enableHighAccuracy:true, timeout:10000 });
 
 function speichern() {
   const jetzt = new Date().toLocaleString("de-DE");
-  const mapsLink = lat && lon
-    ? `https://maps.google.com/?q=${lat},${lon}`
-    : "kein GPS";
+  const maps = lat ? `https://maps.google.com/?q=${lat},${lon}` : "kein GPS";
 
-  const text = `
+  f("ausgabe").textContent = `
 🌱 HÜMIX Einsatz
 
-👤 Name: ${nameF.value}
-📞 Telefon: ${telefon.value}
+👤 Name: ${f("name").value}
+📞 Telefon: ${f("telefon").value}
 
 📍 Adresse:
-${strasse.value} ${hausnummer.value}
-${ort.value}
+${f("strasse").value} ${f("hausnummer").value}
+${f("ort").value}
 
 🧭 GPS:
 ${lat}, ${lon}
 
 🗺️ Karte:
-${mapsLink}
+${maps}
 
 🕒 Datum/Zeit:
 ${jetzt}
 
 🧴 Dünger:
-- Rasen Spezial: ${rasen.value} Säcke
-- Bio-Volldünger: ${bio.value} Säcke
+- Rasen Spezial: ${f("rasen").value} Säcke
+- Bio-Volldünger: ${f("bio").value} Säcke
 
-🚜 Ausgestreut: ${ausgestreut.value}
+🚜 Ausgestreut: ${f("ausgestreut").value}
 `;
-
-  ausgabe.textContent = text;
 }
 </script>
 
