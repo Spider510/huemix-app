@@ -2,166 +2,204 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HÜMIX Einsatz</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#2e7d32">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#2e7d32">
 
 <style>
-body{font-family:Arial;background:#f4f8f4;padding:20px}
-h1{color:#2e7d32}
-label{display:block;margin-top:10px}
-input,select{width:100%;padding:8px}
-button{width:100%;padding:12px;margin-top:10px;font-size:16px;border:none}
-.save{background:#2e7d32;color:#fff}
-.new{background:#1976d2;color:#fff}
-.csv{background:#455a64;color:#fff}
-.sum{background:#6a1b9a;color:#fff}
-.del{background:#c62828;color:#fff}
-pre{background:#fff;padding:10px;margin-top:15px}
+body { font-family: Arial, sans-serif; background:#f4f6f4; margin:0; padding:20px; }
+h1 { color:#2e7d32; }
+label { font-weight:bold; }
+input, select, button {
+  width:100%; padding:10px; margin:6px 0 14px 0;
+  font-size:16px;
+}
+button { border:none; color:#fff; cursor:pointer; }
+.save { background:#2e7d32; }
+.new { background:#1976d2; }
+.export { background:#455a64; }
+.delete { background:#c62828; }
+.box { background:#fff; padding:15px; border-radius:6px; }
+.small { font-size:13px; color:#555; }
 </style>
 </head>
 
 <body>
-
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name<input id="name"></label>
-<label>Telefon<input id="telefon"></label>
-<label>Straße<input id="strasse"></label>
-<label>Hausnummer<input id="hausnr"></label>
-<label>PLZ<input id="plz"></label>
-<label>Ort<input id="ort"></label>
+<div class="box">
 
-<label>Rasen Spezial – Säcke (45 €)
-<input id="rasen" type="number" value="0"></label>
+<label>Name</label>
+<input id="name">
 
-<label>Bio-Volldünger – Säcke (30 €)
-<input id="bio" type="number" value="0"></label>
+<label>Telefon</label>
+<input id="telefon">
 
-<label>Ausgestreut
-<select id="ausgestreut"><option>Ja</option><option>Nein</option></select></label>
+<label>Straße</label>
+<input id="strasse">
 
-<label>Zahlungsart
+<label>Hausnummer</label>
+<input id="hausnr">
+
+<label>PLZ</label>
+<input id="plz">
+
+<label>Ort</label>
+<input id="ort">
+
+<label>HÜMIX Rasen Spezial – Säcke (45 €)</label>
+<input id="rasen" type="number" value="0">
+
+<label>HÜMIX Bio-Volldünger – Säcke (30 €)</label>
+<input id="bio" type="number" value="0">
+
+<label>Ausgestreut</label>
+<select id="ausgestreut">
+  <option>Ja</option>
+  <option>Nein</option>
+</select>
+
+<label>Zahlungsart</label>
 <select id="zahlung">
-<option>Bar</option>
-<option>EC</option>
-<option>Rechnung</option>
-</select></label>
+  <option>Bar</option>
+  <option>EC</option>
+</select>
 
 <button class="save" onclick="speichern()">💾 Speichern</button>
-<button class="new" onclick="neu()">➕ Neuer Eintrag</button>
-<button class="csv" onclick="exportCSV()">📄 Alle Einträge CSV</button>
-<button class="sum" onclick="exportSumCSV()">📊 Tages-Zusammenfassung CSV</button>
-<button class="del" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+<button class="new" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+<button class="export" onclick="exportCSV()">📄 Alle Einträge CSV</button>
+<button class="export" onclick="exportSummary()">📊 Tages-Zusammenfassung CSV</button>
+<button class="delete" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
-<pre id="status">GPS wird ermittelt…</pre>
+<p class="small" id="gpsinfo">GPS wird ermittelt…</p>
+
+</div>
 
 <script>
-const PREIS_RASEN=45, PREIS_BIO=30;
-let lat="",lon="";
-
-const $=id=>document.getElementById(id);
-const status=$("status");
+const PREIS_RASEN = 45;
+const PREIS_BIO = 30;
+let lat = null, lon = null;
 
 /* GPS + Adresse */
-navigator.geolocation.getCurrentPosition(
- pos=>{
-  lat=pos.coords.latitude;
-  lon=pos.coords.longitude;
-  status.textContent="GPS OK – Adresse wird ermittelt…";
-  ladeAdresse(lat,lon);
- },
- err=>status.textContent="GPS Fehler: "+err.message,
- {enableHighAccuracy:true,timeout:10000}
-);
+navigator.geolocation.getCurrentPosition(pos => {
+  lat = pos.coords.latitude;
+  lon = pos.coords.longitude;
+  document.getElementById("gpsinfo").innerText =
+    `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 
-function ladeAdresse(lat,lon){
- fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
- .then(r=>r.json())
- .then(d=>{
-  const a=d.address||{};
-  strasse.value=a.road||"";
-  hausnr.value=a.house_number||"";
-  plz.value=a.postcode||"";
-  ort.value=a.city||a.town||a.village||"";
-  status.textContent="Adresse automatisch übernommen ✔";
- })
- .catch(()=>status.textContent="Adresse konnte nicht geladen werden");
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+    .then(r => r.json())
+    .then(d => {
+      if (!d.address) return;
+      document.getElementById("strasse").value = d.address.road || "";
+      document.getElementById("hausnr").value = d.address.house_number || "";
+      document.getElementById("plz").value = d.address.postcode || "";
+      document.getElementById("ort").value =
+        d.address.city || d.address.town || d.address.village || "";
+    });
+}, () => {
+  document.getElementById("gpsinfo").innerText = "GPS nicht verfügbar";
+});
+
+/* Speichern */
+function speichern() {
+  const jetzt = new Date();
+  const datum = jetzt.toLocaleDateString("de-DE") + ", " +
+                jetzt.toLocaleTimeString("de-DE", {hour:'2-digit', minute:'2-digit'});
+
+  const rasen = Number(rasenEl.value);
+  const bio = Number(bioEl.value);
+  const summe = rasen * PREIS_RASEN + bio * PREIS_BIO;
+
+  const eintrag = {
+    datum,
+    name: name.value,
+    telefon: telefon.value,
+    strasse: strasse.value,
+    hausnr: hausnr.value,
+    plz: plz.value,
+    ort: ort.value,
+    rasen,
+    bio,
+    ausgestreut: ausgestreut.value,
+    zahlung: zahlung.value,
+    summe
+  };
+
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  daten.push(eintrag);
+  localStorage.setItem("huemix", JSON.stringify(daten));
+
+  alert("Gespeichert ✔");
 }
 
-function speichern(){
- const now=new Date();
- const datum=now.toLocaleDateString("de-DE")+" "+now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
-
- const r=+rasen.value||0, b=+bio.value||0;
- const sum=r*PREIS_RASEN+b*PREIS_BIO;
-
- const e={
-  datum,name:name.value,telefon:telefon.value,
-  strasse:strasse.value,hausnr:hausnr.value,
-  plz:plz.value,ort:ort.value,
-  rasen:r,bio:b,ausgestreut:ausgestreut.value,
-  zahlung:zahlung.value,summe:sum
- };
-
- const d=JSON.parse(localStorage.getItem("huemix"))||[];
- d.push(e);
- localStorage.setItem("huemix",JSON.stringify(d));
-
- status.textContent="Gespeichert ✔ Summe "+sum+" €";
+/* Neuer Eintrag */
+function neuerEintrag() {
+  document.querySelectorAll("input").forEach(i => {
+    if (i.type === "number") i.value = 0;
+    else i.value = "";
+  });
 }
 
-function neu(){
- document.querySelectorAll("input").forEach(i=>i.value="");
- rasen.value=0; bio.value=0;
+/* CSV Export */
+function exportCSV() {
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
+
+  daten.forEach(e => {
+    if (!e || !e.datum) return;
+    csv += [
+      e.datum, e.name, e.telefon, e.strasse, e.hausnr,
+      e.plz, e.ort, e.rasen, e.bio, e.ausgestreut, e.zahlung, e.summe
+    ].join(";") + "\n";
+  });
+
+  download(csv, "huemix_alle_eintraege.csv");
 }
 
-function exportCSV(){
- const d=JSON.parse(localStorage.getItem("huemix"))||[];
- if(!d.length)return alert("Keine Daten");
+/* Tages-Zusammenfassung */
+function exportSummary() {
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
+  let barR=0, barB=0, barS=0, ecR=0, ecB=0, ecS=0;
 
- let csv="Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
- d.forEach(e=>csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`);
+  daten.forEach(e => {
+    if (e.zahlung === "Bar") {
+      barR+=e.rasen; barB+=e.bio; barS+=e.summe;
+    } else {
+      ecR+=e.rasen; ecB+=e.bio; ecS+=e.summe;
+    }
+  });
 
- downloadCSV(csv,"huemix_alle_eintraege.csv");
+  let csv =
+    "Zahlung;Rasen Säcke;Bio Säcke;Summe €\n" +
+    `Bar;${barR};${barB};${barS}\n` +
+    `EC;${ecR};${ecB};${ecS}\n`;
+
+  download(csv, "huemix_tageszusammenfassung.csv");
 }
 
-function exportSumCSV(){
- const d=JSON.parse(localStorage.getItem("huemix"))||[];
- let sum={Bar:0,EC:0,Rechnung:0}, sack={Bar:0,EC:0,Rechnung:0};
-
- d.forEach(e=>{
-  sum[e.zahlung]+=e.summe;
-  sack[e.zahlung]+=e.rasen+e.bio;
- });
-
- let csv="Zahlungsart;Säcke;Summe (€)\n";
- ["Bar","EC","Rechnung"].forEach(z=>csv+=`${z};${sack[z]};${sum[z]}\n`);
-
- downloadCSV(csv,"huemix_tageszusammenfassung.csv");
+/* Löschen */
+function allesLoeschen() {
+  if (confirm("Wirklich alle Daten löschen?")) {
+    localStorage.removeItem("huemix");
+    alert("Alle Daten gelöscht");
+  }
 }
 
-function downloadCSV(text,name){
- const blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download=name;
- a.click();
+/* Download Helper */
+function download(text, name) {
+  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
 }
 
-function allesLoeschen(){
- if(confirm("Alle Daten löschen?")){
-  localStorage.removeItem("huemix");
-  status.textContent="Alle Daten gelöscht";
- }
-}
-
-/* Offline */
-if("serviceWorker" in navigator){
- navigator.serviceWorker.register("sw.js");
+/* PWA */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
 }
 </script>
 
