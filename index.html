@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2e7d32">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+
 <style>
 body{font-family:Arial;background:#f4f8f4;padding:20px}
 h1{color:#2e7d32}
@@ -13,6 +18,7 @@ button{width:100%;padding:12px;margin-top:10px;font-size:16px;border:none}
 .save{background:#2e7d32;color:#fff}
 .new{background:#1976d2;color:#fff}
 .csv{background:#455a64;color:#fff}
+.sum{background:#6a1b9a;color:#fff}
 .del{background:#c62828;color:#fff}
 pre{background:#fff;padding:10px;margin-top:15px}
 </style>
@@ -47,7 +53,8 @@ pre{background:#fff;padding:10px;margin-top:15px}
 
 <button class="save" onclick="speichern()">💾 Speichern</button>
 <button class="new" onclick="neu()">➕ Neuer Eintrag</button>
-<button class="csv" onclick="exportCSV()">📄 Tages-CSV exportieren</button>
+<button class="csv" onclick="exportCSV()">📄 Alle Einträge CSV</button>
+<button class="sum" onclick="exportSumCSV()">📊 Tages-Zusammenfassung CSV</button>
 <button class="del" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
 <pre id="status">GPS wird ermittelt…</pre>
@@ -76,10 +83,10 @@ function ladeAdresse(lat,lon){
  .then(r=>r.json())
  .then(d=>{
   const a=d.address||{};
-  $("strasse").value=a.road||"";
-  $("hausnr").value=a.house_number||"";
-  $("plz").value=a.postcode||"";
-  $("ort").value=a.city||a.town||a.village||"";
+  strasse.value=a.road||"";
+  hausnr.value=a.house_number||"";
+  plz.value=a.postcode||"";
+  ort.value=a.city||a.town||a.village||"";
   status.textContent="Adresse automatisch übernommen ✔";
  })
  .catch(()=>status.textContent="Adresse konnte nicht geladen werden");
@@ -92,23 +99,16 @@ function speichern(){
  const r=+rasen.value||0, b=+bio.value||0;
  const sum=r*PREIS_RASEN+b*PREIS_BIO;
 
- const eintrag={
-  datum,
-  name:name.value,
-  telefon:telefon.value,
-  strasse:strasse.value,
-  hausnr:hausnr.value,
-  plz:plz.value,
-  ort:ort.value,
-  rasen:r,
-  bio:b,
-  ausgestreut:ausgestreut.value,
-  zahlung:zahlung.value,
-  summe:sum
+ const e={
+  datum,name:name.value,telefon:telefon.value,
+  strasse:strasse.value,hausnr:hausnr.value,
+  plz:plz.value,ort:ort.value,
+  rasen:r,bio:b,ausgestreut:ausgestreut.value,
+  zahlung:zahlung.value,summe:sum
  };
 
  const d=JSON.parse(localStorage.getItem("huemix"))||[];
- d.push(eintrag);
+ d.push(e);
  localStorage.setItem("huemix",JSON.stringify(d));
 
  status.textContent="Gespeichert ✔ Summe "+sum+" €";
@@ -124,24 +124,31 @@ function exportCSV(){
  if(!d.length)return alert("Keine Daten");
 
  let csv="Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
+ d.forEach(e=>csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`);
+
+ downloadCSV(csv,"huemix_alle_eintraege.csv");
+}
+
+function exportSumCSV(){
+ const d=JSON.parse(localStorage.getItem("huemix"))||[];
  let sum={Bar:0,EC:0,Rechnung:0}, sack={Bar:0,EC:0,Rechnung:0};
 
  d.forEach(e=>{
-  csv+=[
-   e.datum,e.name,e.telefon,e.strasse,e.hausnr,e.plz,e.ort,
-   e.rasen,e.bio,e.ausgestreut,e.zahlung,e.summe
-  ].join(";")+"\n";
   sum[e.zahlung]+=e.summe;
   sack[e.zahlung]+=e.rasen+e.bio;
  });
 
- csv+="\nZUSAMMENFASSUNG\nZahlung;Säcke;Summe\n";
+ let csv="Zahlungsart;Säcke;Summe (€)\n";
  ["Bar","EC","Rechnung"].forEach(z=>csv+=`${z};${sack[z]};${sum[z]}\n`);
 
- const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+ downloadCSV(csv,"huemix_tageszusammenfassung.csv");
+}
+
+function downloadCSV(text,name){
+ const blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
  const a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
- a.download="huemix_"+new Date().toISOString().slice(0,10)+".csv";
+ a.download=name;
  a.click();
 }
 
@@ -150,6 +157,11 @@ function allesLoeschen(){
   localStorage.removeItem("huemix");
   status.textContent="Alle Daten gelöscht";
  }
+}
+
+/* Offline */
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
 }
 </script>
 
