@@ -6,38 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f3f7f2;
-  margin:0;
-  padding:20px;
-}
+body { font-family: Arial, sans-serif; background:#f3f7f2; padding:20px; }
 h1 { color:#2e7d32; }
 label { font-weight:bold; display:block; margin-top:12px; }
-input, select, textarea {
-  width:100%;
-  padding:10px;
-  margin-top:4px;
-  font-size:16px;
+input, select, button, textarea {
+  width:100%; padding:10px; margin-top:4px; font-size:16px;
 }
-button {
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  font-size:16px;
-  border:none;
-  color:white;
-  cursor:pointer;
-}
-.btn-save { background:#2e7d32; }
-.btn-new { background:#1976d2; }
-.btn-csv { background:#455a64; }
-.btn-del { background:#c62828; }
-pre {
-  background:white;
-  padding:10px;
-  white-space:pre-wrap;
-}
+button { color:white; border:none; margin-top:10px; }
+.save { background:#2e7d32; }
+.new { background:#1976d2; }
+.csv { background:#455a64; }
+.del { background:#c62828; }
+pre { background:white; padding:10px; white-space:pre-wrap; }
 </style>
 </head>
 
@@ -45,78 +25,98 @@ pre {
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name</label>
-<input id="name">
+<label>Name<input id="name"></label>
+<label>Telefon<input id="telefon"></label>
+<label>Straße<input id="strasse"></label>
+<label>Hausnummer<input id="hausnr"></label>
+<label>PLZ<input id="plz"></label>
+<label>Ort<input id="ort"></label>
 
-<label>Telefon</label>
-<input id="telefon">
+<label>HÜMIX Rasen Spezial – Säcke (45 €)
+<input id="rasen" type="number" value="0"></label>
 
-<label>Straße</label>
-<input id="strasse">
+<label>HÜMIX Bio-Volldünger – Säcke (30 €)
+<input id="bio" type="number" value="0"></label>
 
-<label>Hausnummer</label>
-<input id="hausnr">
-
-<label>PLZ</label>
-<input id="plz">
-
-<label>Ort</label>
-<input id="ort">
-
-<label>HÜMIX Rasen Spezial – Säcke (45 €)</label>
-<input id="rasen" type="number" value="0">
-
-<label>HÜMIX Bio-Volldünger – Säcke (30 €)</label>
-<input id="bio" type="number" value="0">
-
-<label>Ausgestreut</label>
+<label>Ausgestreut
 <select id="ausgestreut">
   <option>Ja</option>
   <option>Nein</option>
-</select>
+</select></label>
 
-<label>Zahlungsart</label>
+<label>Zahlungsart
 <select id="zahlung">
   <option>Bar</option>
   <option>EC</option>
   <option>Rechnung</option>
-</select>
+</select></label>
 
-<button class="btn-save" onclick="speichern()">💾 Speichern</button>
-<button class="btn-new" onclick="neu()">➕ Neuer Eintrag</button>
-<button class="btn-csv" onclick="exportCSV()">📄 Tages-CSV</button>
-<button class="btn-csv" onclick="exportSummaryCSV()">📊 Tages-Zusammenfassung CSV</button>
-<button class="btn-del" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+<button class="save" onclick="speichern()">💾 Speichern</button>
+<button class="new" onclick="neu()">➕ Neuer Eintrag</button>
+<button class="csv" onclick="exportCSV()">📄 Tages-CSV</button>
+<button class="csv" onclick="exportSummaryCSV()">📊 Tages-Zusammenfassung CSV</button>
+<button class="del" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
-<pre id="ausgabe">GPS wird ermittelt…</pre>
-<textarea id="csvbox" style="display:none"></textarea>
+<pre id="status">GPS wird ermittelt…</pre>
 
 <script>
 const PREIS_RASEN = 45;
-const PREIS_BIO   = 30;
+const PREIS_BIO = 30;
 
-let lat="", lon="";
+/* ========= GPS + ADRESSE ========= */
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    gpsOK,
+    gpsFail,
+    { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+  );
+} else {
+  status.textContent = "GPS nicht unterstützt";
+}
 
-navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude.toFixed(6);
-    lon = pos.coords.longitude.toFixed(6);
-    ausgabe.textContent = `GPS OK:\n${lat}, ${lon}`;
-  },
-  () => ausgabe.textContent = "GPS nicht verfügbar"
-);
+async function gpsOK(pos) {
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
 
+  status.textContent = "GPS OK – Adresse wird geladen…";
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=de`,
+      { headers: { "User-Agent": "huemix-app" } }
+    );
+
+    if (!res.ok) throw new Error("Adresse nicht erreichbar");
+
+    const data = await res.json();
+    const a = data.address || {};
+
+    if (!strasse.value && a.road) strasse.value = a.road;
+    if (!hausnr.value && a.house_number) hausnr.value = a.house_number;
+    if (!plz.value && a.postcode) plz.value = a.postcode;
+    if (!ort.value) ort.value = a.city || a.town || a.village || "";
+
+    status.textContent = "Adresse automatisch übernommen";
+  } catch {
+    status.textContent = "GPS OK – Adresse bitte manuell ergänzen";
+  }
+}
+
+function gpsFail() {
+  status.textContent = "GPS nicht verfügbar – manuelle Eingabe";
+}
+
+/* ========= SPEICHERN ========= */
 function heuteKey() {
   return new Date().toISOString().slice(0,10);
 }
 
 function speichern() {
-  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
-
-  const rasen = Number(document.getElementById("rasen").value || 0);
-  const bio   = Number(document.getElementById("bio").value || 0);
+  const rasen = Number(rasen.value || 0);
+  const bio = Number(bio.value || 0);
   const gesamt = rasen*PREIS_RASEN + bio*PREIS_BIO;
 
+  const daten = JSON.parse(localStorage.getItem("huemix")) || [];
   daten.push({
     isoDate: heuteKey(),
     datum: new Date().toLocaleString("de-DE"),
@@ -126,48 +126,36 @@ function speichern() {
     hausnr: hausnr.value,
     plz: plz.value,
     ort: ort.value,
-    rasen,
-    bio,
+    rasen, bio,
     ausgestreut: ausgestreut.value,
     zahlung: zahlung.value,
     gesamt
   });
 
   localStorage.setItem("huemix", JSON.stringify(daten));
-
-  ausgabe.textContent =
-`🌱 HÜMIX Einsatz gespeichert
-Name: ${name.value}
-Ort: ${plz.value} ${ort.value}
-Rasen: ${rasen} | Bio: ${bio}
-Zahlung: ${zahlung.value}
-Summe: ${gesamt} €`;
+  status.textContent = `Gespeichert – Gesamt ${gesamt} €`;
 }
 
 function neu() {
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  rasen.value=0; bio.value=0;
+  document.querySelectorAll("input").forEach(i=>{
+    if (i.type==="number") i.value=0; else i.value="";
+  });
 }
 
-function allesLoeschen() {
-  if(confirm("Wirklich ALLE Daten löschen?")) {
-    localStorage.removeItem("huemix");
-    ausgabe.textContent="Alle Daten gelöscht";
-  }
-}
-
+/* ========= CSV EINZEL ========= */
 function exportCSV() {
   const daten = JSON.parse(localStorage.getItem("huemix")) || [];
   const heute = daten.filter(e=>e.isoDate===heuteKey());
-  if(!heute.length) return alert("Keine Daten");
+  if (!heute.length) return alert("Keine Daten");
 
   let csv="\uFEFFDatum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
   heute.forEach(e=>{
     csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.gesamt}\n`;
   });
-  download(csv,"huemix_tag.csv");
+  download(csv, "huemix_"+heuteKey()+".csv");
 }
 
+/* ========= CSV ZUSAMMENFASSUNG ========= */
 function exportSummaryCSV() {
   const daten = JSON.parse(localStorage.getItem("huemix")) || [];
   const heute = daten.filter(e=>e.isoDate===heuteKey());
@@ -179,20 +167,27 @@ function exportSummaryCSV() {
     sum[e.zahlung][2]+=e.gesamt;
   });
 
-  let csv="\uFEFFZahlung;Rasen;Bio;Summe\n";
+  let csv="\uFEFFZahlung;Rasen_Säcke;Bio_Säcke;Summe_EUR\n";
   Object.keys(sum).forEach(z=>{
     csv+=`${z};${sum[z][0]};${sum[z][1]};${sum[z][2]}\n`;
   });
-
-  download(csv,"huemix_zusammenfassung.csv");
+  download(csv, "huemix_zusammenfassung_"+heuteKey()+".csv");
 }
 
-function download(text, name) {
+function download(text,name){
   const blob=new Blob([text],{type:"text/csv;charset=utf-8;"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download=name;
   a.click();
+}
+
+/* ========= LÖSCHEN ========= */
+function allesLoeschen() {
+  if (confirm("Wirklich ALLE Daten löschen?")) {
+    localStorage.removeItem("huemix");
+    status.textContent="Alle Daten gelöscht";
+  }
 }
 </script>
 
