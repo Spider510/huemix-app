@@ -22,7 +22,7 @@ button{border:none;border-radius:4px;color:#fff;margin-top:8px}
 <body>
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name</label><input id="name">
+<label>Name</label><input id="kundenname">
 <label>Telefon</label><input id="telefon">
 <label>Straße</label><input id="strasse">
 <label>Hausnummer</label><input id="hausnr">
@@ -53,19 +53,12 @@ button{border:none;border-radius:4px;color:#fff;margin-top:8px}
 let lat=null, lon=null;
 
 function gpsHolen(){
-  if(!navigator.geolocation){
-    gps.textContent="GPS nicht verfügbar";
-    return;
-  }
-
   gps.textContent="GPS wird ermittelt…";
-
   navigator.geolocation.getCurrentPosition(async p=>{
     lat=p.coords.latitude;
     lon=p.coords.longitude;
     gps.textContent=`GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
-    // Reverse Geocoding (OpenStreetMap)
     const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
     const r=await fetch(url,{headers:{'User-Agent':'HuemixApp'}});
     const d=await r.json();
@@ -76,9 +69,7 @@ function gpsHolen(){
       plz.value=d.address.postcode||"";
       ort.value=d.address.city||d.address.town||d.address.village||"";
     }
-  },()=>{
-    gps.textContent="GPS Fehler";
-  },{enableHighAccuracy:true,timeout:10000});
+  },()=>gps.textContent="GPS Fehler",{enableHighAccuracy:true});
 }
 
 function zeit(){
@@ -93,7 +84,7 @@ function speichern(){
 
   const eintrag={
     datum:zeit(),
-    name:name.value||"",
+    name:kundenname.value||"",
     telefon:telefon.value||"",
     strasse:strasse.value||"",
     hausnr:hausnr.value||"",
@@ -142,9 +133,7 @@ function tagesSumme(){
   csv+=`EC;${ec.r};${ec.b};${ec.s}\n`;
   download(csv,"huemix_tageszusammenfassung.csv");
 
-  status.textContent=
-`BAR: ${bar.r} Rasen / ${bar.b} Bio = ${bar.s} €
-EC:  ${ec.r} Rasen / ${ec.b} Bio = ${ec.s} €`;
+  status.textContent=`BAR: ${bar.s} € | EC: ${ec.s} €`;
 }
 
 function allesLoeschen(){
