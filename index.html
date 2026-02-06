@@ -48,19 +48,19 @@ pre { background:#fff; padding:10px; margin-top:15px; white-space:pre-wrap; }
 const f = id => document.getElementById(id);
 let lat="", lon="";
 
+/* GPS nur für Adresse */
 navigator.geolocation.getCurrentPosition(
   pos => {
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
-    f("ausgabe").textContent =
-      `GPS OK:\n${lat.toFixed(6)}, ${lon.toFixed(6)}`;
     reverseGeocode();
+    f("ausgabe").textContent = "Adresse automatisch ermittelt";
   },
   err => f("ausgabe").textContent = "GPS-Fehler: " + err.message,
   { enableHighAccuracy:true, timeout:10000 }
 );
 
-// Adresse + PLZ automatisch holen
+/* Adresse + PLZ holen */
 function reverseGeocode(){
   fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
   .then(r=>r.json())
@@ -75,7 +75,6 @@ function reverseGeocode(){
 
 function speichern(){
   const jetzt = new Date().toLocaleString("de-DE");
-  const maps = lat && lon ? `https://maps.google.com/?q=${lat},${lon}` : "";
 
   const eintrag = [
     jetzt,
@@ -85,12 +84,9 @@ function speichern(){
     f("hausnummer").value,
     f("plz").value,
     f("ort").value,
-    lat,
-    lon,
     f("rasen").value,
     f("bio").value,
-    f("ausgestreut").value,
-    maps
+    f("ausgestreut").value
   ].join(";");
 
   const liste = JSON.parse(localStorage.getItem("huemix")) || [];
@@ -98,28 +94,21 @@ function speichern(){
   localStorage.setItem("huemix", JSON.stringify(liste));
 
   f("ausgabe").textContent =
-`🌱 HÜMIX Einsatz
-Name: ${f("name").value}
-Telefon: ${f("telefon").value}
-Adresse: ${f("strasse").value} ${f("hausnummer").value}, ${f("plz").value} ${f("ort").value}
-GPS: ${lat}, ${lon}
-Karte: ${maps}
-Datum/Zeit: ${jetzt}
-
-Dünger:
-- Rasen Spezial: ${f("rasen").value} Säcke
-- Bio-Volldünger: ${f("bio").value} Säcke
-🚜 Ausgestreut: ${f("ausgestreut").value}`;
+`Gespeichert:
+${jetzt}
+${f("strasse").value} ${f("hausnummer").value}
+${f("plz").value} ${f("ort").value}`;
 }
 
+/* Excel-saubere CSV */
 function exportCSV(){
   const daten = JSON.parse(localStorage.getItem("huemix")) || [];
   if(!daten.length){ alert("Keine Daten vorhanden"); return; }
 
   const header =
-"Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Lat;Lon;Rasen;Bio;Ausgestreut;Karte\n";
+"Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut\n";
 
-  const bom = "\uFEFF"; // wichtig für Excel-Umlaute
+  const bom = "\uFEFF"; // Excel-Umlaute
   const blob = new Blob([bom + header + daten.join("\n")],
     {type:"text/csv;charset=utf-8;"});
 
