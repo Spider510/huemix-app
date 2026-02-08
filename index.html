@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- SheetJS für XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
 body { font-family: Arial, sans-serif; background:#f4f7f4; margin:0; padding:10px; }
 h1 { color:#2e7d32; }
@@ -17,6 +21,7 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 .blue { background:#1976d2; }
 .gray { background:#455a64; }
 .purple { background:#6a1b9a; }
+.orange { background:#ef6c00; }
 .red { background:#c62828; }
 .status { margin-top:10px; font-size:14px; }
 </style>
@@ -67,8 +72,14 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 
 <button class="green" onclick="speichern()">💾 Speichern</button>
 <button class="blue" onclick="felderLeeren()">➕ Neuer Eintrag</button>
+
+<!-- CSV unverändert -->
 <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
-<button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung</button>
+
+<!-- NEU: XLSX -->
+<button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
+
+<button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
 <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
 <div class="status" id="status">Bereit.</div>
@@ -76,7 +87,7 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 <script>
 let lat = null, lon = null;
 
-/* GPS + Adresse */
+/* ================= GPS ================= */
 function gpsHolen() {
   felderLeeren();
   document.getElementById("gpsStatus").innerText = "GPS wird ermittelt…";
@@ -88,71 +99,98 @@ function gpsHolen() {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
       .then(r => r.json())
       .then(d => {
-        document.getElementById("strasse").value = d.address.road || "";
-        document.getElementById("hausnr").value = d.address.house_number || "";
-        document.getElementById("plz").value = d.address.postcode || "";
-        document.getElementById("ort").value = d.address.city || d.address.town || d.address.village || "";
-        document.getElementById("gpsStatus").innerText =
-          `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        strasse.value = d.address.road || "";
+        hausnr.value = d.address.house_number || "";
+        plz.value = d.address.postcode || "";
+        ort.value = d.address.city || d.address.town || d.address.village || "";
+        gpsStatus.innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       });
   }, () => alert("GPS nicht verfügbar"));
 }
 
-/* Speichern */
+/* ================= SPEICHERN ================= */
 function speichern() {
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
-  const rasen = Number(document.getElementById("rasen").value || 0);
-  const bio = Number(document.getElementById("bio").value || 0);
+  const rasen = Number(rasen.value || 0);
+  const bio = Number(bio.value || 0);
   const summe = rasen * 45 + bio * 30;
 
   const jetzt = new Date();
   const datum = jetzt.toLocaleDateString("de-DE");
-  const uhrzeit = jetzt.toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
+  const uhrzeit = jetzt.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 
   daten.push({
     datum,
     uhrzeit,
-    name: document.getElementById("name").value || "",
-    telefon: "'" + (document.getElementById("telefon").value || ""),
-    strasse: document.getElementById("strasse").value || "",
-    hausnr: document.getElementById("hausnr").value || "",
-    plz: document.getElementById("plz").value || "",
-    ort: document.getElementById("ort").value || "",
+    name: name.value || "",
+    telefon: telefon.value || "",
+    strasse: strasse.value || "",
+    hausnr: hausnr.value || "",
+    plz: plz.value || "",
+    ort: ort.value || "",
     rasen,
     bio,
-    ausgestreut: document.getElementById("ausgestreut").value,
-    zahlung: document.getElementById("zahlung").value,
+    ausgestreut: ausgestreut.value,
+    zahlung: zahlung.value,
     summe
   });
 
   localStorage.setItem("humix", JSON.stringify(daten));
-  document.getElementById("status").innerText = "Gespeichert.";
+  status.innerText = "Gespeichert ✔";
   felderLeeren();
 }
 
-/* Felder leeren */
+/* ================= RESET ================= */
 function felderLeeren() {
-  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id =>
-    document.getElementById(id).value = ""
-  );
-  document.getElementById("rasen").value = 0;
-  document.getElementById("bio").value = 0;
+  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id => document.getElementById(id).value = "");
+  rasen.value = 0;
+  bio.value = 0;
 }
 
-/* Tages CSV */
+/* ================= CSV (unverändert) ================= */
 function exportTagesCSV() {
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
   if (!daten.length) return alert("Keine Daten");
 
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
-  daten.forEach(e => {
-    csv += `${e.datum};${e.uhrzeit};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
+  daten.forEach(e=>{
+    csv += `${e.datum};${e.uhrzeit};${e.name};="${e.telefon}";${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
   });
-  download(csv, "humix_tagesliste.csv");
+  downloadCSV(csv,"humix_tagesliste.csv");
 }
 
-/* Tageszusammenfassung */
+/* ================= XLSX (NEU) ================= */
+function exportXLSX() {
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  if (!daten.length) return alert("Keine Daten");
+
+  const sheetData = [
+    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €"]
+  ];
+
+  daten.forEach(e=>{
+    sheetData.push([
+      e.datum, e.uhrzeit, e.name, e.telefon,
+      e.strasse, e.hausnr, e.plz, e.ort,
+      e.rasen, e.bio, e.ausgestreut, e.zahlung, e.summe
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // automatische Spaltenbreite
+  ws["!cols"] = sheetData[0].map((_,i)=>({
+    wch: Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
+
+  XLSX.writeFile(wb, "humix_tagesliste.xlsx");
+}
+
+/* ================= ZUSAMMENFASSUNG CSV ================= */
 function exportZusammenfassung() {
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
   if (!daten.length) return alert("Keine Daten");
@@ -170,27 +208,24 @@ function exportZusammenfassung() {
   csv += `${datum};EC;${eR};${eB};${eS}\n`;
   csv += `${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}`;
 
-  download(csv, "humix_tageszusammenfassung.csv");
+  downloadCSV(csv,"humix_tageszusammenfassung.csv");
 }
 
-/* Löschen */
-function allesLoeschen() {
-  if(confirm("Wirklich alle Daten löschen?")) {
-    localStorage.removeItem("humix");
-    alert("Gelöscht.");
-  }
-}
-
-/* ⬇️ CSV Download – FIX für Excel UMLAUTE */
-function download(text, name) {
-  const blob = new Blob(
-    ["\uFEFF" + text],                // ✅ UTF-8 BOM
-    { type:"text/csv;charset=utf-8;" }
-  );
+/* ================= DOWNLOAD CSV ================= */
+function downloadCSV(text,name){
+  const blob = new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
+}
+
+/* ================= LÖSCHEN ================= */
+function allesLoeschen(){
+  if(confirm("Wirklich alle Daten löschen?")){
+    localStorage.removeItem("humix");
+    alert("Gelöscht");
+  }
 }
 </script>
 </body>
