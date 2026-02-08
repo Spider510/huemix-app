@@ -26,23 +26,12 @@ button{border:none;color:white;border-radius:4px}
 <div class="container">
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name</label>
-<input id="name">
-
-<label>Telefon</label>
-<input id="telefon">
-
-<label>Straße</label>
-<input id="strasse">
-
-<label>Hausnummer</label>
-<input id="hausnr">
-
-<label>PLZ</label>
-<input id="plz">
-
-<label>Ort</label>
-<input id="ort">
+<label>Name</label><input id="name">
+<label>Telefon</label><input id="telefon">
+<label>Straße</label><input id="strasse">
+<label>Hausnummer</label><input id="hausnr">
+<label>PLZ</label><input id="plz">
+<label>Ort</label><input id="ort">
 
 <label>Rasen Spezial – Säcke (45 €)</label>
 <input id="rasen" type="number" value="0">
@@ -77,15 +66,23 @@ button{border:none;color:white;border-radius:4px}
 <script>
 let lat=null, lon=null;
 
-function zeitstempel(name){
-  const d=new Date();
-  return `${name}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}_${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}.csv`;
+function resetFelder(){
+  name.value="";
+  telefon.value="";
+  strasse.value="";
+  hausnr.value="";
+  plz.value="";
+  ort.value="";
+  rasen.value=0;
+  bio.value=0;
+  ausgestreut.value="Ja";
+  zahlung.value="Bar";
 }
 
 function gpsHolen(){
+  resetFelder();
+  lat=null; lon=null;
   gpsinfo.textContent="GPS wird ermittelt...";
-  lat=lon=null;
-  strasse.value=hausnr.value=plz.value=ort.value="";
 
   navigator.geolocation.getCurrentPosition(pos=>{
     lat=pos.coords.latitude;
@@ -118,8 +115,8 @@ function speichern(){
     hausnr:hausnr.value,
     plz:plz.value,
     ort:ort.value,
-    rasen:Number(rasen.value)||0,
-    bio:Number(bio.value)||0,
+    rasen:+rasen.value||0,
+    bio:+bio.value||0,
     ausgestreut:ausgestreut.value,
     zahlung:zahlung.value,
     summe:(rasen.value*45)+(bio.value*30)
@@ -130,12 +127,12 @@ function speichern(){
   localStorage.setItem("huemix",JSON.stringify(liste));
 
   status.textContent="Gespeichert ✔";
-  neu();
+  resetFelder();
 }
 
 function neu(){
-  name.value=telefon.value=strasse.value=hausnr.value=plz.value=ort.value="";
-  rasen.value=bio.value=0;
+  resetFelder();
+  status.textContent="Neuer Eintrag";
 }
 
 function exportCSV(csv,name){
@@ -152,7 +149,7 @@ function tagesCSV(){
   daten.forEach(e=>{
     csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
   });
-  exportCSV(csv,zeitstempel("huemix_tagesliste"));
+  exportCSV(csv,"huemix_tagesliste.csv");
 }
 
 function tagesSumme(){
@@ -172,13 +169,14 @@ function tagesSumme(){
   csv+=`${datum};EC;${ec.r};${ec.b};${ec.s}\n`;
   csv+=`${datum};GESAMT;${g.r};${g.b};${g.s}\n`;
 
-  exportCSV(csv,zeitstempel("huemix_tageszusammenfassung"));
+  exportCSV(csv,"huemix_tageszusammenfassung.csv");
 }
 
 function allesLoeschen(){
   if(confirm("Wirklich ALLES löschen?")){
     localStorage.removeItem("huemix");
     status.textContent="Alle Daten gelöscht";
+    resetFelder();
   }
 }
 </script>
