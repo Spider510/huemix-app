@@ -92,7 +92,8 @@ function gpsHolen() {
         document.getElementById("hausnr").value = d.address.house_number || "";
         document.getElementById("plz").value = d.address.postcode || "";
         document.getElementById("ort").value = d.address.city || d.address.town || d.address.village || "";
-        document.getElementById("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        document.getElementById("gpsStatus").innerText =
+          `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       });
   }, () => alert("GPS nicht verfügbar"));
 }
@@ -132,7 +133,9 @@ function speichern() {
 
 /* Felder leeren */
 function felderLeeren() {
-  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id => document.getElementById(id).value = "");
+  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id =>
+    document.getElementById(id).value = ""
+  );
   document.getElementById("rasen").value = 0;
   document.getElementById("bio").value = 0;
 }
@@ -178,9 +181,12 @@ function allesLoeschen() {
   }
 }
 
-/* Download */
+/* ⬇️ CSV Download – FIX für Excel UMLAUTE */
 function download(text, name) {
-  const blob = new Blob([text], { type:"text/csv;charset=utf-8;" });
+  const blob = new Blob(
+    ["\uFEFF" + text],                // ✅ UTF-8 BOM
+    { type:"text/csv;charset=utf-8;" }
+  );
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
