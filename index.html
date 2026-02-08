@@ -85,7 +85,20 @@ function zeitstempel(prefix){
          "_"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+".csv";
 }
 
+/* 🔄 ALLES LEEREN */
+function neu(){
+  document.querySelectorAll("input").forEach(i=>{
+    if(i.type==="number") i.value=0;
+    else i.value="";
+  });
+  gps.textContent="GPS noch nicht ermittelt";
+  lat=null; lon=null;
+}
+
+/* 📍 GPS DRÜCKEN → ERST LEEREN → DANN GPS + ADRESSE */
 async function gpsHolen(){
+  neu(); // 👈 HIER DIE ENTSCHEIDENDE ÄNDERUNG
+
   gps.textContent="GPS wird ermittelt…";
   navigator.geolocation.getCurrentPosition(async p=>{
     lat=p.coords.latitude;
@@ -93,8 +106,10 @@ async function gpsHolen(){
     gps.textContent=`GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse wird geladen…`;
 
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-        {headers:{"User-Agent":"HuemixApp"}});
+      const r=await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+        {headers:{"User-Agent":"HuemixApp"}}
+      );
       const d=await r.json();
       if(d.address){
         strasse.value=d.address.road||"";
@@ -103,10 +118,13 @@ async function gpsHolen(){
         ort.value=d.address.city||d.address.town||d.address.village||"";
         gps.textContent+="\nAdresse übernommen ✔";
       }
-    }catch{}
-  },e=>gps.textContent="GPS Fehler",{enableHighAccuracy:true,timeout:15000});
+    }catch{
+      gps.textContent+="\nAdresse konnte nicht geladen werden";
+    }
+  },()=>gps.textContent="GPS Fehler",{enableHighAccuracy:true,timeout:15000});
 }
 
+/* 💾 SPEICHERN → AUTOMATISCH LEEREN */
 function speichern(){
   const r=Number(rasen.value)||0;
   const b=Number(bio.value)||0;
@@ -131,19 +149,11 @@ function speichern(){
   l.push(eintrag);
   localStorage.setItem("huemix",JSON.stringify(l));
 
-  status.textContent="Gespeichert ✔ – bereit für neuen Eintrag";
+  status.textContent="Gespeichert ✔ – bereit für nächsten Eintrag";
   neu(); // 👈 AUTOMATISCH LEEREN
 }
 
-function neu(){
-  document.querySelectorAll("input").forEach(i=>{
-    if(i.type==="number") i.value=0;
-    else i.value="";
-  });
-  gps.textContent="GPS noch nicht ermittelt";
-  lat=null; lon=null;
-}
-
+/* 📄 CSV EXPORT */
 async function exportCSV(text,filename){
   const csv="\uFEFF"+text.replace(/\n/g,"\r\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
