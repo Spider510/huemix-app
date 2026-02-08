@@ -78,6 +78,10 @@ function zeit(){
          d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 }
 
+function tagesDatum(){
+  return new Date().toLocaleDateString("de-DE");
+}
+
 function zeitstempel(prefix){
   const d=new Date();
   return prefix+"_"+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+
@@ -185,12 +189,13 @@ function tagesSumme(){
   });
 
   const gesamt={
-    r: bar.r + ec.r,
-    b: bar.b + ec.b,
-    s: bar.s + ec.s
+    r:bar.r+ec.r,
+    b:bar.b+ec.b,
+    s:bar.s+ec.s
   };
 
-  let csv="Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  let csv=`Datum;${tagesDatum()}\n\n`;
+  csv+="Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
   csv+=`Bar;${bar.r};${bar.b};${bar.s}\n`;
   csv+=`EC;${ec.r};${ec.b};${ec.s}\n`;
   csv+=`GESAMT;${gesamt.r};${gesamt.b};${gesamt.s}\n`;
