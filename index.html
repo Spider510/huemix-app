@@ -10,7 +10,7 @@ body{font-family:Arial;background:#f4f7f4;margin:0}
 .container{max-width:900px;margin:auto;padding:15px}
 h1{color:#2e7d32}
 label{font-weight:bold}
-input,select,button{width:100%;padding:10px;margin-bottom:10px;font-size:16px}
+input,select,button{width:100%;padding:10px;margin-bottom:10px;font-size:16px;box-sizing:border-box}
 button{border:none;color:#fff;border-radius:4px}
 .save{background:#2e7d32}
 .new{background:#1976d2}
@@ -34,10 +34,10 @@ button{border:none;color:#fff;border-radius:4px}
 <label>Ort</label><input id="ort">
 
 <label>Rasen Spezial – Säcke (45 €)</label>
-<input id="rasen" type="number" value="0">
+<input id="rasen" type="number" value="0" min="0">
 
 <label>Bio-Volldünger – Säcke (30 €)</label>
-<input id="bio" type="number" value="0">
+<input id="bio" type="number" value="0" min="0">
 
 <label>Ausgestreut</label>
 <select id="ausgestreut"><option>Ja</option><option>Nein</option></select>
@@ -61,14 +61,46 @@ button{border:none;color:#fff;border-radius:4px}
 let gps = {lat:null, lon:null};
 let gpsToken = 0;
 
+// ---------- Helfer ----------
+function safe(v){
+  if(v === undefined || v === null) return "";
+  if(String(v).toLowerCase() === "undefined") return "";
+  return String(v);
+}
+function num(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function fmtDatumZeit(d){
+  // Datum + Uhrzeit ohne Sekunden: 08.02.2026 09:55
+  const dat = d.toLocaleDateString("de-DE");
+  const tim = d.toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
+  return `${dat} ${tim}`;
+}
+function fmtNurDatum(d){
+  return d.toLocaleDateString("de-DE");
+}
+function laden(){
+  return JSON.parse(localStorage.getItem("huemix") || "[]");
+}
+function sichern(arr){
+  localStorage.setItem("huemix", JSON.stringify(arr));
+}
+
+// ---------- Form ----------
 function resetForm(){
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(id=>document.getElementById(id).value="");
-  rasen.value=0; bio.value=0;
-  ausgestreut.value="Ja"; zahlung.value="Bar";
+  rasen.value = 0;
+  bio.value = 0;
+  ausgestreut.value = "Ja";
+  zahlung.value = "Bar";
+  status.textContent = "Bereit.";
 }
 
 function gpsNeu(){
+  // Felder leeren, damit man Adresse neu ziehen kann
   resetForm();
+
   gps = {lat:null, lon:null};
   gpsToken++;
   const token = gpsToken;
@@ -80,87 +112,138 @@ function gpsNeu(){
     gps.lon=pos.coords.longitude;
     gpsinfo.textContent=`GPS OK: ${gps.lat.toFixed(6)}, ${gps.lon.toFixed(6)}`;
     adresseVonGPS(token);
-  },()=>gpsinfo.textContent="GPS fehlgeschlagen");
+  },err=>{
+    gpsinfo.textContent = "GPS fehlgeschlagen";
+    status.textContent = safe(err && err.message) || "GPS Fehler";
+  }, {enableHighAccuracy:true, timeout:12000, maximumAge:0});
 }
 
 function adresseVonGPS(token){
   fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${gps.lat}&lon=${gps.lon}`)
   .then(r=>r.json()).then(d=>{
     if(token!==gpsToken) return;
-    strasse.value=d.address.road||"";
-    hausnr.value=d.address.house_number||"";
-    plz.value=d.address.postcode||"";
-    ort.value=d.address.city||d.address.town||d.address.village||"";
+    strasse.value = (d.address && d.address.road) ? d.address.road : "";
+    hausnr.value  = (d.address && d.address.house_number) ? d.address.house_number : "";
+    plz.value     = (d.address && d.address.postcode) ? d.address.postcode : "";
+    ort.value     = (d.address && (d.address.city || d.address.town || d.address.village)) ? (d.address.city || d.address.town || d.address.village) : "";
+  }).catch(()=>{
+    status.textContent = "Adresse konnte nicht geladen werden (Internet?).";
   });
 }
 
+// ---------- Speichern ----------
 function speichern(){
-  const jetzt=new Date();
-  const eintrag={
-    datum:jetzt.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name:name.value,
-    telefon:telefon.value,
-    strasse:strasse.value,
-    hausnr:hausnr.value,
-    plz:plz.value,
-    ort:ort.value,
-    rasen:+rasen.value||0,
-    bio:+bio.value||0,
-    ausgestreut:ausgestreut.value,
-    zahlung:zahlung.value,
-    summe:(rasen.value*45)+(bio.value*30)
+  const jetzt = new Date();
+  const r = num(rasen.value);
+  const b = num(bio.value);
+
+  const eintrag = {
+    ts: jetzt.getTime(),                       // wichtig: für saubere CSV später
+    datum: fmtDatumZeit(jetzt),                // Anzeige/Export
+    name: safe(name.value),
+    telefon: safe(telefon.value),
+    strasse: safe(strasse.value),
+    hausnr: safe(hausnr.value),
+    plz: safe(plz.value),
+    ort: safe(ort.value),
+    rasen: r,
+    bio: b,
+    ausgestreut: safe(ausgestreut.value),
+    zahlung: safe(zahlung.value),
+    summe: (r * 45) + (b * 30)
   };
 
-  const daten=JSON.parse(localStorage.getItem("huemix")||"[]");
+  const daten = laden();
   daten.push(eintrag);
-  localStorage.setItem("huemix",JSON.stringify(daten));
+  sichern(daten);
 
-  status.textContent="Gespeichert ✔";
+  status.textContent = "Gespeichert ✔";
   resetForm();
 }
 
-function exportListe(){
-  const daten=JSON.parse(localStorage.getItem("huemix")||"[]");
-  let csv="Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
-  daten.forEach(e=>{
-    csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
-  });
-  download(csv,"huemix_tagesliste.csv");
-}
-
-function exportSumme(){
-  const daten=JSON.parse(localStorage.getItem("huemix")||"[]");
-  let s={Bar:{r:0,b:0,e:0},EC:{r:0,b:0,e:0}};
-  daten.forEach(e=>{
-    s[e.zahlung].r+=e.rasen;
-    s[e.zahlung].b+=e.bio;
-    s[e.zahlung].e+=e.summe;
-  });
-
-  const d=new Date().toLocaleDateString("de-DE");
-  let csv=`Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n`;
-  csv+=`${d};Bar;${s.Bar.r};${s.Bar.b};${s.Bar.e}\n`;
-  csv+=`${d};EC;${s.EC.r};${s.EC.b};${s.EC.e}\n`;
-  csv+=`${d};GESAMT;${s.Bar.r+s.EC.r};${s.Bar.b+s.EC.b};${s.Bar.e+s.EC.e}\n`;
-
-  download(csv,"huemix_tageszusammenfassung.csv");
-}
-
-function download(text,name){
-  const blob=new Blob(["\ufeff"+text],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
+// ---------- CSV Downloads ----------
+function download(text, name){
+  // BOM + UTF-8 gegen Umlaute-Probleme in Excel
+  const blob = new Blob(["\ufeff"+text], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
   a.click();
 }
 
+// Tagesliste CSV
+function exportListe(){
+  const daten = laden();
+
+  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
+
+  daten.forEach(e=>{
+    // Datum reparieren:
+    // - wenn e.datum nur Uhrzeit ist oder leer -> wenn ts vorhanden, neu formatieren
+    let datum = safe(e.datum);
+    const looksLikeOnlyTime = /^\d{2}:\d{2}$/.test(datum);
+    if((!datum || looksLikeOnlyTime) && e.ts){
+      datum = fmtDatumZeit(new Date(Number(e.ts)));
+    }
+
+    csv += [
+      datum,
+      safe(e.name),
+      safe(e.telefon),
+      safe(e.strasse),
+      safe(e.hausnr),
+      safe(e.plz),
+      safe(e.ort),
+      num(e.rasen),
+      num(e.bio),
+      safe(e.ausgestreut),
+      safe(e.zahlung),
+      num(e.summe)
+    ].join(";") + "\n";
+  });
+
+  download(csv, "huemix_tagesliste.csv");
+  status.textContent = "Tages-CSV exportiert ✔";
+}
+
+// Tageszusammenfassung CSV (Datum ohne Uhrzeit + Gesamt)
+function exportSumme(){
+  const daten = laden();
+
+  let s = {
+    Bar:{r:0,b:0,e:0},
+    EC:{r:0,b:0,e:0}
+  };
+
+  daten.forEach(e=>{
+    const z = (safe(e.zahlung) === "EC") ? "EC" : "Bar";
+    s[z].r += num(e.rasen);
+    s[z].b += num(e.bio);
+    s[z].e += num(e.summe);
+  });
+
+  const d = fmtNurDatum(new Date());
+
+  let csv = "Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv += `${d};Bar;${s.Bar.r};${s.Bar.b};${s.Bar.e}\n`;
+  csv += `${d};EC;${s.EC.r};${s.EC.b};${s.EC.e}\n`;
+  csv += `${d};GESAMT;${s.Bar.r + s.EC.r};${s.Bar.b + s.EC.b};${s.Bar.e + s.EC.e}\n`;
+
+  download(csv, "huemix_tageszusammenfassung.csv");
+  status.textContent = "Tageszusammenfassung exportiert ✔";
+}
+
+// ---------- Löschen ----------
 function allesLoeschen(){
-  if(confirm("Alles löschen?")){
+  if(confirm("Alle Daten wirklich löschen?")){
     localStorage.removeItem("huemix");
     resetForm();
-    status.textContent="Alle Daten gelöscht";
+    status.textContent = "Alle Daten gelöscht ✔";
   }
 }
+
+// Startzustand
+resetForm();
 </script>
 </body>
 </html>
