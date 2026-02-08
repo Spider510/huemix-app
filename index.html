@@ -5,7 +5,7 @@
 <title>HÜMIX Einsatz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- PWA / App (optional, falls du die Dateien hast) -->
+<!-- PWA / App -->
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="HÜMIX Einsatz">
@@ -59,190 +59,136 @@ button{border:none;border-radius:4px;color:#fff;margin-top:8px}
 <div id="gps">GPS noch nicht ermittelt</div>
 
 <button class="green" onclick="speichern()">💾 Speichern</button>
-<button class="blue" onclick="neu()">➕ Neuer Eintrag</button>
 <button class="gray" onclick="tagesCSV()">📄 Tages-CSV exportieren</button>
 <button class="purple" onclick="tagesSumme()">📊 Tageszusammenfassung CSV</button>
 <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
 <div class="small">
-Tipp iPad/iPhone: Beim Export öffnet sich „Teilen“. Dort „In Dateien sichern“ auswählen.
+iPad/iPhone: Beim Export → „Teilen“ → „In Dateien sichern“
 </div>
 
 <div id="status">Bereit.</div>
 
 <script>
 let lat=null, lon=null;
+const PREIS_RASEN=45, PREIS_BIO=30;
 
-const PREIS_RASEN = 45;
-const PREIS_BIO = 30;
-
-function zeit() {
-  const d = new Date();
-  return d.toLocaleDateString("de-DE") + " " +
-         d.toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
+function zeit(){
+  const d=new Date();
+  return d.toLocaleDateString("de-DE")+" "+
+         d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
 }
 
-function zeitstempelDateiname(prefix) {
-  // yyyy-mm-dd_hhmm -> verhindert iOS Überschreiben/Cache
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
-  const hh = String(d.getHours()).padStart(2,'0');
-  const mi = String(d.getMinutes()).padStart(2,'0');
-  return `${prefix}_${yyyy}-${mm}-${dd}_${hh}${mi}.csv`;
+function zeitstempel(prefix){
+  const d=new Date();
+  return prefix+"_"+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+
+         "_"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+".csv";
 }
 
 async function gpsHolen(){
-  gps.textContent = "GPS wird ermittelt…";
-  if (!navigator.geolocation) {
-    gps.textContent = "GPS nicht verfügbar";
-    return;
-  }
-
+  gps.textContent="GPS wird ermittelt…";
   navigator.geolocation.getCurrentPosition(async p=>{
-    lat = p.coords.latitude;
-    lon = p.coords.longitude;
-    gps.textContent = `GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse wird geladen…`;
+    lat=p.coords.latitude;
+    lon=p.coords.longitude;
+    gps.textContent=`GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse wird geladen…`;
 
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-      const r = await fetch(url, { headers: { "User-Agent":"HuemixApp" }});
-      const d = await r.json();
-      if (d.address) {
-        strasse.value = d.address.road || "";
-        hausnr.value  = d.address.house_number || "";
-        plz.value     = d.address.postcode || "";
-        ort.value     = d.address.city || d.address.town || d.address.village || "";
-        gps.textContent = `GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse übernommen ✔`;
-      } else {
-        gps.textContent = `GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse nicht gefunden`;
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+        {headers:{"User-Agent":"HuemixApp"}});
+      const d=await r.json();
+      if(d.address){
+        strasse.value=d.address.road||"";
+        hausnr.value=d.address.house_number||"";
+        plz.value=d.address.postcode||"";
+        ort.value=d.address.city||d.address.town||d.address.village||"";
+        gps.textContent+="\nAdresse übernommen ✔";
       }
-    } catch (e) {
-      gps.textContent = `GPS OK: ${lat.toFixed(6)}, ${lon.toFixed(6)}\nAdresse konnte nicht geladen werden`;
-    }
-  }, err=>{
-    gps.textContent = "GPS Fehler: " + (err && err.message ? err.message : "");
-  }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
+    }catch{}
+  },e=>gps.textContent="GPS Fehler",{enableHighAccuracy:true,timeout:15000});
 }
 
 function speichern(){
-  const r = Number(rasen.value) || 0;
-  const b = Number(bio.value) || 0;
-  const sum = r*PREIS_RASEN + b*PREIS_BIO;
+  const r=Number(rasen.value)||0;
+  const b=Number(bio.value)||0;
+  const sum=r*PREIS_RASEN+b*PREIS_BIO;
 
-  const eintrag = {
-    datum: zeit(),
-    name: kundenname.value || "",
-    telefon: telefon.value || "",
-    strasse: strasse.value || "",
-    hausnr: hausnr.value || "",
-    plz: plz.value || "",
-    ort: ort.value || "",
-    rasen: r,
-    bio: b,
-    ausgestreut: ausgestreut.value,
-    zahlung: zahlung.value,
-    summe: sum
+  const eintrag={
+    datum:zeit(),
+    name:kundenname.value||"",
+    telefon:telefon.value||"",
+    strasse:strasse.value||"",
+    hausnr:hausnr.value||"",
+    plz:plz.value||"",
+    ort:ort.value||"",
+    rasen:r,
+    bio:b,
+    ausgestreut:ausgestreut.value,
+    zahlung:zahlung.value,
+    summe:sum
   };
 
-  const l = JSON.parse(localStorage.getItem("huemix") || "[]");
+  const l=JSON.parse(localStorage.getItem("huemix")||"[]");
   l.push(eintrag);
-  localStorage.setItem("huemix", JSON.stringify(l));
+  localStorage.setItem("huemix",JSON.stringify(l));
 
-  status.textContent = "Gespeichert ✔";
+  status.textContent="Gespeichert ✔ – bereit für neuen Eintrag";
+  neu(); // 👈 AUTOMATISCH LEEREN
 }
 
 function neu(){
-  document.querySelectorAll("input").forEach(i => {
-    if (i.type === "number") i.value = 0;
-    else i.value = "";
+  document.querySelectorAll("input").forEach(i=>{
+    if(i.type==="number") i.value=0;
+    else i.value="";
   });
-  gps.textContent = "GPS noch nicht ermittelt";
-  lat = null; lon = null;
-  status.textContent = "Bereit.";
+  gps.textContent="GPS noch nicht ermittelt";
+  lat=null; lon=null;
 }
 
-/* === iOS-sicherer CSV Export ===
-   1) Erst Web Share API mit echter Datei (iOS ideal)
-   2) Fallback: klassischer Download-Link
-*/
-async function exportCSV(text, filename){
-  // Excel + Umlaute + saubere Zeilenenden:
-  const csvText = "\uFEFF" + text.replace(/\n/g, "\r\n");
-  const blob = new Blob([csvText], { type:"text/csv;charset=utf-8" });
-
-  // iOS/iPadOS: Teilen -> "In Dateien sichern" funktioniert zuverlässig
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, {type:"text/csv"})] })) {
-      const file = new File([blob], filename, { type:"text/csv" });
-      await navigator.share({ files:[file], title: filename });
-      status.textContent = "CSV exportiert (Teilen) ✔";
+async function exportCSV(text,filename){
+  const csv="\uFEFF"+text.replace(/\n/g,"\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[new File([blob],filename)]})){
+      await navigator.share({files:[new File([blob],filename)]});
       return;
     }
-  } catch (_) {
-    // wenn Share abgebrochen wird -> fallback
-  }
-
-  // Fallback: normaler Download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
+  }catch{}
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
   a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
-  status.textContent = "CSV exportiert (Download) ✔";
 }
 
 function tagesCSV(){
-  const l = JSON.parse(localStorage.getItem("huemix") || "[]");
-
-  // Header
-  let csv = "Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
-
-  // Daten
+  const l=JSON.parse(localStorage.getItem("huemix")||"[]");
+  let csv="Datum;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe\n";
   l.forEach(e=>{
-    if(!e) return;
-    csv += `${e.datum||""};${e.name||""};${e.telefon||""};${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${Number(e.rasen)||0};${Number(e.bio)||0};${e.ausgestreut||""};${e.zahlung||""};${Number(e.summe)||0}\n`;
+    csv+=`${e.datum};${e.name};${e.telefon};${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
   });
-
-  // Für iOS: eindeutiger Dateiname
-  exportCSV(csv, zeitstempelDateiname("huemix_tag"));
+  exportCSV(csv,zeitstempel("huemix_tag"));
 }
 
 function tagesSumme(){
-  const l = JSON.parse(localStorage.getItem("huemix") || "[]");
-  let bar = { r:0, b:0, s:0 };
-  let ec  = { r:0, b:0, s:0 };
-
+  const l=JSON.parse(localStorage.getItem("huemix")||"[]");
+  let bar={r:0,b:0,s:0}, ec={r:0,b:0,s:0};
   l.forEach(e=>{
-    if(!e) return;
-    const r = Number(e.rasen) || 0;
-    const b = Number(e.bio) || 0;
-    const s = r*PREIS_RASEN + b*PREIS_BIO; // immer neu berechnen
-
-    if (e.zahlung === "Bar") { bar.r+=r; bar.b+=b; bar.s+=s; }
-    if (e.zahlung === "EC")  { ec.r+=r;  ec.b+=b;  ec.s+=s; }
+    const s=e.rasen*PREIS_RASEN+e.bio*PREIS_BIO;
+    if(e.zahlung==="Bar"){bar.r+=e.rasen;bar.b+=e.bio;bar.s+=s;}
+    if(e.zahlung==="EC"){ec.r+=e.rasen;ec.b+=e.bio;ec.s+=s;}
   });
-
-  let csv = "Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
-  csv += `Bar;${bar.r};${bar.b};${bar.s}\n`;
-  csv += `EC;${ec.r};${ec.b};${ec.s}\n`;
-
-  status.textContent = `BAR: ${bar.s} € | EC: ${ec.s} €`;
-  exportCSV(csv, zeitstempelDateiname("huemix_tageszusammenfassung"));
+  let csv="Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv+=`Bar;${bar.r};${bar.b};${bar.s}\n`;
+  csv+=`EC;${ec.r};${ec.b};${ec.s}\n`;
+  exportCSV(csv,zeitstempel("huemix_tageszusammenfassung"));
+  status.textContent=`BAR: ${bar.s} € | EC: ${ec.s} €`;
 }
 
 function allesLoeschen(){
   if(confirm("Wirklich alle Daten löschen?")){
     localStorage.removeItem("huemix");
-    status.textContent = "Alle Daten gelöscht";
+    status.textContent="Alle Daten gelöscht";
   }
 }
 </script>
-
 </body>
 </html>
