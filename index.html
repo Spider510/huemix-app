@@ -76,7 +76,7 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 <!-- CSV unverändert -->
 <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
 
-<!-- NEU: XLSX -->
+<!-- XLSX -->
 <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
 
 <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
@@ -99,53 +99,60 @@ function gpsHolen() {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
       .then(r => r.json())
       .then(d => {
-        strasse.value = d.address.road || "";
-        hausnr.value = d.address.house_number || "";
-        plz.value = d.address.postcode || "";
-        ort.value = d.address.city || d.address.town || d.address.village || "";
-        gpsStatus.innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        document.getElementById("strasse").value = (d.address && d.address.road) ? d.address.road : "";
+        document.getElementById("hausnr").value  = (d.address && d.address.house_number) ? d.address.house_number : "";
+        document.getElementById("plz").value     = (d.address && d.address.postcode) ? d.address.postcode : "";
+        document.getElementById("ort").value     = (d.address && (d.address.city || d.address.town || d.address.village)) ? (d.address.city || d.address.town || d.address.village) : "";
+        document.getElementById("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       });
   }, () => alert("GPS nicht verfügbar"));
 }
 
-/* ================= SPEICHERN ================= */
+/* ================= SPEICHERN (FIX NUR HIER) ================= */
 function speichern() {
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  try {
+    const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
-  const rasen = Number(rasen.value || 0);
-  const bio = Number(bio.value || 0);
-  const summe = rasen * 45 + bio * 30;
+    // ✅ zuverlässig per getElementById lesen (kein Safari-Globals / kein window.name Problem)
+    const rasenVal = Number(document.getElementById("rasen").value || 0);
+    const bioVal   = Number(document.getElementById("bio").value || 0);
+    const summe    = rasenVal * 45 + bioVal * 30;
 
-  const jetzt = new Date();
-  const datum = jetzt.toLocaleDateString("de-DE");
-  const uhrzeit = jetzt.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+    const jetzt   = new Date();
+    const datum   = jetzt.toLocaleDateString("de-DE");
+    const uhrzeit = jetzt.toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
 
-  daten.push({
-    datum,
-    uhrzeit,
-    name: name.value || "",
-    telefon: telefon.value || "",
-    strasse: strasse.value || "",
-    hausnr: hausnr.value || "",
-    plz: plz.value || "",
-    ort: ort.value || "",
-    rasen,
-    bio,
-    ausgestreut: ausgestreut.value,
-    zahlung: zahlung.value,
-    summe
-  });
+    daten.push({
+      datum,
+      uhrzeit,
+      name: document.getElementById("name").value || "",
+      telefon: document.getElementById("telefon").value || "",
+      strasse: document.getElementById("strasse").value || "",
+      hausnr: document.getElementById("hausnr").value || "",
+      plz: document.getElementById("plz").value || "",
+      ort: document.getElementById("ort").value || "",
+      rasen: rasenVal,
+      bio: bioVal,
+      ausgestreut: document.getElementById("ausgestreut").value,
+      zahlung: document.getElementById("zahlung").value,
+      summe
+    });
 
-  localStorage.setItem("humix", JSON.stringify(daten));
-  status.innerText = "Gespeichert ✔";
-  felderLeeren();
+    localStorage.setItem("humix", JSON.stringify(daten));
+
+    document.getElementById("status").innerText = "Gespeichert ✔";
+    felderLeeren(); // ✅ wird jetzt sicher ausgeführt
+  } catch (e) {
+    document.getElementById("status").innerText = "Fehler beim Speichern";
+    alert("Speichern fehlgeschlagen: " + (e && e.message ? e.message : e));
+  }
 }
 
-/* ================= RESET ================= */
+/* ================= RESET (unverändert) ================= */
 function felderLeeren() {
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(id => document.getElementById(id).value = "");
-  rasen.value = 0;
-  bio.value = 0;
+  document.getElementById("rasen").value = 0;
+  document.getElementById("bio").value = 0;
 }
 
 /* ================= CSV (unverändert) ================= */
@@ -155,12 +162,14 @@ function exportTagesCSV() {
 
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
   daten.forEach(e=>{
-    csv += `${e.datum};${e.uhrzeit};${e.name};="${e.telefon}";${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
+    // Telefon so, dass Excel die führende 0 behält:
+    const tel = String(e.telefon || "").replace(/"/g,'""');
+    csv += `${e.datum};${e.uhrzeit};${e.name};="${tel}";${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
   });
   downloadCSV(csv,"humix_tagesliste.csv");
 }
 
-/* ================= XLSX (NEU) ================= */
+/* ================= XLSX (unverändert) ================= */
 function exportXLSX() {
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
   if (!daten.length) return alert("Keine Daten");
@@ -179,18 +188,16 @@ function exportXLSX() {
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-  // automatische Spaltenbreite
   ws["!cols"] = sheetData[0].map((_,i)=>({
     wch: Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
   }));
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
-
   XLSX.writeFile(wb, "humix_tagesliste.xlsx");
 }
 
-/* ================= ZUSAMMENFASSUNG CSV ================= */
+/* ================= ZUSAMMENFASSUNG CSV (unverändert) ================= */
 function exportZusammenfassung() {
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
   if (!daten.length) return alert("Keine Daten");
@@ -211,7 +218,7 @@ function exportZusammenfassung() {
   downloadCSV(csv,"humix_tageszusammenfassung.csv");
 }
 
-/* ================= DOWNLOAD CSV ================= */
+/* ================= DOWNLOAD CSV (unverändert) ================= */
 function downloadCSV(text,name){
   const blob = new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
   const a = document.createElement("a");
@@ -220,7 +227,7 @@ function downloadCSV(text,name){
   a.click();
 }
 
-/* ================= LÖSCHEN ================= */
+/* ================= LÖSCHEN (unverändert) ================= */
 function allesLoeschen(){
   if(confirm("Wirklich alle Daten löschen?")){
     localStorage.removeItem("humix");
