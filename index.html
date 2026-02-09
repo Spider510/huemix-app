@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- SheetJS für XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -31,55 +29,26 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<label>Name</label>
-<input id="name">
+<label>Name</label><input id="name">
+<label>Telefon</label><input id="telefon" inputmode="tel">
+<label>Straße</label><input id="strasse">
+<label>Hausnummer</label><input id="hausnr">
+<label>PLZ</label><input id="plz">
+<label>Ort</label><input id="ort">
 
-<label>Telefon</label>
-<input id="telefon" inputmode="tel">
+<label>Rasen kg</label><input id="rasenKg" type="number" value="20">
+<label>Rasen Preis €</label><input id="rasenPreis" type="number" value="45">
+<label>Rasen Säcke</label><input id="rasen" type="number" value="0">
 
-<label>Straße</label>
-<input id="strasse">
-
-<label>Hausnummer</label>
-<input id="hausnr">
-
-<label>PLZ</label>
-<input id="plz">
-
-<label>Ort</label>
-<input id="ort">
-
-<!-- ✅ NEU: Rasen kg & Preis anpassbar -->
-<label>Rasen Spezial – kg (Standard 20)</label>
-<input id="rasenKg" type="number" value="20">
-
-<label>Rasen Spezial – Preis (€) (Standard 45)</label>
-<input id="rasenPreis" type="number" value="45">
-
-<label>Rasen Spezial – Säcke</label>
-<input id="rasen" type="number" value="0">
-
-<!-- ✅ NEU: Bio Liter & Preis anpassbar -->
-<label>Bio-Volldünger – Liter (Standard 65)</label>
-<input id="bioL" type="number" value="65">
-
-<label>Bio-Volldünger – Preis (€) (Standard 30)</label>
-<input id="bioPreis" type="number" value="30">
-
-<label>Bio-Volldünger – Säcke</label>
-<input id="bio" type="number" value="0">
+<label>Bio Liter</label><input id="bioL" type="number" value="65">
+<label>Bio Preis €</label><input id="bioPreis" type="number" value="30">
+<label>Bio Säcke</label><input id="bio" type="number" value="0">
 
 <label>Ausgestreut</label>
-<select id="ausgestreut">
-  <option>Ja</option>
-  <option>Nein</option>
-</select>
+<select id="ausgestreut"><option>Ja</option><option>Nein</option></select>
 
 <label>Zahlungsart</label>
-<select id="zahlung">
-  <option>Bar</option>
-  <option>EC</option>
-</select>
+<select id="zahlung"><option>Bar</option><option>EC</option></select>
 
 <button class="blue" onclick="gpsHolen()">📍 GPS neu holen</button>
 <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
@@ -87,208 +56,65 @@ button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
 <button class="green" onclick="speichern()">💾 Speichern</button>
 <button class="blue" onclick="felderLeeren()">➕ Neuer Eintrag</button>
 
-<!-- CSV unverändert -->
 <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
-
-<!-- XLSX -->
 <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-
 <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
 <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
 
 <div class="status" id="status">Bereit.</div>
 
 <script>
-let lat = null, lon = null;
+const STD_RASEN_KG=20, STD_RASEN_PREIS=45, STD_BIO_L=65, STD_BIO_PREIS=30;
 
-// ✅ Standards (wie von dir gewünscht)
-const STD_RASEN_KG = 20;
-const STD_RASEN_PREIS = 45;
-const STD_BIO_L = 65;
-const STD_BIO_PREIS = 30;
-
-/* ================= GPS ================= */
-function gpsHolen() {
+function speichern(){
+  const d=JSON.parse(localStorage.getItem("humix")||"[]");
+  const r=+rasen.value||0,b=+bio.value||0;
+  const rp=+rasenPreis.value||45,bp=+bioPreis.value||30;
+  const now=new Date();
+  d.push({
+    datum:now.toLocaleDateString("de-DE"),
+    uhrzeit:now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+    name:name.value,telefon:telefon.value,strasse:strasse.value,
+    hausnr:hausnr.value,plz:plz.value,ort:ort.value,
+    rasen:r,bio:b,rasenKg:+rasenKg.value,bioL:+bioL.value,
+    rasenPreis:rp,bioPreis:bp,
+    ausgestreut:ausgestreut.value,zahlung:zahlung.value,
+    summe:r*rp+b*bp
+  });
+  localStorage.setItem("humix",JSON.stringify(d));
   felderLeeren();
-  document.getElementById("gpsStatus").innerText = "GPS wird ermittelt…";
-
-  navigator.geolocation.getCurrentPosition(pos => {
-    lat = pos.coords.latitude;
-    lon = pos.coords.longitude;
-
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-      .then(r => r.json())
-      .then(d => {
-        document.getElementById("strasse").value = (d.address && d.address.road) ? d.address.road : "";
-        document.getElementById("hausnr").value  = (d.address && d.address.house_number) ? d.address.house_number : "";
-        document.getElementById("plz").value     = (d.address && d.address.postcode) ? d.address.postcode : "";
-        document.getElementById("ort").value     = (d.address && (d.address.city || d.address.town || d.address.village)) ? (d.address.city || d.address.town || d.address.village) : "";
-        document.getElementById("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      });
-  }, () => alert("GPS nicht verfügbar"));
+  rasenKg.value=STD_RASEN_KG; bioL.value=STD_BIO_L;
+  rasenPreis.value=STD_RASEN_PREIS; bioPreis.value=STD_BIO_PREIS;
 }
 
-/* ================= SPEICHERN (nur Summe + Reset erweitert) ================= */
-function speichern() {
-  try {
-    const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-
-    const rasenVal = Number(document.getElementById("rasen").value || 0);
-    const bioVal   = Number(document.getElementById("bio").value || 0);
-
-    // ✅ NEU: Preise aus Eingabefeldern
-    const rasenPreisVal = Number(document.getElementById("rasenPreis").value || STD_RASEN_PREIS);
-    const bioPreisVal   = Number(document.getElementById("bioPreis").value || STD_BIO_PREIS);
-
-    // ✅ NEU: Mengen (kg/L) speichern (für Nachvollziehbarkeit)
-    const rasenKgVal = Number(document.getElementById("rasenKg").value || STD_RASEN_KG);
-    const bioLVal    = Number(document.getElementById("bioL").value || STD_BIO_L);
-
-    // ✅ Summe mit aktuellen Preisen berechnen
-    const summe = rasenVal * rasenPreisVal + bioVal * bioPreisVal;
-
-    const jetzt   = new Date();
-    const datum   = jetzt.toLocaleDateString("de-DE");
-    const uhrzeit = jetzt.toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
-
-    daten.push({
-      datum,
-      uhrzeit,
-      name: document.getElementById("name").value || "",
-      telefon: document.getElementById("telefon").value || "",
-      strasse: document.getElementById("strasse").value || "",
-      hausnr: document.getElementById("hausnr").value || "",
-      plz: document.getElementById("plz").value || "",
-      ort: document.getElementById("ort").value || "",
-      rasen: rasenVal,
-      bio: bioVal,
-      // ✅ NEU:
-      rasenKg: rasenKgVal,
-      bioL: bioLVal,
-      rasenPreis: rasenPreisVal,
-      bioPreis: bioPreisVal,
-      ausgestreut: document.getElementById("ausgestreut").value,
-      zahlung: document.getElementById("zahlung").value,
-      summe
-    });
-
-    localStorage.setItem("humix", JSON.stringify(daten));
-
-    document.getElementById("status").innerText = "Gespeichert ✔";
-
-    // ✅ Nach Speichern: Felder leeren + Standards zurücksetzen
-    felderLeeren();
-    resetStandardsNachSpeichern();
-
-  } catch (e) {
-    document.getElementById("status").innerText = "Fehler beim Speichern";
-    alert("Speichern fehlgeschlagen: " + (e && e.message ? e.message : e));
-  }
+function felderLeeren(){
+  ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>document.getElementById(i).value="");
+  rasen.value=0; bio.value=0;
 }
 
-/* ================= RESET (wie vorher) ================= */
-function felderLeeren() {
-  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("rasen").value = 0;
-  document.getElementById("bio").value = 0;
-}
-
-// ✅ NEU: Standards nach Speichern zurücksetzen
-function resetStandardsNachSpeichern() {
-  document.getElementById("rasenKg").value = STD_RASEN_KG;
-  document.getElementById("bioL").value = STD_BIO_L;
-  document.getElementById("rasenPreis").value = STD_RASEN_PREIS;
-  document.getElementById("bioPreis").value = STD_BIO_PREIS;
-}
-
-/* ================= CSV (minimal erweitert: Preise/Mengen optional anhängen) ================= */
-function exportTagesCSV() {
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-  if (!daten.length) return alert("Keine Daten");
-
-  // ✅ Ich lasse deine Spalten wie gewohnt – und hänge nur 4 Spalten hinten dran (stört Excel nicht)
-  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €;Rasen kg;Rasen Preis;Bio L;Bio Preis\n";
-
-  daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
-    csv += `${e.datum};${e.uhrzeit};${e.name};="${tel}";${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe};${e.rasenKg ?? ""};${e.rasenPreis ?? ""};${e.bioL ?? ""};${e.bioPreis ?? ""}\n`;
-  });
-
-  downloadCSV(csv,"humix_tagesliste.csv");
-}
-
-/* ================= XLSX (minimal erweitert + Auto-Spaltenbreite bleibt) ================= */
-function exportXLSX() {
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-  if (!daten.length) return alert("Keine Daten");
-
-  const sheetData = [
-    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €","Rasen kg","Rasen Preis","Bio L","Bio Preis"]
-  ];
-
-  daten.forEach(e=>{
-    sheetData.push([
-      e.datum, e.uhrzeit, e.name, e.telefon,
-      e.strasse, e.hausnr, e.plz, e.ort,
-      e.rasen, e.bio, e.ausgestreut, e.zahlung, e.summe,
-      e.rasenKg ?? "", e.rasenPreis ?? "", e.bioL ?? "", e.bioPreis ?? ""
-    ]);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
-  ws["!cols"] = sheetData[0].map((_,i)=>({
-    wch: Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
-  }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
-  XLSX.writeFile(wb, "humix_tagesliste.xlsx");
-}
-
-/* ================= ZUSAMMENFASSUNG CSV (nur erweitert um Standards/Preise oben) ================= */
-function exportZusammenfassung() {
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-  if (!daten.length) return alert("Keine Daten");
-
-  const datum = daten[0].datum;
-
-  // ✅ Standards (wie du wolltest) oben rein
-  // (Hier bewusst die Standardwerte – nicht die Tageswerte, damit es immer gleich ist)
-  let csv = "Datum;Standard Rasen;Preis;Standard Bio;Preis\n";
-  csv += `${datum};${STD_RASEN_KG}kg;${STD_RASEN_PREIS}€;${STD_BIO_L}L;${STD_BIO_PREIS}€\n\n`;
-
+/* ✅ HIER IST DIE REPARATUR */
+function exportZusammenfassung(){
+  const d=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!d.length) return alert("Keine Daten");
+  const datum=d[0].datum;
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  daten.forEach(e=>{
-    if(e.zahlung==="Bar"){bR+=Number(e.rasen||0); bB+=Number(e.bio||0); bS+=Number(e.summe||0);}
-    if(e.zahlung==="EC"){eR+=Number(e.rasen||0); eB+=Number(e.bio||0); eS+=Number(e.summe||0);}
+  d.forEach(x=>{
+    if(x.zahlung==="Bar"){bR+=x.rasen;bB+=x.bio;bS+=x.summe;}
+    if(x.zahlung==="EC"){eR+=x.rasen;eB+=x.bio;eS+=x.summe;}
   });
-
-  csv += "Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
-  csv += `Bar;${bR};${bB};${bS}\n`;
-  csv += `EC;${eR};${eB};${eS}\n`;
-  csv += `GESAMT;${bR+eR};${bB+eB};${bS+eS}`;
-
+  let csv="Datum;Standard Rasen kg;Rasen Preis €;Standard Bio L;Bio Preis €;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv+=`${datum};20;45;65;30;Bar;${bR};${bB};${bS}\n`;
+  csv+=`${datum};20;45;65;30;EC;${eR};${eB};${eS}\n`;
+  csv+=`${datum};20;45;65;30;GESAMT;${bR+eR};${bB+eB};${bS+eS}`;
   downloadCSV(csv,"humix_tageszusammenfassung.csv");
 }
 
-/* ================= DOWNLOAD CSV (unverändert) ================= */
-function downloadCSV(text,name){
-  const blob = new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
+function downloadCSV(t,n){
+  const b=new Blob(["\uFEFF"+t],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(b); a.download=n; a.click();
 }
-
-/* ================= LÖSCHEN (unverändert) ================= */
-function allesLoeschen(){
-  if(confirm("Wirklich alle Daten löschen?")){
-    localStorage.removeItem("humix");
-    alert("Gelöscht");
-  }
-}
+function allesLoeschen(){ if(confirm("Wirklich löschen?")) localStorage.removeItem("humix"); }
 </script>
 </body>
 </html>
