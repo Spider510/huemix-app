@@ -40,12 +40,23 @@ th { background:#e8f5e9; }
 
 <input type="hidden" id="editId">
 
-<label>Name</label><input id="name">
-<label>Telefon</label><input id="telefon" inputmode="tel">
-<label>Straße</label><input id="strasse">
-<label>Hausnummer</label><input id="hausnr">
-<label>PLZ</label><input id="plz">
-<label>Ort</label><input id="ort">
+<label>Name</label>
+<input id="name" placeholder="optional">
+
+<label>Telefon</label>
+<input id="telefon" inputmode="tel">
+
+<label>Straße</label>
+<input id="strasse">
+
+<label>Hausnummer</label>
+<input id="hausnr">
+
+<label>PLZ</label>
+<input id="plz">
+
+<label>Ort</label>
+<input id="ort">
 
 <label>Rasen Spezial – Säcke (45 €)</label>
 <input id="rasen" type="number" value="0">
@@ -54,10 +65,16 @@ th { background:#e8f5e9; }
 <input id="bio" type="number" value="0">
 
 <label>Ausgestreut</label>
-<select id="ausgestreut"><option>Ja</option><option>Nein</option></select>
+<select id="ausgestreut">
+  <option>Ja</option>
+  <option>Nein</option>
+</select>
 
 <label>Zahlungsart</label>
-<select id="zahlung"><option>Bar</option><option>EC</option></select>
+<select id="zahlung">
+  <option>Bar</option>
+  <option>EC</option>
+</select>
 
 <button class="blue" onclick="gpsHolen()">📍 GPS neu holen</button>
 <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
@@ -116,6 +133,8 @@ function gpsHolen(){
 /* ================= SPEICHERN ================= */
 function speichern(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+
+  const nameVal = name.value.trim() || "(kein Name)";
   const rasenVal=Number(rasen.value||0);
   const bioVal=Number(bio.value||0);
   const summe=rasenVal*45+bioVal*30;
@@ -124,16 +143,16 @@ function speichern(){
     id: editId.value||crypto.randomUUID(),
     datum: heuteDatum(),
     uhrzeit: new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name:name.value||"",
-    telefon:telefon.value||"",
-    strasse:strasse.value||"",
-    hausnr:hausnr.value||"",
-    plz:plz.value||"",
-    ort:ort.value||"",
-    rasen:rasenVal,
-    bio:bioVal,
-    ausgestreut:ausgestreut.value,
-    zahlung:zahlung.value,
+    name: nameVal,
+    telefon: telefon.value||"",
+    strasse: strasse.value||"",
+    hausnr: hausnr.value||"",
+    plz: plz.value||"",
+    ort: ort.value||"",
+    rasen: rasenVal,
+    bio: bioVal,
+    ausgestreut: ausgestreut.value,
+    zahlung: zahlung.value,
     summe
   };
 
@@ -157,7 +176,7 @@ function ladeHeute(){
 
   let aktuellerOrt="", ortSumme=0;
 
-  daten.forEach((e,i)=>{
+  daten.forEach(e=>{
     if(e.ort!==aktuellerOrt){
       if(aktuellerOrt){
         tbody.innerHTML+=`<tr class="sumRow"><td colspan="5">Zwischensumme ${aktuellerOrt}</td><td>${ortSumme}</td><td></td></tr>`;
@@ -170,18 +189,18 @@ function ladeHeute(){
     ortSumme+=e.summe;
 
     tbody.innerHTML+=`
-    <tr class="${e.zahlung==='Bar'?'bar':'ec'}">
-      <td>${e.uhrzeit}</td>
-      <td>${e.ort} – ${e.name}</td>
-      <td>${e.rasen}</td>
-      <td>${e.bio}</td>
-      <td>${e.zahlung}</td>
-      <td>${e.summe}</td>
-      <td>
-        <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-        <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
-      </td>
-    </tr>`;
+      <tr class="${e.zahlung==='Bar'?'bar':'ec'}">
+        <td>${e.uhrzeit}</td>
+        <td>${e.ort} – ${e.name}</td>
+        <td>${e.rasen}</td>
+        <td>${e.bio}</td>
+        <td>${e.zahlung}</td>
+        <td>${e.summe}</td>
+        <td>
+          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+        </td>
+      </tr>`;
   });
 
   if(aktuellerOrt){
@@ -193,7 +212,9 @@ function ladeHeute(){
 function bearbeiten(id){
   const e=JSON.parse(localStorage.getItem("humix")).find(x=>x.id===id);
   editId.value=e.id;
-  Object.keys(e).forEach(k=>{ if(document.getElementById(k)) document.getElementById(k).value=e[k]; });
+  Object.keys(e).forEach(k=>{
+    if(document.getElementById(k) && k!=="id") document.getElementById(k).value=e[k];
+  });
 }
 
 function loeschen(id){
@@ -210,8 +231,74 @@ function felderLeeren(){
   rasen.value=0; bio.value=0;
 }
 
-/* ================= CSV / XLSX / ZUSAMMENFASSUNG (unverändert) ================= */
-/* → bleiben exakt wie vorher */
+/* ================= CSV ================= */
+function exportTagesCSV(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  let csv="Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
+  daten.forEach(e=>{
+    const tel=String(e.telefon||"").replace(/"/g,'""');
+    csv+=`${e.datum};${e.uhrzeit};${e.name};="${tel}";${e.strasse};${e.hausnr};${e.plz};${e.ort};${e.rasen};${e.bio};${e.ausgestreut};${e.zahlung};${e.summe}\n`;
+  });
+  downloadCSV(csv,"humix_tagesliste.csv");
+}
+
+/* ================= XLSX ================= */
+function exportXLSX(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  const sheetData=[["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €"]];
+  daten.forEach(e=>{
+    sheetData.push([e.datum,e.uhrzeit,e.name,e.telefon,e.strasse,e.hausnr,e.plz,e.ort,e.rasen,e.bio,e.ausgestreut,e.zahlung,e.summe]);
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(sheetData);
+  ws["!cols"]=sheetData[0].map((_,i)=>({wch:Math.max(...sheetData.map(r=>String(r[i]||"").length))+2}));
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"HÜMIX");
+  XLSX.writeFile(wb,"humix_tagesliste.xlsx");
+}
+
+/* ================= ZUSAMMENFASSUNG ================= */
+function exportZusammenfassung(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  const datum=daten[0].datum;
+  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
+
+  daten.forEach(e=>{
+    if(e.zahlung==="Bar"){bR+=e.rasen;bB+=e.bio;bS+=e.summe;}
+    if(e.zahlung==="EC"){eR+=e.rasen;eB+=e.bio;eS+=e.summe;}
+  });
+
+  let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv+=`${datum};Bar;${bR};${bB};${bS}\n`;
+  csv+=`${datum};EC;${eR};${eB};${eS}\n`;
+  csv+=`${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}`;
+
+  downloadCSV(csv,"humix_tageszusammenfassung.csv");
+}
+
+/* ================= DOWNLOAD ================= */
+function downloadCSV(text,name){
+  const blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  a.click();
+}
+
+/* ================= ALLES LÖSCHEN ================= */
+function allesLoeschen(){
+  if(confirm("Wirklich alle Daten löschen?")){
+    localStorage.removeItem("humix");
+    ladeHeute();
+  }
+}
 
 window.onload=ladeHeute;
 </script>
