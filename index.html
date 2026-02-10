@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- SheetJS für XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -91,7 +89,13 @@ th { background:#e8f5e9; }
 <table>
 <thead>
 <tr>
-<th>Uhrzeit</th><th>Name</th><th>Rasen</th><th>Bio</th><th>Zahlung</th><th>€</th><th>Aktion</th>
+<th>Uhrzeit</th>
+<th>Ort</th>
+<th>Rasen</th>
+<th>Bio</th>
+<th>Zahlung</th>
+<th>€</th>
+<th>Aktion</th>
 </tr>
 </thead>
 <tbody id="tabelleHeute"></tbody>
@@ -171,7 +175,7 @@ function ladeHeute(){
     tbody.innerHTML += `
       <tr>
         <td>${e.uhrzeit}</td>
-        <td>${e.name}</td>
+        <td>${e.ort}</td>
         <td>${e.rasen}</td>
         <td>${e.bio}</td>
         <td>${e.zahlung}</td>
@@ -271,7 +275,7 @@ function downloadCSV(text,name){
   a.click();
 }
 
-/* ================= LÖSCHEN ALLES ================= */
+/* ================= ALLES LÖSCHEN ================= */
 function allesLoeschen(){
   if(confirm("Wirklich alle Daten löschen?")){
     localStorage.removeItem("humix");
