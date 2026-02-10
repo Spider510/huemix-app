@@ -5,6 +5,7 @@
 <title>HÜMIX Einsatz</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- SheetJS für XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -30,7 +31,7 @@ th { background:#e8f5e9; }
 .ec { background:#e3f2fd; }
 .summe { font-weight:bold; background:#f1f8e9; }
 
-.actionBtn { padding:4px 6px; font-size:12px; }
+.actionBtn { padding:4px 6px; font-size:12px; width:auto; }
 .status { font-size:14px; margin-top:6px; }
 </style>
 </head>
@@ -109,6 +110,7 @@ th { background:#e8f5e9; }
 <script>
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
+function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 
 /* ================= GPS ================= */
 function gpsHolen(){
@@ -118,6 +120,7 @@ function gpsHolen(){
   navigator.geolocation.getCurrentPosition(pos=>{
     const lat=pos.coords.latitude;
     const lon=pos.coords.longitude;
+
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
       .then(r=>r.json())
       .then(d=>{
@@ -125,39 +128,41 @@ function gpsHolen(){
         el("hausnr").value=d.address?.house_number||"";
         el("plz").value=d.address?.postcode||"";
         el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-        el("gpsStatus").innerText="GPS OK";
+        el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       });
-  });
+  }, ()=>alert("GPS nicht verfügbar"));
 }
 
 /* ================= SPEICHERN ================= */
 function speichern(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const rasen=Number(el("rasen").value||0);
-  const bio=Number(el("bio").value||0);
-  const summe=rasen*45+bio*30;
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
-  const id=el("editId").value||Date.now()+"_"+Math.random();
-  const eintrag={
+  const rasen = toNum(el("rasen").value || 0);
+  const bio   = toNum(el("bio").value || 0);
+  const summe = rasen*45 + bio*30;
+
+  const id = el("editId").value || (Date.now()+"_"+Math.random());
+
+  const eintrag = {
     id,
-    datum:heuteDatum(),
-    uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name:el("name").value.trim()||"(kein Name)",
-    telefon:el("telefon").value||"",
-    strasse:el("strasse").value||"",
-    hausnr:el("hausnr").value||"",
-    plz:el("plz").value||"",
-    ort:el("ort").value||"",
-    rasen,bio,
-    ausgestreut:el("ausgestreut").value,
-    zahlung:el("zahlung").value,
+    datum: heuteDatum(),
+    uhrzeit: new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+    name: (el("name").value || "").trim() || "(kein Name)",
+    telefon: el("telefon").value || "",
+    strasse: el("strasse").value || "",
+    hausnr: el("hausnr").value || "",
+    plz: el("plz").value || "",
+    ort: el("ort").value || "",
+    rasen, bio,
+    ausgestreut: el("ausgestreut").value,
+    zahlung: el("zahlung").value,
     summe
   };
 
-  const i=daten.findIndex(e=>e.id===id);
+  const i = daten.findIndex(e=>e.id===id);
   if(i>=0) daten[i]=eintrag; else daten.push(eintrag);
 
-  localStorage.setItem("humix",JSON.stringify(daten));
+  localStorage.setItem("humix", JSON.stringify(daten));
   neuerEintrag();
   ladeHeute();
 }
@@ -173,77 +178,187 @@ function neuerEintrag(){
 
 /* ================= HEUTE + SUMMEN ================= */
 function ladeHeute(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]")
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
-  const tbody=el("tabelleHeute");
-  const tfoot=el("summenHeute");
+  const tbody = el("tabelleHeute");
+  const tfoot = el("summenHeute");
   tbody.innerHTML="";
   tfoot.innerHTML="";
 
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
 
   daten.forEach(e=>{
-    if(e.zahlung==="Bar"){bR+=e.rasen;bB+=e.bio;bS+=e.summe;}
-    if(e.zahlung==="EC"){eR+=e.rasen;eB+=e.bio;eS+=e.summe;}
+    const ras = toNum(e.rasen);
+    const bi  = toNum(e.bio);
+    const su  = toNum(e.summe);
 
-    tbody.innerHTML+=`
-    <tr class="${e.zahlung==="Bar"?"bar":"ec"}">
-      <td>${e.uhrzeit}</td>
-      <td>${e.ort} – ${e.name}</td>
-      <td>${e.rasen}</td>
-      <td>${e.bio}</td>
-      <td>${e.zahlung}</td>
-      <td>${e.summe}</td>
-      <td>
-        <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-        <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
-      </td>
-    </tr>`;
+    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
+    if(e.zahlung==="EC"){  eR+=ras; eB+=bi; eS+=su; }
+
+    tbody.innerHTML += `
+      <tr class="${e.zahlung==="Bar" ? "bar" : "ec"}">
+        <td>${e.uhrzeit || ""}</td>
+        <td>${(e.ort||"")} – ${(e.name||"")}</td>
+        <td>${ras}</td>
+        <td>${bi}</td>
+        <td>${e.zahlung||""}</td>
+        <td>${su}</td>
+        <td>
+          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+        </td>
+      </tr>`;
   });
 
-  tfoot.innerHTML=`
-  <tr class="summe bar">
-    <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td>
-  </tr>
-  <tr class="summe ec">
-    <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td>
-  </tr>
-  <tr class="summe">
-    <td colspan="2">GESAMT</td>
-    <td>${bR+eR}</td>
-    <td>${bB+eB}</td>
-    <td></td>
-    <td>${bS+eS}</td>
-    <td></td>
-  </tr>`;
+  tfoot.innerHTML = `
+    <tr class="summe bar">
+      <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td>
+    </tr>
+    <tr class="summe ec">
+      <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td>
+    </tr>
+    <tr class="summe">
+      <td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td>
+    </tr>`;
 }
 
 function bearbeiten(id){
-  const e=JSON.parse(localStorage.getItem("humix")).find(x=>x.id===id);
-  el("editId").value=e.id;
-  Object.keys(e).forEach(k=>{ if(el(k)) el(k).value=e[k]; });
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  const e = daten.find(x=>x.id===id);
+  if(!e) return;
+
+  el("editId").value = e.id;
+  el("name").value = (e.name && e.name !== "(kein Name)") ? e.name : "";
+  el("telefon").value = e.telefon || "";
+  el("strasse").value = e.strasse || "";
+  el("hausnr").value = e.hausnr || "";
+  el("plz").value = e.plz || "";
+  el("ort").value = e.ort || "";
+  el("rasen").value = toNum(e.rasen);
+  el("bio").value = toNum(e.bio);
+  el("ausgestreut").value = e.ausgestreut || "Ja";
+  el("zahlung").value = e.zahlung || "Bar";
 }
 
 function loeschen(id){
   if(!confirm("Eintrag löschen?")) return;
-  const daten=JSON.parse(localStorage.getItem("humix")).filter(e=>e.id!==id);
-  localStorage.setItem("humix",JSON.stringify(daten));
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]").filter(e=>e.id!==id);
+  localStorage.setItem("humix", JSON.stringify(daten));
   ladeHeute();
 }
 
-/* ================= EXPORTS (unverändert) ================= */
-function exportTagesCSV(){ /* unverändert */ }
-function exportXLSX(){ /* unverändert */ }
-function exportZusammenfassung(){ /* unverändert */ }
+/* ================= DOWNLOAD CSV (BOM für Umlaute) ================= */
+function downloadCSV(text, name){
+  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* ================= EXPORT: Tages-CSV ================= */
+function exportTagesCSV(){
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
+    .filter(e=>e.datum===heuteDatum());
+
+  if(!daten.length) return alert("Keine Daten für heute");
+
+  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
+
+  daten.forEach(e=>{
+    const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
+    csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${toNum(e.bio)};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
+  });
+
+  const dateName = new Date().toISOString().slice(0,10); // yyyy-mm-dd
+  downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
+}
+
+/* ================= EXPORT: XLSX (heute + Auto-Spaltenbreite) ================= */
+function exportXLSX(){
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
+    .filter(e=>e.datum===heuteDatum());
+
+  if(!daten.length) return alert("Keine Daten für heute");
+
+  const sheetData = [
+    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €"]
+  ];
+
+  daten.forEach(e=>{
+    sheetData.push([
+      e.datum,
+      e.uhrzeit,
+      e.name || "",
+      e.telefon || "",
+      e.strasse || "",
+      e.hausnr || "",
+      e.plz || "",
+      e.ort || "",
+      toNum(e.rasen),
+      toNum(e.bio),
+      e.ausgestreut || "",
+      e.zahlung || "",
+      toNum(e.summe)
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // Auto-Spaltenbreite
+  ws["!cols"] = sheetData[0].map((_, i) => ({
+    wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
+
+  const dateName = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
+}
+
+/* ================= EXPORT: Tageszusammenfassung CSV (heute) ================= */
+function exportZusammenfassung(){
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
+    .filter(e=>e.datum===heuteDatum());
+
+  if(!daten.length) return alert("Keine Daten für heute");
+
+  const datum = heuteDatum();
+  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
+
+  daten.forEach(e=>{
+    const ras = toNum(e.rasen);
+    const bi  = toNum(e.bio);
+    const su  = toNum(e.summe);
+    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
+    if(e.zahlung==="EC"){  eR+=ras; eB+=bi; eS+=su; }
+  });
+
+  let csv = "Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv += `${datum};Bar;${bR};${bB};${bS}\n`;
+  csv += `${datum};EC;${eR};${eB};${eS}\n`;
+  csv += `${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
+
+  const dateName = new Date().toISOString().slice(0,10);
+  downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
+}
+
+/* ================= ALLES LÖSCHEN ================= */
 function allesLoeschen(){
   if(confirm("Wirklich alle Daten löschen?")){
     localStorage.removeItem("humix");
+    neuerEintrag();
     ladeHeute();
+    alert("Gelöscht");
   }
 }
 
-window.onload=ladeHeute;
+window.onload = ladeHeute;
 </script>
+
 </body>
 </html>
