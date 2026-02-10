@@ -249,17 +249,32 @@ function exportXLSX(){
   XLSX.writeFile(wb,"humix_tagesliste.xlsx");
 }
 
+/* ================= ZUSAMMENFASSUNG CSV ================= */
+/* ✅ NUR HIER geändert: NaN verhindern (alte/kaputte Einträge sauber auf 0 setzen) */
 function exportZusammenfassung(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
   if(!daten.length) return alert("Keine Daten");
 
+  const toNum = (v)=>{
+    // erlaubt "16", 16, "", null, undefined, "16,5" etc.
+    if (v === null || v === undefined || v === "") return 0;
+    const n = Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
+
   daten.forEach(e=>{
-    if(e.zahlung==="Bar"){bR+=e.rasen;bB+=e.bio;bS+=e.summe;}
-    if(e.zahlung==="EC"){eR+=e.rasen;eB+=e.bio;eS+=e.summe;}
+    const rasen = toNum(e.rasen);
+    const bio   = toNum(e.bio);
+    const summe = toNum(e.summe);
+
+    if(e.zahlung==="Bar"){ bR+=rasen; bB+=bio; bS+=summe; }
+    if(e.zahlung==="EC"){  eR+=rasen; eB+=bio; eS+=summe; }
   });
 
-  const d=daten[0].datum;
+  const d = daten[0].datum || heuteDatum();
+
   let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
   csv+=`${d};Bar;${bR};${bB};${bS}\n`;
   csv+=`${d};EC;${eR};${eB};${eS}\n`;
@@ -268,6 +283,7 @@ function exportZusammenfassung(){
   downloadCSV(csv,"humix_tageszusammenfassung.csv");
 }
 
+/* ================= DOWNLOAD CSV ================= */
 function downloadCSV(text,name){
   const blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");
