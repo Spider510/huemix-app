@@ -102,6 +102,7 @@ function heuteDatum(){
   return new Date().toLocaleDateString("de-DE");
 }
 
+/* ================= GPS ================= */
 function gpsHolen(){
   felderLeeren();
   document.getElementById("gpsStatus").innerText="GPS wird ermittelt…";
@@ -118,89 +119,98 @@ function gpsHolen(){
   });
 }
 
+/* ================= SPEICHERN – FIX ================= */
 function speichern(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const rasen=Number(rasenInput.value||0);
-  const bio=Number(bioInput.value||0);
-  const summe=rasen*45+bio*30;
-  const jetzt=new Date();
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
-  const eintrag={
-    id: editId.value || crypto.randomUUID(),
+  const rasenVal = Number(document.getElementById("rasen").value || 0);
+  const bioVal   = Number(document.getElementById("bio").value || 0);
+  const summe    = rasenVal * 45 + bioVal * 30;
+
+  const jetzt = new Date();
+
+  const eintrag = {
+    id: document.getElementById("editId").value || crypto.randomUUID(),
     datum: heuteDatum(),
     uhrzeit: jetzt.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name: name.value||"",
-    telefon: telefon.value||"",
-    strasse: strasse.value||"",
-    hausnr: hausnr.value||"",
-    plz: plz.value||"",
-    ort: ort.value||"",
-    rasen, bio,
-    ausgestreut: ausgestreut.value,
-    zahlung: zahlung.value,
-    summe
+    name: document.getElementById("name").value || "",
+    telefon: document.getElementById("telefon").value || "",
+    strasse: document.getElementById("strasse").value || "",
+    hausnr: document.getElementById("hausnr").value || "",
+    plz: document.getElementById("plz").value || "",
+    ort: document.getElementById("ort").value || "",
+    rasen: rasenVal,
+    bio: bioVal,
+    ausgestreut: document.getElementById("ausgestreut").value,
+    zahlung: document.getElementById("zahlung").value,
+    summe: summe
   };
 
-  const idx=daten.findIndex(e=>e.id===eintrag.id);
-  if(idx>=0) daten[idx]=eintrag; else daten.push(eintrag);
+  const idx = daten.findIndex(e => e.id === eintrag.id);
+  if (idx >= 0) daten[idx] = eintrag;
+  else daten.push(eintrag);
 
-  localStorage.setItem("humix",JSON.stringify(daten));
-  status.innerText="Gespeichert ✔";
+  localStorage.setItem("humix", JSON.stringify(daten));
+
+  document.getElementById("status").innerText = "Gespeichert ✔";
   felderLeeren();
   ladeHeute();
 }
 
+/* ================= HEUTE LADEN ================= */
 function ladeHeute(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]")
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
-  tabelleHeute.innerHTML="";
+
+  const tbody = document.getElementById("tabelleHeute");
+  tbody.innerHTML = "";
+
   daten.forEach(e=>{
-    tabelleHeute.innerHTML+=`
-    <tr>
-      <td>${e.uhrzeit}</td>
-      <td>${e.name}</td>
-      <td>${e.rasen}</td>
-      <td>${e.bio}</td>
-      <td>${e.zahlung}</td>
-      <td>${e.summe}</td>
-      <td>
-        <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-        <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
-      </td>
-    </tr>`;
+    tbody.innerHTML += `
+      <tr>
+        <td>${e.uhrzeit}</td>
+        <td>${e.name}</td>
+        <td>${e.rasen}</td>
+        <td>${e.bio}</td>
+        <td>${e.zahlung}</td>
+        <td>${e.summe}</td>
+        <td>
+          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+        </td>
+      </tr>`;
   });
 }
 
+/* ================= BEARBEITEN ================= */
 function bearbeiten(id){
-  const e=JSON.parse(localStorage.getItem("humix")).find(x=>x.id===id);
-  editId.value=e.id;
-  Object.entries(e).forEach(([k,v])=>{
-    if(document.getElementById(k)) document.getElementById(k).value=v;
+  const e = JSON.parse(localStorage.getItem("humix")).find(x=>x.id===id);
+  document.getElementById("editId").value = e.id;
+  Object.keys(e).forEach(k=>{
+    if(document.getElementById(k)) document.getElementById(k).value = e[k];
   });
-  status.innerText="Bearbeitungsmodus aktiv";
+  document.getElementById("status").innerText="Bearbeitungsmodus aktiv";
 }
 
+/* ================= LÖSCHEN ================= */
 function loeschen(id){
   if(!confirm("Eintrag löschen?")) return;
-  const daten=JSON.parse(localStorage.getItem("humix")).filter(e=>e.id!==id);
+  const daten = JSON.parse(localStorage.getItem("humix")).filter(e=>e.id!==id);
   localStorage.setItem("humix",JSON.stringify(daten));
   ladeHeute();
 }
 
+/* ================= RESET ================= */
 function felderLeeren(){
-  editId.value="";
-  ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>document.getElementById(i).value="");
-  rasen.value=0; bio.value=0;
+  document.getElementById("editId").value="";
+  ["name","telefon","strasse","hausnr","plz","ort"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("rasen").value=0;
+  document.getElementById("bio").value=0;
 }
 
-function allesLoeschen(){
-  if(confirm("Wirklich alle Daten löschen?")){
-    localStorage.removeItem("humix");
-    ladeHeute();
-  }
-}
+/* ================= CSV / XLSX / ZUSAMMENFASSUNG bleiben unverändert ================= */
 
-window.onload=ladeHeute;
+window.onload = ladeHeute;
 </script>
 </body>
 </html>
