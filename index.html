@@ -12,7 +12,7 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
   background:#f2f4f7;
   margin:0;
-  padding-bottom:120px;
+  padding-bottom:125px;
 }
 h1{
   text-align:center;
@@ -55,11 +55,11 @@ input,select{
   display:flex;
   justify-content:space-around;
   padding:10px;
+  gap:6px;
   box-shadow:0 -3px 10px rgba(0,0,0,0.1);
 }
 .fixedBar button{
   flex:1;
-  margin:0 4px;
   padding:12px;
   font-size:14px;
   border:none;
@@ -73,10 +73,10 @@ input,select{
 .toggle{
   background:#e5e7eb;
   border-radius:10px;
-  padding:8px;
+  padding:10px;
   margin-top:8px;
   text-align:center;
-  font-weight:600;
+  font-weight:700;
   cursor:pointer;
 }
 .hidden{ display:none; }
@@ -87,7 +87,7 @@ table{
   margin-top:10px;
 }
 th,td{
-  padding:6px;
+  padding:7px 6px;
   font-size:13px;
   border-bottom:1px solid #eee;
   text-align:center;
@@ -95,19 +95,19 @@ th,td{
 .bar{ background:#ecfdf5; }
 .ec{ background:#eff6ff; }
 .sumRow{
-  font-weight:bold;
+  font-weight:800;
   background:#f9fafb;
 }
 
 .smallBtn{
-  padding:4px 6px;
+  padding:5px 7px;
   font-size:12px;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
 }
-.editBtn{ background:#2563eb; color:white; }
-.delBtn{ background:#dc2626; color:white; }
+.editBtn{ background:#2563eb; color:#fff; }
+.delBtn{ background:#dc2626; color:#fff; }
 
 .gpsBtn{
   margin-top:10px;
@@ -116,6 +116,12 @@ th,td{
   border:none;
   padding:10px;
   border-radius:10px;
+  width:100%;
+}
+.hint{
+  font-size:12px;
+  margin-top:6px;
+  color:#666;
 }
 </style>
 </head>
@@ -127,97 +133,110 @@ th,td{
 <input type="hidden" id="editId">
 
 <div class="card">
-<h3>📍 Adresse</h3>
-<label>Straße</label><input id="strasse">
-<label>Hausnr</label><input id="hausnr">
-<label>PLZ</label><input id="plz">
-<label>Ort</label><input id="ort">
-<button class="gpsBtn" onclick="gpsHolen()">GPS holen</button>
-<div id="gpsStatus" style="font-size:12px;margin-top:5px;color:#666;"></div>
+  <h3>📍 Adresse</h3>
+  <label>Straße</label><input id="strasse">
+  <label>Hausnr</label><input id="hausnr">
+  <label>PLZ</label><input id="plz">
+  <label>Ort</label><input id="ort">
+  <button class="gpsBtn" onclick="gpsHolen()">GPS holen</button>
+  <div id="gpsStatus" class="hint">Noch keine Adresse per GPS geholt.</div>
 </div>
 
 <div class="card">
-<h3>👤 Kunde</h3>
-<label>Name</label><input id="name">
-<label>Telefon</label><input id="telefon">
+  <h3>👤 Kunde</h3>
+  <label>Name</label><input id="name" placeholder="optional">
+  <label>Telefon</label><input id="telefon" inputmode="tel" placeholder="z.B. 0170...">
 </div>
 
 <div class="card">
-<h3>🌱 Mengen</h3>
-<div class="row">
-  <div>
-    <label>Rasen (45€)</label>
-    <input id="rasen" type="number" value="0">
+  <h3>🌱 Mengen</h3>
+  <div class="row">
+    <div>
+      <label>Rasen (45€)</label>
+      <input id="rasen" type="number" value="0" min="0">
+    </div>
+    <div>
+      <label>Bio (30€)</label>
+      <input id="bio" type="number" value="0" min="0">
+    </div>
   </div>
-  <div>
-    <label>Bio (30€)</label>
-    <input id="bio" type="number" value="0">
+
+  <label>Zahlung</label>
+  <select id="zahlung">
+    <option>Bar</option>
+    <option>EC</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge anzeigen</div>
+  <div id="heuteBlock" class="hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Uhr</th>
+          <th>Ort – Name</th>
+          <th>Rasen</th>
+          <th>Bio</th>
+          <th>Zahlung</th>
+          <th>€</th>
+          <th>✏️</th>
+          <th>🗑</th>
+        </tr>
+      </thead>
+      <tbody id="tabelleHeute"></tbody>
+      <tfoot id="summenHeute"></tfoot>
+    </table>
   </div>
 </div>
 
-<label>Zahlung</label>
-<select id="zahlung">
-<option>Bar</option>
-<option>EC</option>
-</select>
-</div>
-
-<!-- HEUTE -->
 <div class="card">
-<div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge</div>
-<div id="heuteBlock" class="hidden">
-<table>
-<thead>
-<tr>
-<th>Uhr</th>
-<th>Ort – Name</th>
-<th>Rasen</th>
-<th>Bio</th>
-<th>Zahlung</th>
-<th>€</th>
-<th>✏️</th>
-<th>🗑</th>
-</tr>
-</thead>
-<tbody id="tabelleHeute"></tbody>
-<tfoot id="summenHeute"></tfoot>
-</table>
-</div>
-</div>
-
-<!-- KUNDEN -->
-<div class="card">
-<div class="toggle" onclick="toggleKunden()">👥 Kundenliste</div>
-<div id="kundenBlock" class="hidden">
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Telefon</th>
-<th>Ort</th>
-<th>✏️</th>
-<th>🗑</th>
-</tr>
-</thead>
-<tbody id="kundenTabelle"></tbody>
-</table>
-</div>
+  <div class="toggle" onclick="toggleKunden()">👥 Kundenliste anzeigen</div>
+  <div id="kundenBlock" class="hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Ort</th>
+          <th>Name</th>
+          <th>Telefon</th>
+          <th>✏️</th>
+          <th>🗑</th>
+        </tr>
+      </thead>
+      <tbody id="kundenTabelle"></tbody>
+    </table>
+    <div class="hint">Hinweis: Kundenliste ist duplikatfrei (Ort+Name). ✏️ öffnet den letzten Eintrag dieses Kunden. 🗑 löscht alle Einträge des Kunden.</div>
+  </div>
 </div>
 
 <div class="fixedBar">
-<button class="save" onclick="speichern()">Speichern</button>
-<button class="new" onclick="neuerEintrag()">Neu</button>
-<button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
-<button class="export" onclick="exportKundenCSV()">Kunden CSV</button>
-<button class="export" onclick="exportKundenExcel()">Kunden XLS</button>
+  <button class="save" onclick="speichern()">Speichern</button>
+  <button class="new" onclick="neuerEintrag()">Neu</button>
+  <button class="export" onclick="exportTagesZusammenfassung()">Tages-CSV</button>
+  <button class="export" onclick="exportKundenCSV()">Kunden-CSV</button>
+  <button class="export" onclick="exportKundenExcel()">Kunden-XLS</button>
 </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
 function heute(){ return new Date().toLocaleDateString("de-DE"); }
+function uhrzeitJetzt(){ return new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function normalizeKey(s){ return String(s||"").trim().toLowerCase(); }
 
-/* GPS */
+/* ================= TOGGLES ================= */
+function toggleHeute(){
+  el("heuteBlock").classList.toggle("hidden");
+  ladeHeute();
+}
+function toggleKunden(){
+  el("kundenBlock").classList.toggle("hidden");
+  ladeKunden();
+}
+
+/* ================= GPS ================= */
 function gpsHolen(){
+  el("gpsStatus").innerText="GPS wird ermittelt…";
   navigator.geolocation.getCurrentPosition(pos=>{
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
       .then(r=>r.json())
@@ -226,181 +245,307 @@ function gpsHolen(){
         el("hausnr").value=d.address?.house_number||"";
         el("plz").value=d.address?.postcode||"";
         el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-      });
-  });
+        el("gpsStatus").innerText="Adresse übernommen ✔";
+      })
+      .catch(()=> el("gpsStatus").innerText="Fehler beim Adress-Abruf");
+  }, ()=> el("gpsStatus").innerText="GPS nicht verfügbar/abgelehnt");
 }
 
-/* Speichern */
+/* ================= STORAGE HELPERS ================= */
+function loadAll(){
+  return JSON.parse(localStorage.getItem("humix")||"[]");
+}
+function saveAll(arr){
+  localStorage.setItem("humix", JSON.stringify(arr));
+}
+
+/* ================= SPEICHERN / BEARBEITEN ================= */
 function speichern(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const id=el("editId").value||Date.now();
+  const daten = loadAll();
 
-  const rasen=Number(el("rasen").value||0);
-  const bio=Number(el("bio").value||0);
+  const rasen = num(el("rasen").value||0);
+  const bio   = num(el("bio").value||0);
+  const summe = rasen*45 + bio*30;
 
-  const eintrag={
+  const id = el("editId").value || (Date.now()+"_"+Math.random());
+
+  const entry = {
     id,
-    datum:heute(),
-    uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name:el("name").value||"",
-    telefon:el("telefon").value||"",
-    ort:el("ort").value||"",
-    strasse:el("strasse").value||"",
-    hausnr:el("hausnr").value||"",
-    plz:el("plz").value||"",
-    rasen,bio,
-    summe:rasen*45+bio*30,
-    zahlung:el("zahlung").value
+    datum: heute(),
+    uhrzeit: uhrzeitJetzt(),
+    name: (el("name").value||"").trim() || "(kein Name)",
+    telefon: (el("telefon").value||"").trim(),
+    strasse: (el("strasse").value||"").trim(),
+    hausnr: (el("hausnr").value||"").trim(),
+    plz: (el("plz").value||"").trim(),
+    ort: (el("ort").value||"").trim(),
+    rasen,
+    bio,
+    zahlung: el("zahlung").value,
+    summe
   };
 
-  const index=daten.findIndex(e=>e.id==id);
-  if(index>=0) daten[index]=eintrag;
-  else daten.push(eintrag);
+  const idx = daten.findIndex(e=>e.id===id);
+  if(idx>=0) daten[idx]=entry; else daten.push(entry);
 
-  localStorage.setItem("humix",JSON.stringify(daten));
+  saveAll(daten);
   neuerEintrag();
+
+  // Views aktualisieren
   ladeHeute();
   ladeKunden();
 }
 
+/* ================= RESET ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
   el("rasen").value=0;
   el("bio").value=0;
+  el("gpsStatus").innerText="Noch keine Adresse per GPS geholt.";
 }
 
-/* Toggle */
-function toggleHeute(){ el("heuteBlock").classList.toggle("hidden"); ladeHeute(); }
-function toggleKunden(){ el("kundenBlock").classList.toggle("hidden"); ladeKunden(); }
-
-/* Heute */
-function ladeHeute(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]").filter(e=>e.datum===heute());
-  const tbody=el("tabelleHeute");
-  const tfoot=el("summenHeute");
-  tbody.innerHTML=""; tfoot.innerHTML="";
-
-  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  daten.forEach(e=>{
-    if(e.zahlung==="Bar"){ bR+=e.rasen; bB+=e.bio; bS+=e.summe; }
-    if(e.zahlung==="EC"){ eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
-
-    tbody.innerHTML+=`
-    <tr>
-      <td>${e.uhrzeit}</td>
-      <td>${e.ort} – ${e.name}</td>
-      <td>${e.rasen}</td>
-      <td>${e.bio}</td>
-      <td>${e.zahlung}</td>
-      <td>${e.summe}</td>
-      <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
-      <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
-    </tr>`;
-  });
-
-  tfoot.innerHTML=`
-  <tr class="sumRow"><td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td colspan="2"></td></tr>
-  <tr class="sumRow"><td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td colspan="2"></td></tr>
-  <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td colspan="2"></td></tr>
-  `;
-}
-
-/* Kunden */
-function ladeKunden(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const tbody=el("kundenTabelle");
-  tbody.innerHTML="";
-  daten.forEach(e=>{
-    tbody.innerHTML+=`
-    <tr>
-      <td>${e.name}</td>
-      <td>${e.telefon}</td>
-      <td>${e.ort}</td>
-      <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
-      <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
-    </tr>`;
-  });
-}
-
-/* Bearbeiten */
+/* ================= BEARBEITEN ================= */
 function bearbeiten(id){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const e=daten.find(x=>x.id==id);
-  el("editId").value=e.id;
-  el("name").value=e.name;
-  el("telefon").value=e.telefon;
-  el("ort").value=e.ort;
-  el("strasse").value=e.strasse;
-  el("hausnr").value=e.hausnr;
-  el("plz").value=e.plz;
-  el("rasen").value=e.rasen;
-  el("bio").value=e.bio;
-  el("zahlung").value=e.zahlung;
+  const daten = loadAll();
+  const e = daten.find(x=>x.id===id);
+  if(!e) return;
+
+  el("editId").value = e.id;
+  el("name").value = (e.name && e.name !== "(kein Name)") ? e.name : "";
+  el("telefon").value = e.telefon || "";
+  el("strasse").value = e.strasse || "";
+  el("hausnr").value = e.hausnr || "";
+  el("plz").value = e.plz || "";
+  el("ort").value = e.ort || "";
+  el("rasen").value = num(e.rasen);
+  el("bio").value = num(e.bio);
+  el("zahlung").value = e.zahlung || "Bar";
 }
 
-/* Löschen */
-function loeschen(id){
-  if(!confirm("Löschen?")) return;
-  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  daten=daten.filter(e=>e.id!=id);
-  localStorage.setItem("humix",JSON.stringify(daten));
+/* ================= LÖSCHEN (Eintrag) ================= */
+function loeschenEintrag(id){
+  if(!confirm("Eintrag löschen?")) return;
+  let daten = loadAll().filter(e=>e.id!==id);
+  saveAll(daten);
   ladeHeute();
   ladeKunden();
 }
 
-/* Kunden CSV */
-function exportKundenCSV(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  if(!daten.length) return alert("Keine Daten");
-  let csv="Name;Telefon;Ort\n";
+/* ================= HEUTE ANZEIGE ================= */
+function ladeHeute(){
+  const daten = loadAll().filter(e=>e.datum===heute());
+
+  const tbody = el("tabelleHeute");
+  const tfoot = el("summenHeute");
+  tbody.innerHTML="";
+  tfoot.innerHTML="";
+
+  let bR=0,bB=0,bS=0, eR=0,eB=0,eS=0;
+
   daten.forEach(e=>{
-    csv+=`${e.name};${e.telefon};${e.ort}\n`;
+    const ras = num(e.rasen);
+    const bi  = num(e.bio);
+    const su  = num(e.summe);
+
+    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
+    if(e.zahlung==="EC"){  eR+=ras; eB+=bi; eS+=su; }
+
+    const cls = (e.zahlung==="Bar") ? "bar" : "ec";
+
+    tbody.innerHTML += `
+      <tr class="${cls}">
+        <td>${e.uhrzeit||""}</td>
+        <td>${(e.ort||"")} – ${(e.name||"")}</td>
+        <td>${ras}</td>
+        <td>${bi}</td>
+        <td>${e.zahlung||""}</td>
+        <td>${su}</td>
+        <td><button class="smallBtn editBtn" onclick="bearbeiten('${e.id}')">✏️</button></td>
+        <td><button class="smallBtn delBtn" onclick="loeschenEintrag('${e.id}')">🗑</button></td>
+      </tr>`;
   });
-  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="humix_kunden.csv";
+
+  tfoot.innerHTML = `
+    <tr class="sumRow">
+      <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td colspan="2"></td>
+    </tr>
+    <tr class="sumRow">
+      <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td colspan="2"></td>
+    </tr>
+    <tr class="sumRow">
+      <td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td colspan="2"></td>
+    </tr>`;
+}
+
+/* ================= KUNDENLISTE (duplikatfrei) =================
+   - key: ort+name (normalized)
+   - ✏️ öffnet den zuletzt gespeicherten Eintrag für diesen Kunden
+   - 🗑 löscht alle Einträge dieses Kunden
+*/
+function ladeKunden(){
+  const daten = loadAll();
+  const tbody = el("kundenTabelle");
+  tbody.innerHTML="";
+
+  // Map: key -> {lastEntry, count}
+  const map = new Map();
+
+  daten.forEach(e=>{
+    const key = normalizeKey(e.ort) + "||" + normalizeKey(e.name);
+    const existing = map.get(key);
+    if(!existing){
+      map.set(key, { last: e, count: 1 });
+    } else {
+      existing.count += 1;
+      // "last" = der neueste (nach gespeichertem Datum/Zeitstempel: wir nehmen die Reihenfolge im Array als „neu“)
+      existing.last = e;
+    }
+  });
+
+  // sortiert nach Ort, dann Name
+  const arr = Array.from(map.values())
+    .map(x=>x.last)
+    .sort((a,b)=>{
+      const ao = (a.ort||"").localeCompare(b.ort||"","de");
+      if(ao!==0) return ao;
+      return (a.name||"").localeCompare(b.name||"","de");
+    });
+
+  arr.forEach(k=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${k.ort||""}</td>
+        <td>${k.name||""}</td>
+        <td>${k.telefon||""}</td>
+        <td><button class="smallBtn editBtn" onclick="bearbeiten('${k.id}')">✏️</button></td>
+        <td><button class="smallBtn delBtn" onclick="loeschenKunde('${k.ort||""}','${k.name||""}')">🗑</button></td>
+      </tr>`;
+  });
+}
+
+function loeschenKunde(ort, name){
+  if(!confirm(`Alle Einträge von "${name}" in "${ort}" löschen?`)) return;
+  const daten = loadAll().filter(e=>{
+    return !(String(e.ort||"").trim()===String(ort||"").trim() && String(e.name||"").trim()===String(name||"").trim());
+  });
+  saveAll(daten);
+  ladeHeute();
+  ladeKunden();
+}
+
+/* ================= CSV DOWNLOAD HELPER (BOM für Umlaute) ================= */
+function downloadCSV(text, filename){
+  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
 }
 
-/* Kunden XLS */
-function exportKundenExcel(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  if(!daten.length) return alert("Keine Daten");
-
-  const sheet=[["Name","Telefon","Ort"]];
-  daten.forEach(e=>sheet.push([e.name,e.telefon,e.ort]));
-
-  const ws=XLSX.utils.aoa_to_sheet(sheet);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Kunden");
-  XLSX.writeFile(wb,"humix_kunden.xlsx");
-}
-
-/* Tages CSV */
+/* ================= TAGESZUSAMMENFASSUNG CSV (wie „alt“) ================= */
 function exportTagesZusammenfassung(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]").filter(e=>e.datum===heute());
-  if(!daten.length) return alert("Keine Daten");
+  const daten = loadAll().filter(e=>e.datum===heute());
+  if(!daten.length) return alert("Keine Daten für heute");
 
-  let b=0,e=0;
-  daten.forEach(d=>{
-    if(d.zahlung==="Bar") b+=d.summe;
-    if(d.zahlung==="EC") e+=d.summe;
+  let bR=0,bB=0,bS=0, eR=0,eB=0,eS=0;
+
+  daten.forEach(e=>{
+    const ras=num(e.rasen), bi=num(e.bio), su=num(e.summe);
+    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
+    if(e.zahlung==="EC"){  eR+=ras; eB+=bi; eS+=su; }
   });
 
-  let csv="Datum;Bar;EC;Gesamt\n";
-  csv+=`${heute()};${b};${e};${b+e}\n`;
+  const datum = heute();
+  let csv = "Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv += `${datum};Bar;${bR};${bB};${bS}\n`;
+  csv += `${datum};EC;${eR};${eB};${eS}\n`;
+  csv += `${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
 
-  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="humix_tag.csv";
-  a.click();
+  downloadCSV(csv, "humix_tageszusammenfassung.csv");
 }
 
-window.onload=function(){ ladeHeute(); ladeKunden(); };
+/* ================= KUNDEN CSV (vollständig, duplikatfrei + Tel mit 0) ================= */
+function exportKundenCSV(){
+  const daten = loadAll();
+  if(!daten.length) return alert("Keine Daten vorhanden");
+
+  const map = new Map();
+
+  daten.forEach(e=>{
+    const key = normalizeKey(e.ort) + "||" + normalizeKey(e.name);
+    if(!map.has(key)) map.set(key, e);
+    else map.set(key, e); // letzter gewinnt
+  });
+
+  const arr = Array.from(map.values()).sort((a,b)=>{
+    const ao = (a.ort||"").localeCompare(b.ort||"","de");
+    if(ao!==0) return ao;
+    return (a.name||"").localeCompare(b.name||"","de");
+  });
+
+  let csv = "Name;Telefon;Straße;Hausnr;PLZ;Ort\n";
+  arr.forEach(k=>{
+    const tel = String(k.telefon||"").replace(/"/g,'""');
+    // Excel: führende 0 behalten
+    csv += `${k.name||""};="${tel}";${k.strasse||""};${k.hausnr||""};${k.plz||""};${k.ort||""}\n`;
+  });
+
+  downloadCSV(csv, "humix_kundenliste.csv");
+}
+
+/* ================= KUNDEN XLS (vollständig, duplikatfrei + Auto-Spalten) ================= */
+function exportKundenExcel(){
+  const daten = loadAll();
+  if(!daten.length) return alert("Keine Daten vorhanden");
+
+  const map = new Map();
+  daten.forEach(e=>{
+    const key = normalizeKey(e.ort) + "||" + normalizeKey(e.name);
+    map.set(key, e); // letzter gewinnt
+  });
+
+  const arr = Array.from(map.values()).sort((a,b)=>{
+    const ao = (a.ort||"").localeCompare(b.ort||"","de");
+    if(ao!==0) return ao;
+    return (a.name||"").localeCompare(b.name||"","de");
+  });
+
+  const sheetData = [
+    ["Name","Telefon","Straße","Hausnr","PLZ","Ort"]
+  ];
+
+  arr.forEach(k=>{
+    sheetData.push([
+      k.name||"",
+      k.telefon||"",
+      k.strasse||"",
+      k.hausnr||"",
+      k.plz||"",
+      k.ort||""
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  ws["!cols"] = sheetData[0].map((_,i)=>({
+    wch: Math.max(...sheetData.map(r=>String(r[i]??"").length)) + 2
+  }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Kunden");
+  XLSX.writeFile(wb, "humix_kundenliste.xlsx");
+}
+
+/* ================= INIT ================= */
+window.onload = function(){
+  // Daten laden, auch wenn Blöcke zu sind (für sofortige Funktion)
+  ladeHeute();
+  ladeKunden();
+};
 </script>
+
 </body>
 </html>
