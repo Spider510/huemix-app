@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HÜMIX Einsatz</title>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
   background:#f2f4f7;
   margin:0;
-  padding-bottom:90px;
+  padding-bottom:100px;
 }
 
 h1{
@@ -57,9 +59,7 @@ input,select{
   gap:10px;
 }
 
-.row > div{
-  flex:1;
-}
+.row > div{ flex:1; }
 
 .fixedBar{
   position:fixed;
@@ -109,6 +109,7 @@ th,td{
   padding:6px;
   font-size:13px;
   border-bottom:1px solid #eee;
+  text-align:center;
 }
 
 .bar{ background:#ecfdf5; }
@@ -117,6 +118,25 @@ th,td{
 .sumRow{
   font-weight:bold;
   background:#f9fafb;
+}
+
+.smallBtn{
+  padding:4px 6px;
+  font-size:12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.editBtn{ background:#2563eb; color:white; }
+.delBtn{ background:#dc2626; color:white; }
+
+.gpsBtn{
+  margin-top:10px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -133,6 +153,8 @@ th,td{
 <label>Hausnr</label><input id="hausnr">
 <label>PLZ</label><input id="plz">
 <label>Ort</label><input id="ort">
+<button class="gpsBtn" onclick="gpsHolen()">GPS holen</button>
+<div id="gpsStatus" style="font-size:12px;margin-top:5px;color:#666;"></div>
 </div>
 
 <div class="card">
@@ -164,7 +186,6 @@ th,td{
 <div class="card">
 <div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge anzeigen</div>
 <div id="heuteBlock" class="hidden">
-
 <table>
 <thead>
 <tr>
@@ -174,13 +195,31 @@ th,td{
 <th>Bio</th>
 <th>Zahlung</th>
 <th>€</th>
-<th>Bearb.</th>
+<th>✏️</th>
+<th>🗑</th>
 </tr>
 </thead>
 <tbody id="tabelleHeute"></tbody>
 <tfoot id="summenHeute"></tfoot>
 </table>
+</div>
+</div>
 
+<div class="card">
+<div class="toggle" onclick="toggleKunden()">👥 Kundenliste anzeigen</div>
+<div id="kundenBlock" class="hidden">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Telefon</th>
+<th>Straße</th>
+<th>PLZ</th>
+<th>Ort</th>
+</tr>
+</thead>
+<tbody id="kundenTabelle"></tbody>
+</table>
 </div>
 </div>
 
@@ -188,32 +227,48 @@ th,td{
 <button class="save" onclick="speichern()">Speichern</button>
 <button class="new" onclick="neuerEintrag()">Neu</button>
 <button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
+<button class="export" onclick="exportKundenExcel()">Kunden XLS</button>
 </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
 function heute(){ return new Date().toLocaleDateString("de-DE"); }
 
-function toggleHeute(){
-  el("heuteBlock").classList.toggle("hidden");
+/* ================= GPS ================= */
+function gpsHolen(){
+  el("gpsStatus").innerText="GPS wird ermittelt…";
+  navigator.geolocation.getCurrentPosition(pos=>{
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
+      .then(r=>r.json())
+      .then(d=>{
+        el("strasse").value=d.address?.road||"";
+        el("hausnr").value=d.address?.house_number||"";
+        el("plz").value=d.address?.postcode||"";
+        el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
+        el("gpsStatus").innerText="Adresse übernommen";
+      });
+  });
 }
 
-/* ================= SPEICHERN + BEARBEITEN ================= */
+/* ================= SPEICHERN ================= */
 function speichern(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-
   const rasen=Number(el("rasen").value||0);
   const bio=Number(el("bio").value||0);
   const summe=rasen*45+bio*30;
 
-  const id=el("editId").value || Date.now();
+  const id=el("editId").value||Date.now();
 
   const eintrag={
     id,
     datum:heute(),
     uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    ort:el("ort").value||"",
     name:el("name").value||"(kein Name)",
+    telefon:el("telefon").value||"",
+    strasse:el("strasse").value||"",
+    hausnr:el("hausnr").value||"",
+    plz:el("plz").value||"",
+    ort:el("ort").value||"",
     rasen,bio,summe,
     zahlung:el("zahlung").value
   };
@@ -227,7 +282,6 @@ function speichern(){
   ladeHeute();
 }
 
-/* ================= RESET ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
@@ -235,7 +289,29 @@ function neuerEintrag(){
   el("bio").value=0;
 }
 
-/* ================= HEUTIGE EINTRÄGE ================= */
+function bearbeiten(id){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const e=daten.find(x=>x.id==id);
+  el("editId").value=e.id;
+  el("name").value=e.name;
+  el("telefon").value=e.telefon;
+  el("strasse").value=e.strasse;
+  el("hausnr").value=e.hausnr;
+  el("plz").value=e.plz;
+  el("ort").value=e.ort;
+  el("rasen").value=e.rasen;
+  el("bio").value=e.bio;
+  el("zahlung").value=e.zahlung;
+}
+
+function loeschen(id){
+  if(!confirm("Eintrag löschen?")) return;
+  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  daten=daten.filter(e=>e.id!=id);
+  localStorage.setItem("humix",JSON.stringify(daten));
+  ladeHeute();
+}
+
 function ladeHeute(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]")
     .filter(e=>e.datum===heute());
@@ -259,32 +335,83 @@ function ladeHeute(){
         <td>${e.bio}</td>
         <td>${e.zahlung}</td>
         <td>${e.summe}</td>
-        <td><button onclick="bearbeiten(${e.id})">✏️</button></td>
+        <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
+        <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
       </tr>`;
   });
 
   tfoot.innerHTML=`
-    <tr class="sumRow"><td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td></tr>
-    <tr class="sumRow"><td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td></tr>
-    <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td></tr>
+  <tr class="sumRow"><td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td colspan="2"></td></tr>
+  <tr class="sumRow"><td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td colspan="2"></td></tr>
+  <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td colspan="2"></td></tr>
   `;
 }
 
-/* ================= BEARBEITEN ================= */
-function bearbeiten(id){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const e=daten.find(x=>x.id==id);
-  if(!e) return;
-
-  el("editId").value=e.id;
-  el("ort").value=e.ort;
-  el("name").value=e.name;
-  el("rasen").value=e.rasen;
-  el("bio").value=e.bio;
-  el("zahlung").value=e.zahlung;
+/* ================= KUNDEN VORSCHAU ================= */
+function toggleKunden(){
+  el("kundenBlock").classList.toggle("hidden");
+  ladeKunden();
 }
 
-/* ================= TAGESZUSAMMENFASSUNG CSV ================= */
+function ladeKunden(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const tbody=el("kundenTabelle");
+  tbody.innerHTML="";
+  const map={};
+
+  daten.forEach(e=>{
+    const key=e.name+"_"+e.ort;
+    if(!map[key]){
+      map[key]=e;
+    }
+  });
+
+  Object.values(map)
+    .sort((a,b)=>a.ort.localeCompare(b.ort))
+    .forEach(k=>{
+      tbody.innerHTML+=`
+        <tr>
+          <td>${k.name}</td>
+          <td>${k.telefon}</td>
+          <td>${k.strasse}</td>
+          <td>${k.plz}</td>
+          <td>${k.ort}</td>
+        </tr>`;
+    });
+}
+
+/* ================= KUNDEN XLS ================= */
+function exportKundenExcel(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  const map={};
+  daten.forEach(e=>{
+    const key=e.name+"_"+e.ort;
+    if(!map[key]){
+      map[key]=[
+        e.name,e.telefon,e.strasse,e.hausnr,e.plz,e.ort
+      ];
+    }
+  });
+
+  const sheetData=[
+    ["Name","Telefon","Straße","Hausnr","PLZ","Ort"]
+  ];
+
+  Object.values(map).forEach(k=>sheetData.push(k));
+
+  const ws=XLSX.utils.aoa_to_sheet(sheetData);
+  ws["!cols"]=sheetData[0].map((_,i)=>({
+    wch:Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
+  }));
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Kunden");
+  XLSX.writeFile(wb,"humix_kundenliste.xlsx");
+}
+
+/* ================= CSV ================= */
 function exportTagesZusammenfassung(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]")
     .filter(e=>e.datum===heute());
