@@ -127,8 +127,6 @@ th,td{
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
-<input type="hidden" id="editId">
-
 <div class="card">
 <h3>📍 Adresse</h3>
 <label>Straße</label><input id="strasse">
@@ -187,7 +185,7 @@ th,td{
 <div class="fixedBar">
 <button class="save" onclick="speichern()">Speichern</button>
 <button class="new" onclick="neuerEintrag()">Neu</button>
-<button class="export" onclick="exportTagesCSV()">Export</button>
+<button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
 </div>
 
 <script>
@@ -253,10 +251,12 @@ function ladeHeute(){
   tbody.innerHTML="";
   tfoot.innerHTML="";
 
-  let total=0;
+  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
 
   daten.forEach(e=>{
-    total+=e.summe||0;
+    if(e.zahlung==="Bar"){ bR+=e.rasen; bB+=e.bio; bS+=e.summe; }
+    if(e.zahlung==="EC"){  eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
+
     tbody.innerHTML+=`
       <tr class="${e.zahlung==="Bar"?"bar":"ec"}">
         <td>${e.uhrzeit}</td>
@@ -265,23 +265,42 @@ function ladeHeute(){
       </tr>`;
   });
 
-  tfoot.innerHTML=`<tr class="sumRow"><td colspan="2">Gesamt</td><td>${total}</td></tr>`;
+  tfoot.innerHTML=`
+    <tr class="sumRow"><td colspan="2">BAR</td><td>${bS}</td></tr>
+    <tr class="sumRow"><td colspan="2">EC</td><td>${eS}</td></tr>
+    <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bS+eS}</td></tr>
+  `;
 }
 
-function exportTagesCSV(){
+/* ================= TAGESZUSAMMENFASSUNG CSV ================= */
+function exportTagesZusammenfassung(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]")
     .filter(e=>e.datum===heute());
+
   if(!daten.length) return alert("Keine Daten");
 
-  let csv="Datum;Uhrzeit;Ort;Name;Rasen;Bio;Zahlung;Summe\n";
+  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
+
   daten.forEach(e=>{
-    csv+=`${e.datum};${e.uhrzeit};${e.ort};${e.name};${e.rasen};${e.bio};${e.zahlung};${e.summe}\n`;
+    const rasen=Number(e.rasen)||0;
+    const bio=Number(e.bio)||0;
+    const summe=Number(e.summe)||0;
+
+    if(e.zahlung==="Bar"){ bR+=rasen; bB+=bio; bS+=summe; }
+    if(e.zahlung==="EC"){  eR+=rasen; eB+=bio; eS+=summe; }
   });
+
+  const datum=heute();
+
+  let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
+  csv+=`${datum};Bar;${bR};${bB};${bS}\n`;
+  csv+=`${datum};EC;${eR};${eB};${eS}\n`;
+  csv+=`${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
 
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="humix_heute.csv";
+  a.download="humix_tageszusammenfassung.csv";
   a.click();
 }
 
