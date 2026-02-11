@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HÜMIX Einsatz</title>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <style>
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
@@ -127,14 +125,14 @@ th,td{
 
 <h1>🌱 HÜMIX Einsatz</h1>
 
+<input type="hidden" id="editId">
+
 <div class="card">
 <h3>📍 Adresse</h3>
 <label>Straße</label><input id="strasse">
 <label>Hausnr</label><input id="hausnr">
 <label>PLZ</label><input id="plz">
 <label>Ort</label><input id="ort">
-<button style="margin-top:10px;background:#2563eb;color:#fff;border:none;padding:10px;border-radius:10px;" onclick="gpsHolen()">GPS holen</button>
-<div id="gpsStatus" style="font-size:12px;margin-top:5px;color:#666;"></div>
 </div>
 
 <div class="card">
@@ -172,7 +170,11 @@ th,td{
 <tr>
 <th>Uhr</th>
 <th>Ort – Name</th>
+<th>Rasen</th>
+<th>Bio</th>
+<th>Zahlung</th>
 <th>€</th>
+<th>Bearb.</th>
 </tr>
 </thead>
 <tbody id="tabelleHeute"></tbody>
@@ -196,23 +198,7 @@ function toggleHeute(){
   el("heuteBlock").classList.toggle("hidden");
 }
 
-/* ================= GPS ================= */
-function gpsHolen(){
-  el("gpsStatus").innerText="GPS wird ermittelt…";
-  navigator.geolocation.getCurrentPosition(pos=>{
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
-      .then(r=>r.json())
-      .then(d=>{
-        el("strasse").value=d.address?.road||"";
-        el("hausnr").value=d.address?.house_number||"";
-        el("plz").value=d.address?.postcode||"";
-        el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-        el("gpsStatus").innerText="Adresse übernommen";
-      });
-  });
-}
-
-/* ================= SPEICHERN ================= */
+/* ================= SPEICHERN + BEARBEITEN ================= */
 function speichern(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
 
@@ -220,14 +206,21 @@ function speichern(){
   const bio=Number(el("bio").value||0);
   const summe=rasen*45+bio*30;
 
-  daten.push({
+  const id=el("editId").value || Date.now();
+
+  const eintrag={
+    id,
     datum:heute(),
     uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
     ort:el("ort").value||"",
     name:el("name").value||"(kein Name)",
     rasen,bio,summe,
     zahlung:el("zahlung").value
-  });
+  };
+
+  const index=daten.findIndex(e=>e.id==id);
+  if(index>=0) daten[index]=eintrag;
+  else daten.push(eintrag);
 
   localStorage.setItem("humix",JSON.stringify(daten));
   neuerEintrag();
@@ -236,12 +229,13 @@ function speichern(){
 
 /* ================= RESET ================= */
 function neuerEintrag(){
+  el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
   el("rasen").value=0;
   el("bio").value=0;
 }
 
-/* ================= HEUTE ================= */
+/* ================= HEUTIGE EINTRÄGE ================= */
 function ladeHeute(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]")
     .filter(e=>e.datum===heute());
@@ -255,21 +249,39 @@ function ladeHeute(){
 
   daten.forEach(e=>{
     if(e.zahlung==="Bar"){ bR+=e.rasen; bB+=e.bio; bS+=e.summe; }
-    if(e.zahlung==="EC"){  eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
+    if(e.zahlung==="EC"){ eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
 
     tbody.innerHTML+=`
       <tr class="${e.zahlung==="Bar"?"bar":"ec"}">
         <td>${e.uhrzeit}</td>
         <td>${e.ort} – ${e.name}</td>
+        <td>${e.rasen}</td>
+        <td>${e.bio}</td>
+        <td>${e.zahlung}</td>
         <td>${e.summe}</td>
+        <td><button onclick="bearbeiten(${e.id})">✏️</button></td>
       </tr>`;
   });
 
   tfoot.innerHTML=`
-    <tr class="sumRow"><td colspan="2">BAR</td><td>${bS}</td></tr>
-    <tr class="sumRow"><td colspan="2">EC</td><td>${eS}</td></tr>
-    <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bS+eS}</td></tr>
+    <tr class="sumRow"><td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td></tr>
+    <tr class="sumRow"><td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td></tr>
+    <tr class="sumRow"><td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td></tr>
   `;
+}
+
+/* ================= BEARBEITEN ================= */
+function bearbeiten(id){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const e=daten.find(x=>x.id==id);
+  if(!e) return;
+
+  el("editId").value=e.id;
+  el("ort").value=e.ort;
+  el("name").value=e.name;
+  el("rasen").value=e.rasen;
+  el("bio").value=e.bio;
+  el("zahlung").value=e.zahlung;
 }
 
 /* ================= TAGESZUSAMMENFASSUNG CSV ================= */
@@ -282,20 +294,14 @@ function exportTagesZusammenfassung(){
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
 
   daten.forEach(e=>{
-    const rasen=Number(e.rasen)||0;
-    const bio=Number(e.bio)||0;
-    const summe=Number(e.summe)||0;
-
-    if(e.zahlung==="Bar"){ bR+=rasen; bB+=bio; bS+=summe; }
-    if(e.zahlung==="EC"){  eR+=rasen; eB+=bio; eS+=summe; }
+    if(e.zahlung==="Bar"){ bR+=e.rasen; bB+=e.bio; bS+=e.summe; }
+    if(e.zahlung==="EC"){ eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
   });
 
-  const datum=heute();
-
   let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
-  csv+=`${datum};Bar;${bR};${bB};${bS}\n`;
-  csv+=`${datum};EC;${eR};${eB};${eS}\n`;
-  csv+=`${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
+  csv+=`${heute()};Bar;${bR};${bB};${bS}\n`;
+  csv+=`${heute()};EC;${eR};${eB};${eS}\n`;
+  csv+=`${heute()};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
 
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");
