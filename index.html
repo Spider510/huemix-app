@@ -12,7 +12,7 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
   background:#f2f4f7;
   margin:0;
-  padding-bottom:100px;
+  padding-bottom:110px;
 }
 
 h1{
@@ -30,12 +30,6 @@ h1{
   padding:15px;
   border-radius:14px;
   box-shadow:0 4px 12px rgba(0,0,0,0.05);
-}
-
-.card h3{
-  margin-top:0;
-  font-size:16px;
-  color:#444;
 }
 
 label{
@@ -75,11 +69,11 @@ input,select{
 
 .fixedBar button{
   flex:1;
-  margin:0 5px;
-  padding:14px;
-  font-size:15px;
+  margin:0 4px;
+  padding:12px;
+  font-size:14px;
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   color:#fff;
 }
 
@@ -227,6 +221,7 @@ th,td{
 <button class="save" onclick="speichern()">Speichern</button>
 <button class="new" onclick="neuerEintrag()">Neu</button>
 <button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
+<button class="export" onclick="exportKundenCSV()">Kunden CSV</button>
 <button class="export" onclick="exportKundenExcel()">Kunden XLS</button>
 </div>
 
@@ -253,6 +248,7 @@ function gpsHolen(){
 /* ================= SPEICHERN ================= */
 function speichern(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+
   const rasen=Number(el("rasen").value||0);
   const bio=Number(el("bio").value||0);
   const summe=rasen*45+bio*30;
@@ -282,6 +278,7 @@ function speichern(){
   ladeHeute();
 }
 
+/* ================= RESET ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
@@ -289,29 +286,7 @@ function neuerEintrag(){
   el("bio").value=0;
 }
 
-function bearbeiten(id){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const e=daten.find(x=>x.id==id);
-  el("editId").value=e.id;
-  el("name").value=e.name;
-  el("telefon").value=e.telefon;
-  el("strasse").value=e.strasse;
-  el("hausnr").value=e.hausnr;
-  el("plz").value=e.plz;
-  el("ort").value=e.ort;
-  el("rasen").value=e.rasen;
-  el("bio").value=e.bio;
-  el("zahlung").value=e.zahlung;
-}
-
-function loeschen(id){
-  if(!confirm("Eintrag löschen?")) return;
-  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  daten=daten.filter(e=>e.id!=id);
-  localStorage.setItem("humix",JSON.stringify(daten));
-  ladeHeute();
-}
-
+/* ================= HEUTE ================= */
 function ladeHeute(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]")
     .filter(e=>e.datum===heute());
@@ -347,18 +322,37 @@ function ladeHeute(){
   `;
 }
 
-/* ================= KUNDEN VORSCHAU ================= */
-function toggleKunden(){
-  el("kundenBlock").classList.toggle("hidden");
-  ladeKunden();
+/* ================= BEARBEITEN ================= */
+function bearbeiten(id){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const e=daten.find(x=>x.id==id);
+  el("editId").value=e.id;
+  el("name").value=e.name;
+  el("telefon").value=e.telefon;
+  el("strasse").value=e.strasse;
+  el("hausnr").value=e.hausnr;
+  el("plz").value=e.plz;
+  el("ort").value=e.ort;
+  el("rasen").value=e.rasen;
+  el("bio").value=e.bio;
+  el("zahlung").value=e.zahlung;
 }
 
-function ladeKunden(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const tbody=el("kundenTabelle");
-  tbody.innerHTML="";
-  const map={};
+/* ================= LÖSCHEN ================= */
+function loeschen(id){
+  if(!confirm("Eintrag löschen?")) return;
+  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  daten=daten.filter(e=>e.id!=id);
+  localStorage.setItem("humix",JSON.stringify(daten));
+  ladeHeute();
+}
 
+/* ================= KUNDEN CSV ================= */
+function exportKundenCSV(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  const map={};
   daten.forEach(e=>{
     const key=e.name+"_"+e.ort;
     if(!map[key]){
@@ -366,18 +360,17 @@ function ladeKunden(){
     }
   });
 
-  Object.values(map)
-    .sort((a,b)=>a.ort.localeCompare(b.ort))
-    .forEach(k=>{
-      tbody.innerHTML+=`
-        <tr>
-          <td>${k.name}</td>
-          <td>${k.telefon}</td>
-          <td>${k.strasse}</td>
-          <td>${k.plz}</td>
-          <td>${k.ort}</td>
-        </tr>`;
-    });
+  let csv="Name;Telefon;Straße;Hausnr;PLZ;Ort\n";
+
+  Object.values(map).forEach(k=>{
+    csv+=`${k.name};${k.telefon};${k.strasse};${k.hausnr};${k.plz};${k.ort}\n`;
+  });
+
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="humix_kundenliste.csv";
+  a.click();
 }
 
 /* ================= KUNDEN XLS ================= */
