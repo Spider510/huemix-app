@@ -12,7 +12,7 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
   background:#f2f4f7;
   margin:0;
-  padding-bottom:110px;
+  padding-bottom:120px;
 }
 h1{
   text-align:center;
@@ -162,9 +162,9 @@ th,td{
 </select>
 </div>
 
-<!-- HEUTIGE EINTRÄGE -->
+<!-- HEUTE -->
 <div class="card">
-<div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge anzeigen</div>
+<div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge</div>
 <div id="heuteBlock" class="hidden">
 <table>
 <thead>
@@ -185,18 +185,18 @@ th,td{
 </div>
 </div>
 
-<!-- KUNDENLISTE -->
+<!-- KUNDEN -->
 <div class="card">
-<div class="toggle" onclick="toggleKunden()">👥 Kundenliste anzeigen</div>
+<div class="toggle" onclick="toggleKunden()">👥 Kundenliste</div>
 <div id="kundenBlock" class="hidden">
 <table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Telefon</th>
-<th>Straße</th>
-<th>PLZ</th>
 <th>Ort</th>
+<th>✏️</th>
+<th>🗑</th>
 </tr>
 </thead>
 <tbody id="kundenTabelle"></tbody>
@@ -209,26 +209,15 @@ th,td{
 <button class="new" onclick="neuerEintrag()">Neu</button>
 <button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
 <button class="export" onclick="exportKundenCSV()">Kunden CSV</button>
+<button class="export" onclick="exportKundenExcel()">Kunden XLS</button>
 </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
 function heute(){ return new Date().toLocaleDateString("de-DE"); }
 
-/* ================= TOGGLE ================= */
-function toggleHeute(){
-  el("heuteBlock").classList.toggle("hidden");
-  ladeHeute();
-}
-
-function toggleKunden(){
-  el("kundenBlock").classList.toggle("hidden");
-  ladeKunden();
-}
-
-/* ================= GPS ================= */
+/* GPS */
 function gpsHolen(){
-  el("gpsStatus").innerText="GPS wird ermittelt…";
   navigator.geolocation.getCurrentPosition(pos=>{
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
       .then(r=>r.json())
@@ -237,32 +226,30 @@ function gpsHolen(){
         el("hausnr").value=d.address?.house_number||"";
         el("plz").value=d.address?.postcode||"";
         el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-        el("gpsStatus").innerText="Adresse übernommen";
       });
   });
 }
 
-/* ================= SPEICHERN ================= */
+/* Speichern */
 function speichern(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const id=el("editId").value||Date.now();
 
   const rasen=Number(el("rasen").value||0);
   const bio=Number(el("bio").value||0);
-  const summe=rasen*45+bio*30;
-
-  const id=el("editId").value||Date.now();
 
   const eintrag={
     id,
     datum:heute(),
     uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name:el("name").value||"(kein Name)",
+    name:el("name").value||"",
     telefon:el("telefon").value||"",
+    ort:el("ort").value||"",
     strasse:el("strasse").value||"",
     hausnr:el("hausnr").value||"",
     plz:el("plz").value||"",
-    ort:el("ort").value||"",
-    rasen,bio,summe,
+    rasen,bio,
+    summe:rasen*45+bio*30,
     zahlung:el("zahlung").value
   };
 
@@ -273,9 +260,9 @@ function speichern(){
   localStorage.setItem("humix",JSON.stringify(daten));
   neuerEintrag();
   ladeHeute();
+  ladeKunden();
 }
 
-/* ================= RESET ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
@@ -283,15 +270,16 @@ function neuerEintrag(){
   el("bio").value=0;
 }
 
-/* ================= HEUTE ================= */
-function ladeHeute(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]")
-    .filter(e=>e.datum===heute());
+/* Toggle */
+function toggleHeute(){ el("heuteBlock").classList.toggle("hidden"); ladeHeute(); }
+function toggleKunden(){ el("kundenBlock").classList.toggle("hidden"); ladeKunden(); }
 
+/* Heute */
+function ladeHeute(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]").filter(e=>e.datum===heute());
   const tbody=el("tabelleHeute");
   const tfoot=el("summenHeute");
-  tbody.innerHTML="";
-  tfoot.innerHTML="";
+  tbody.innerHTML=""; tfoot.innerHTML="";
 
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
 
@@ -300,16 +288,16 @@ function ladeHeute(){
     if(e.zahlung==="EC"){ eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
 
     tbody.innerHTML+=`
-      <tr class="${e.zahlung==="Bar"?"bar":"ec"}">
-        <td>${e.uhrzeit}</td>
-        <td>${e.ort} – ${e.name}</td>
-        <td>${e.rasen}</td>
-        <td>${e.bio}</td>
-        <td>${e.zahlung}</td>
-        <td>${e.summe}</td>
-        <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
-        <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
-      </tr>`;
+    <tr>
+      <td>${e.uhrzeit}</td>
+      <td>${e.ort} – ${e.name}</td>
+      <td>${e.rasen}</td>
+      <td>${e.bio}</td>
+      <td>${e.zahlung}</td>
+      <td>${e.summe}</td>
+      <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
+      <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
+    </tr>`;
   });
 
   tfoot.innerHTML=`
@@ -319,60 +307,100 @@ function ladeHeute(){
   `;
 }
 
-/* ================= KUNDEN ================= */
+/* Kunden */
 function ladeKunden(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
   const tbody=el("kundenTabelle");
   tbody.innerHTML="";
-
-  const map={};
-
   daten.forEach(e=>{
-    const key=e.name+"_"+e.ort;
-    if(!map[key]){
-      map[key]=e;
-    }
-  });
-
-  Object.values(map).forEach(k=>{
     tbody.innerHTML+=`
-      <tr>
-        <td>${k.name}</td>
-        <td>${k.telefon}</td>
-        <td>${k.strasse}</td>
-        <td>${k.plz}</td>
-        <td>${k.ort}</td>
-      </tr>`;
+    <tr>
+      <td>${e.name}</td>
+      <td>${e.telefon}</td>
+      <td>${e.ort}</td>
+      <td><button class="smallBtn editBtn" onclick="bearbeiten(${e.id})">✏️</button></td>
+      <td><button class="smallBtn delBtn" onclick="loeschen(${e.id})">🗑</button></td>
+    </tr>`;
   });
 }
 
-/* ================= KUNDEN CSV ================= */
+/* Bearbeiten */
+function bearbeiten(id){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  const e=daten.find(x=>x.id==id);
+  el("editId").value=e.id;
+  el("name").value=e.name;
+  el("telefon").value=e.telefon;
+  el("ort").value=e.ort;
+  el("strasse").value=e.strasse;
+  el("hausnr").value=e.hausnr;
+  el("plz").value=e.plz;
+  el("rasen").value=e.rasen;
+  el("bio").value=e.bio;
+  el("zahlung").value=e.zahlung;
+}
+
+/* Löschen */
+function loeschen(id){
+  if(!confirm("Löschen?")) return;
+  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  daten=daten.filter(e=>e.id!=id);
+  localStorage.setItem("humix",JSON.stringify(daten));
+  ladeHeute();
+  ladeKunden();
+}
+
+/* Kunden CSV */
 function exportKundenCSV(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
   if(!daten.length) return alert("Keine Daten");
-
-  const map={};
+  let csv="Name;Telefon;Ort\n";
   daten.forEach(e=>{
-    const key=e.name+"_"+e.ort;
-    if(!map[key]){
-      map[key]=e;
-    }
+    csv+=`${e.name};${e.telefon};${e.ort}\n`;
+  });
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="humix_kunden.csv";
+  a.click();
+}
+
+/* Kunden XLS */
+function exportKundenExcel(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+  if(!daten.length) return alert("Keine Daten");
+
+  const sheet=[["Name","Telefon","Ort"]];
+  daten.forEach(e=>sheet.push([e.name,e.telefon,e.ort]));
+
+  const ws=XLSX.utils.aoa_to_sheet(sheet);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Kunden");
+  XLSX.writeFile(wb,"humix_kunden.xlsx");
+}
+
+/* Tages CSV */
+function exportTagesZusammenfassung(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]").filter(e=>e.datum===heute());
+  if(!daten.length) return alert("Keine Daten");
+
+  let b=0,e=0;
+  daten.forEach(d=>{
+    if(d.zahlung==="Bar") b+=d.summe;
+    if(d.zahlung==="EC") e+=d.summe;
   });
 
-  let csv="Name;Telefon;Straße;Hausnr;PLZ;Ort\n";
-  Object.values(map).forEach(k=>{
-    csv+=`${k.name};${k.telefon};${k.strasse};${k.hausnr};${k.plz};${k.ort}\n`;
-  });
+  let csv="Datum;Bar;EC;Gesamt\n";
+  csv+=`${heute()};${b};${e};${b+e}\n`;
 
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="humix_kundenliste.csv";
+  a.download="humix_tag.csv";
   a.click();
 }
 
-window.onload=ladeHeute;
+window.onload=function(){ ladeHeute(); ladeKunden(); };
 </script>
-
 </body>
 </html>
