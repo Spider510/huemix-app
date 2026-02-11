@@ -8,21 +8,60 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f2f4f7;margin:0;padding:10px}
-h1{color:#2e7d32;text-align:center}
-.card{background:#fff;padding:15px;border-radius:14px;margin-bottom:15px;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-input,select,button{width:100%;padding:12px;margin-top:6px;border-radius:8px;border:1px solid #ddd;font-size:16px}
-button{border:none;color:#fff;font-weight:bold}
-.green{background:#2e7d32}
-.blue{background:#2962ff}
-.gray{background:#455a64}
-.purple{background:#6a1b9a}
-.orange{background:#ef6c00}
-.red{background:#c62828}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
-.bar{background:#e8f5e9}
-.ec{background:#e3f2fd}
+body{
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  background:#f2f4f8;
+  margin:0;
+  padding:12px;
+}
+h1{
+  text-align:center;
+  color:#2e7d32;
+}
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.08);
+}
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+button{
+  border:none;
+  color:#fff;
+  margin-top:8px;
+}
+.green{background:#2e7d32;}
+.blue{background:#1976d2;}
+.gray{background:#455a64;}
+.purple{background:#6a1b9a;}
+.red{background:#c62828;}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:14px;
+}
+th,td{
+  padding:6px;
+  border-bottom:1px solid #eee;
+  text-align:center;
+}
+th{background:#f5f5f5;}
+.bar{background:#e8f5e9;}
+.ec{background:#e3f2fd;}
+.smallbtn{
+  padding:4px 8px;
+  font-size:13px;
+  border-radius:6px;
+}
 </style>
 </head>
 
@@ -34,63 +73,91 @@ th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
 <input id="name" placeholder="Name">
 <input id="telefon" placeholder="Telefon">
 <input id="strasse" placeholder="Straße">
-<input id="hausnr" placeholder="Hausnummer">
+<input id="hausnr" placeholder="Hausnr">
 <input id="plz" placeholder="PLZ">
 <input id="ort" placeholder="Ort">
-
 <input id="rasen" type="number" value="0" placeholder="Rasen Säcke">
 <input id="bio" type="number" value="0" placeholder="Bio Säcke">
+
+<select id="ausgestreut">
+<option>Ja</option>
+<option>Nein</option>
+</select>
 
 <select id="zahlung">
 <option>Bar</option>
 <option>EC</option>
 </select>
 
-<button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
+<button class="blue" onclick="gpsHolen()">📍 GPS Adresse holen</button>
 <button class="green" onclick="speichern()">💾 Speichern</button>
-<button class="gray" onclick="felderLeeren()">Neu</button>
+<button class="blue" onclick="neu()">➕ Neuer Eintrag</button>
 </div>
 
 <div class="card">
-<button class="blue" onclick="zeigeHeute()">📋 Heutige Einträge</button>
+<button class="gray" onclick="exportTagesCSV()">📄 Tages CSV</button>
+<button class="purple" onclick="exportZusammenfassung()">📊 Tages-Zusammenfassung CSV</button>
+<button class="gray" onclick="exportKundenCSV()">👥 Kunden CSV</button>
+<button class="gray" onclick="exportKundenXLS()">📊 Kunden XLS</button>
+</div>
+
+<div class="card">
+<h3>📋 Heutige Einträge</h3>
 <div id="heute"></div>
 </div>
 
 <div class="card">
-<button class="purple" onclick="zeigeKunden()">👥 Kundenliste</button>
+<h3>👥 Kundenliste</h3>
 <div id="kunden"></div>
-</div>
-
-<div class="card">
-<button class="gray" onclick="exportTagesCSV()">Tages CSV</button>
-<button class="orange" onclick="exportTagesXLS()">Tages XLS</button>
-<button class="purple" onclick="exportZusammenfassungCSV()">Tagessummen CSV</button>
-<button class="orange" onclick="exportKundenXLS()">Kunden XLS</button>
 </div>
 
 <script>
 
-const PRICE_RASEN = 45;
-const PRICE_BIO = 30;
+let editIndex=null;
 
-let editIndex = null;
-
-/* ================= BASIC ================= */
-
-function getAll(){
-  return JSON.parse(localStorage.getItem("humix")||"[]");
-}
-function saveAll(d){
-  localStorage.setItem("humix",JSON.stringify(d));
-}
-function today(){
+function heuteDatum(){
   return new Date().toLocaleDateString("de-DE");
 }
-function toNum(v){
-  return Number(v)||0;
+
+function neu(){
+  editIndex=null;
+  ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>document.getElementById(i).value="");
+  document.getElementById("rasen").value=0;
+  document.getElementById("bio").value=0;
 }
 
-/* ================= GPS ================= */
+function speichern(){
+  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+
+  const rasen=parseInt(document.getElementById("rasen").value)||0;
+  const bio=parseInt(document.getElementById("bio").value)||0;
+  const summe=rasen*45+bio*30;
+
+  const eintrag={
+    datum:heuteDatum(),
+    uhr:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+    name:document.getElementById("name").value||"",
+    telefon:document.getElementById("telefon").value||"",
+    strasse:document.getElementById("strasse").value||"",
+    hausnr:document.getElementById("hausnr").value||"",
+    plz:document.getElementById("plz").value||"",
+    ort:document.getElementById("ort").value||"",
+    rasen,
+    bio,
+    zahlung:document.getElementById("zahlung").value,
+    summe
+  };
+
+  if(editIndex!==null){
+    daten[editIndex]=eintrag;
+  }else{
+    daten.push(eintrag);
+  }
+
+  localStorage.setItem("humix",JSON.stringify(daten));
+  neu();
+  anzeigen();
+}
 
 function gpsHolen(){
 navigator.geolocation.getCurrentPosition(pos=>{
@@ -105,188 +172,148 @@ document.getElementById("ort").value=d.address.city||d.address.town||d.address.v
 });
 }
 
-/* ================= SPEICHERN ================= */
+function anzeigen(){
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
 
-function speichern(){
+const heute=daten.filter(d=>d.datum===heuteDatum());
 
-let daten=getAll();
+let html="<table><tr><th>Uhr</th><th>Ort-Name</th><th>Rasen</th><th>Bio</th><th>€</th><th></th><th></th></tr>";
 
-let obj={
-datum:today(),
-uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-name:document.getElementById("name").value||"",
-telefon:document.getElementById("telefon").value||"",
-strasse:document.getElementById("strasse").value||"",
-hausnr:document.getElementById("hausnr").value||"",
-plz:document.getElementById("plz").value||"",
-ort:document.getElementById("ort").value||"",
-rasen:toNum(document.getElementById("rasen").value),
-bio:toNum(document.getElementById("bio").value),
-zahlung:document.getElementById("zahlung").value
-};
+let barR=0,barB=0,barS=0,ecR=0,ecB=0,ecS=0;
 
-obj.summe=obj.rasen*PRICE_RASEN+obj.bio*PRICE_BIO;
-
-if(editIndex!==null){
-daten[editIndex]=obj;
-editIndex=null;
-}else{
-daten.push(obj);
-}
-
-saveAll(daten);
-felderLeeren();
-zeigeHeute();
-zeigeKunden();
-}
-
-/* ================= RESET ================= */
-
-function felderLeeren(){
-["name","telefon","strasse","hausnr","plz","ort"].forEach(id=>document.getElementById(id).value="");
-document.getElementById("rasen").value=0;
-document.getElementById("bio").value=0;
-editIndex=null;
-}
-
-/* ================= HEUTE ================= */
-
-function zeigeHeute(){
-let daten=getAll().filter(e=>e.datum===today());
-let html="<table><tr><th>Uhr</th><th>Ort-Name</th><th>R</th><th>B</th><th>Z</th><th>€</th><th></th><th></th></tr>";
-
-let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-daten.forEach((e,i)=>{
-let cls=e.zahlung==="EC"?"ec":"bar";
+heute.forEach((e,i)=>{
+let cls=e.zahlung==="Bar"?"bar":"ec";
+let name=e.name||"(kein Name)";
 html+=`<tr class="${cls}">
-<td>${e.uhrzeit}</td>
-<td>${e.ort} - ${e.name||"(kein Name)"}</td>
+<td>${e.uhr}</td>
+<td>${e.ort} - ${name}</td>
 <td>${e.rasen}</td>
 <td>${e.bio}</td>
-<td>${e.zahlung}</td>
 <td>${e.summe}</td>
-<td><button onclick="edit(${i})">✏</button></td>
-<td><button onclick="del(${i})">🗑</button></td>
+<td><button class="smallbtn blue" onclick="bearbeiten(${i})">✏️</button></td>
+<td><button class="smallbtn red" onclick="loeschen(${i})">🗑</button></td>
 </tr>`;
 
-if(e.zahlung==="EC"){eR+=e.rasen;eB+=e.bio;eS+=e.summe;}
-else{bR+=e.rasen;bB+=e.bio;bS+=e.summe;}
+if(e.zahlung==="Bar"){barR+=e.rasen;barB+=e.bio;barS+=e.summe;}
+else{ecR+=e.rasen;ecB+=e.bio;ecS+=e.summe;}
+
 });
 
-html+=`<tr><td colspan="8"><b>BAR: ${bR}/${bB} = ${bS}€ | EC: ${eR}/${eB} = ${eS}€ | GESAMT: ${bR+eR}/${bB+eB} = ${bS+eS}€</b></td></tr>`;
+html+=`<tr><td colspan="2"><b>BAR</b></td><td>${barR}</td><td>${barB}</td><td>${barS}</td></tr>`;
+html+=`<tr><td colspan="2"><b>EC</b></td><td>${ecR}</td><td>${ecB}</td><td>${ecS}</td></tr>`;
+html+=`<tr><td colspan="2"><b>GESAMT</b></td><td>${barR+ecR}</td><td>${barB+ecB}</td><td>${barS+ecS}</td></tr>`;
+
 html+="</table>";
 
 document.getElementById("heute").innerHTML=html;
+
+kundenListe(daten);
 }
 
-function edit(i){
-let daten=getAll().filter(e=>e.datum===today());
-let e=daten[i];
-document.getElementById("name").value=e.name;
-document.getElementById("telefon").value=e.telefon;
-document.getElementById("strasse").value=e.strasse;
-document.getElementById("hausnr").value=e.hausnr;
-document.getElementById("plz").value=e.plz;
-document.getElementById("ort").value=e.ort;
-document.getElementById("rasen").value=e.rasen;
-document.getElementById("bio").value=e.bio;
-document.getElementById("zahlung").value=e.zahlung;
-editIndex=getAll().findIndex(x=>x.uhrzeit===e.uhrzeit);
+function bearbeiten(i){
+const daten=JSON.parse(localStorage.getItem("humix"));
+editIndex=i;
+const e=daten[i];
+for(let k in e){
+if(document.getElementById(k))document.getElementById(k).value=e[k];
+}
 }
 
-function del(i){
-let daten=getAll();
-let heutige=daten.filter(e=>e.datum===today());
-let target=heutige[i];
-daten=daten.filter(x=>!(x.uhrzeit===target.uhrzeit && x.datum===target.datum));
-saveAll(daten);
-zeigeHeute();
-zeigeKunden();
+function loeschen(i){
+const daten=JSON.parse(localStorage.getItem("humix"));
+daten.splice(i,1);
+localStorage.setItem("humix",JSON.stringify(daten));
+anzeigen();
 }
 
-/* ================= KUNDEN ================= */
+function kundenListe(daten){
+let map={};
 
-function zeigeKunden(){
-let daten=getAll();
-let unique=[...new Map(daten.map(e=>[e.ort+e.name,e])).values()];
+daten.forEach(e=>{
+let key=e.ort+"_"+(e.name||"");
+map[key]=e;
+});
 
-let html="<table><tr><th>Ort</th><th>Name</th><th>Tel</th></tr>";
-unique.forEach(e=>{
+let html="<table><tr><th>Ort</th><th>Name</th><th>Adresse</th><th>Letzter Kauf</th><th></th><th></th></tr>";
+
+Object.values(map).forEach(e=>{
 html+=`<tr>
 <td>${e.ort}</td>
 <td>${e.name||"(kein Name)"}</td>
-<td>${e.telefon||""}</td>
+<td>${e.strasse} ${e.hausnr}, ${e.plz}</td>
+<td>R:${e.rasen} B:${e.bio} €${e.summe}</td>
+<td><button class="smallbtn blue" onclick="bearbeitenKunde('${e.ort}','${e.name}')">✏️</button></td>
+<td><button class="smallbtn red" onclick="kundeLoeschen('${e.ort}','${e.name}')">🗑</button></td>
 </tr>`;
 });
+
 html+="</table>";
 document.getElementById("kunden").innerHTML=html;
 }
 
-/* ================= EXPORT ================= */
-
-function exportTagesCSV(){
-let daten=getAll().filter(e=>e.datum===today());
-if(!daten.length)return alert("Keine Daten");
-
-let csv="Datum;Uhr;Ort;Name;Rasen;Bio;Zahlung;Summe €\n";
-daten.forEach(e=>{
-csv+=`${e.datum};${e.uhrzeit};${e.ort};${e.name};${e.rasen};${e.bio};${e.zahlung};${e.summe}\n`;
-});
-download(csv,"humix_tag.csv");
+function bearbeitenKunde(ort,name){
+const daten=JSON.parse(localStorage.getItem("humix"));
+let last=daten.reverse().find(e=>e.ort===ort && e.name===name);
+if(!last)return;
+for(let k in last){
+if(document.getElementById(k))document.getElementById(k).value=last[k];
+}
 }
 
-function exportTagesXLS(){
-let daten=getAll().filter(e=>e.datum===today());
-let ws=XLSX.utils.json_to_sheet(daten);
-let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Heute");
-XLSX.writeFile(wb,"humix_tag.xlsx");
+function kundeLoeschen(ort,name){
+let daten=JSON.parse(localStorage.getItem("humix"));
+daten=daten.filter(e=>!(e.ort===ort && e.name===name));
+localStorage.setItem("humix",JSON.stringify(daten));
+anzeigen();
+}
+
+function exportTagesCSV(){
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+let csv="Datum;Uhr;Ort;Name;Rasen;Bio;Zahlung;Summe\n";
+daten.forEach(e=>{
+csv+=`${e.datum};${e.uhr};${e.ort};${e.name};${e.rasen};${e.bio};${e.zahlung};${e.summe}\n`;
+});
+download(csv,"tagesliste.csv");
+}
+
+function exportZusammenfassung(){
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+let bar=0,ec=0;
+daten.forEach(e=>{
+if(e.zahlung==="Bar")bar+=e.summe;
+else ec+=e.summe;
+});
+let csv="Datum;Bar;EC;Gesamt\n";
+csv+=`${heuteDatum()};${bar};${ec};${bar+ec}`;
+download(csv,"tagessummen.csv");
+}
+
+function exportKundenCSV(){
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+let csv="Ort;Name;Telefon;Adresse\n";
+daten.forEach(e=>{
+csv+=`${e.ort};${e.name};${e.telefon};${e.strasse} ${e.hausnr} ${e.plz}\n`;
+});
+download(csv,"kunden.csv");
 }
 
 function exportKundenXLS(){
-let daten=getAll();
-let ws=XLSX.utils.json_to_sheet(daten);
-let wb=XLSX.utils.book_new();
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+const ws=XLSX.utils.json_to_sheet(daten);
+const wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,"Kunden");
-XLSX.writeFile(wb,"humix_kunden.xlsx");
-}
-
-function exportZusammenfassungCSV(){
-let daten=getAll().filter(e=>e.datum===today());
-if(!daten.length)return alert("Keine Daten");
-
-let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-daten.forEach(e=>{
-if(e.zahlung==="EC"){eR+=e.rasen;eB+=e.bio;eS+=e.summe;}
-else{bR+=e.rasen;bB+=e.bio;bS+=e.summe;}
-});
-
-let gR=bR+eR,gB=bB+eB,gS=bS+eS;
-
-let csv="Datum;Zahlung;Rasen;Bio;Summe €\n";
-csv+=`${today()};Bar;${bR};${bB};${bS}\n`;
-csv+=`${today()};EC;${eR};${eB};${eS}\n`;
-csv+=`${today()};GESAMT;${gR};${gB};${gS}\n\n`;
-csv+="Artikel;Menge;Einzelpreis;Wert\n";
-csv+=`Rasen Spezial;${gR};${PRICE_RASEN};${gR*PRICE_RASEN}\n`;
-csv+=`Bio-Volldünger;${gB};${PRICE_BIO};${gB*PRICE_BIO}\n`;
-csv+=`GESAMT;;;${gS}\n`;
-
-download(csv,"humix_tagessummen.csv");
+XLSX.writeFile(wb,"kunden.xlsx");
 }
 
 function download(text,name){
-let blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8;"});
-let a=document.createElement("a");
+const blob=new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"});
+const a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
 a.download=name;
 a.click();
 }
 
-zeigeHeute();
-zeigeKunden();
+anzeigen();
 
 </script>
 </body>
