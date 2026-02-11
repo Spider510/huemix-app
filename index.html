@@ -14,16 +14,14 @@ body{
   margin:0;
   padding-bottom:110px;
 }
-
 h1{
   text-align:center;
   padding:15px;
   margin:0;
   font-size:22px;
-  background:#ffffff;
+  background:#fff;
   box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
-
 .card{
   background:#fff;
   margin:15px;
@@ -31,14 +29,12 @@ h1{
   border-radius:14px;
   box-shadow:0 4px 12px rgba(0,0,0,0.05);
 }
-
 label{
   font-size:13px;
   font-weight:600;
   margin-top:10px;
   display:block;
 }
-
 input,select{
   width:100%;
   padding:12px;
@@ -47,12 +43,7 @@ input,select{
   border:1px solid #ddd;
   font-size:15px;
 }
-
-.row{
-  display:flex;
-  gap:10px;
-}
-
+.row{ display:flex; gap:10px; }
 .row > div{ flex:1; }
 
 .fixedBar{
@@ -60,13 +51,12 @@ input,select{
   bottom:0;
   left:0;
   right:0;
-  background:#ffffff;
+  background:#fff;
   display:flex;
   justify-content:space-around;
   padding:10px;
   box-shadow:0 -3px 10px rgba(0,0,0,0.1);
 }
-
 .fixedBar button{
   flex:1;
   margin:0 4px;
@@ -76,7 +66,6 @@ input,select{
   border-radius:10px;
   color:#fff;
 }
-
 .save{ background:#16a34a; }
 .new{ background:#2563eb; }
 .export{ background:#6b7280; }
@@ -90,7 +79,6 @@ input,select{
   font-weight:600;
   cursor:pointer;
 }
-
 .hidden{ display:none; }
 
 table{
@@ -98,17 +86,14 @@ table{
   border-collapse:collapse;
   margin-top:10px;
 }
-
 th,td{
   padding:6px;
   font-size:13px;
   border-bottom:1px solid #eee;
   text-align:center;
 }
-
 .bar{ background:#ecfdf5; }
 .ec{ background:#eff6ff; }
-
 .sumRow{
   font-weight:bold;
   background:#f9fafb;
@@ -177,6 +162,7 @@ th,td{
 </select>
 </div>
 
+<!-- HEUTIGE EINTRÄGE -->
 <div class="card">
 <div class="toggle" onclick="toggleHeute()">📋 Heutige Einträge anzeigen</div>
 <div id="heuteBlock" class="hidden">
@@ -199,6 +185,7 @@ th,td{
 </div>
 </div>
 
+<!-- KUNDENLISTE -->
 <div class="card">
 <div class="toggle" onclick="toggleKunden()">👥 Kundenliste anzeigen</div>
 <div id="kundenBlock" class="hidden">
@@ -222,12 +209,22 @@ th,td{
 <button class="new" onclick="neuerEintrag()">Neu</button>
 <button class="export" onclick="exportTagesZusammenfassung()">Tages CSV</button>
 <button class="export" onclick="exportKundenCSV()">Kunden CSV</button>
-<button class="export" onclick="exportKundenExcel()">Kunden XLS</button>
 </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
 function heute(){ return new Date().toLocaleDateString("de-DE"); }
+
+/* ================= TOGGLE ================= */
+function toggleHeute(){
+  el("heuteBlock").classList.toggle("hidden");
+  ladeHeute();
+}
+
+function toggleKunden(){
+  el("kundenBlock").classList.toggle("hidden");
+  ladeKunden();
+}
 
 /* ================= GPS ================= */
 function gpsHolen(){
@@ -322,29 +319,31 @@ function ladeHeute(){
   `;
 }
 
-/* ================= BEARBEITEN ================= */
-function bearbeiten(id){
+/* ================= KUNDEN ================= */
+function ladeKunden(){
   const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  const e=daten.find(x=>x.id==id);
-  el("editId").value=e.id;
-  el("name").value=e.name;
-  el("telefon").value=e.telefon;
-  el("strasse").value=e.strasse;
-  el("hausnr").value=e.hausnr;
-  el("plz").value=e.plz;
-  el("ort").value=e.ort;
-  el("rasen").value=e.rasen;
-  el("bio").value=e.bio;
-  el("zahlung").value=e.zahlung;
-}
+  const tbody=el("kundenTabelle");
+  tbody.innerHTML="";
 
-/* ================= LÖSCHEN ================= */
-function loeschen(id){
-  if(!confirm("Eintrag löschen?")) return;
-  let daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  daten=daten.filter(e=>e.id!=id);
-  localStorage.setItem("humix",JSON.stringify(daten));
-  ladeHeute();
+  const map={};
+
+  daten.forEach(e=>{
+    const key=e.name+"_"+e.ort;
+    if(!map[key]){
+      map[key]=e;
+    }
+  });
+
+  Object.values(map).forEach(k=>{
+    tbody.innerHTML+=`
+      <tr>
+        <td>${k.name}</td>
+        <td>${k.telefon}</td>
+        <td>${k.strasse}</td>
+        <td>${k.plz}</td>
+        <td>${k.ort}</td>
+      </tr>`;
+  });
 }
 
 /* ================= KUNDEN CSV ================= */
@@ -361,7 +360,6 @@ function exportKundenCSV(){
   });
 
   let csv="Name;Telefon;Straße;Hausnr;PLZ;Ort\n";
-
   Object.values(map).forEach(k=>{
     csv+=`${k.name};${k.telefon};${k.strasse};${k.hausnr};${k.plz};${k.ort}\n`;
   });
@@ -370,63 +368,6 @@ function exportKundenCSV(){
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download="humix_kundenliste.csv";
-  a.click();
-}
-
-/* ================= KUNDEN XLS ================= */
-function exportKundenExcel(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]");
-  if(!daten.length) return alert("Keine Daten");
-
-  const map={};
-  daten.forEach(e=>{
-    const key=e.name+"_"+e.ort;
-    if(!map[key]){
-      map[key]=[
-        e.name,e.telefon,e.strasse,e.hausnr,e.plz,e.ort
-      ];
-    }
-  });
-
-  const sheetData=[
-    ["Name","Telefon","Straße","Hausnr","PLZ","Ort"]
-  ];
-
-  Object.values(map).forEach(k=>sheetData.push(k));
-
-  const ws=XLSX.utils.aoa_to_sheet(sheetData);
-  ws["!cols"]=sheetData[0].map((_,i)=>({
-    wch:Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
-  }));
-
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Kunden");
-  XLSX.writeFile(wb,"humix_kundenliste.xlsx");
-}
-
-/* ================= CSV ================= */
-function exportTagesZusammenfassung(){
-  const daten=JSON.parse(localStorage.getItem("humix")||"[]")
-    .filter(e=>e.datum===heute());
-
-  if(!daten.length) return alert("Keine Daten");
-
-  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  daten.forEach(e=>{
-    if(e.zahlung==="Bar"){ bR+=e.rasen; bB+=e.bio; bS+=e.summe; }
-    if(e.zahlung==="EC"){ eR+=e.rasen; eB+=e.bio; eS+=e.summe; }
-  });
-
-  let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
-  csv+=`${heute()};Bar;${bR};${bB};${bS}\n`;
-  csv+=`${heute()};EC;${eR};${eB};${eS}\n`;
-  csv+=`${heute()};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
-
-  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="humix_tageszusammenfassung.csv";
   a.click();
 }
 
