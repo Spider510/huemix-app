@@ -313,22 +313,6 @@
     font-size:13px;
     color: var(--muted);
   }
-
-  .editTag{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 10px;
-    border-radius:999px;
-    border:1px solid var(--border);
-    background:#fff;
-    font-weight:900;
-    font-size:12px;
-  }
-  .editTag.on{
-    border-color: rgba(245,158,11,.45);
-    box-shadow: 0 0 0 4px rgba(245,158,11,.12);
-  }
 </style>
 </head>
 
@@ -451,7 +435,10 @@
     <button class="btn green" onclick="speichern()">💾 Speichern</button>
     <button class="btn blue" onclick="neuerEintrag()">➕ Neu</button>
     <button class="btn gray" onclick="exportTagesCSV()">Tages-CSV</button>
-    <button class="btn slate" onclick="exportKundenCSV()">Kunden-CSV</button>
+
+    <!-- ✅ KORRIGIERT: statt Kunden-CSV jetzt Tagessummen CSV -->
+    <button class="btn slate" onclick="exportZusammenfassungCSV()">Tagessummen-CSV</button>
+
     <button class="btn orange" onclick="exportKundenXLS()">Kunden-XLS</button>
   </div>
 </div>
@@ -613,13 +600,11 @@ function speichern() {
 
 /* =================== HEUTE: ANZEIGE / GRUPPIERUNG / SUMMEN =================== */
 function isToday(datumStr){
-  // datumStr ist de-DE (z.B. 11.2.2026)
   const today = new Date().toLocaleDateString("de-DE");
   return String(datumStr || "") === today;
 }
 function parseTimeHHMM(t){
   const s = String(t||"").trim();
-  // "19:05"
   const parts = s.split(":");
   if(parts.length<2) return 0;
   return toNum(parts[0])*60 + toNum(parts[1]);
@@ -642,14 +627,12 @@ function renderHeute(){
     return parseTimeHHMM(a.uhrzeit) - parseTimeHHMM(b.uhrzeit);
   });
 
-  // Summen global
   const totals = {
     bar:{rasen:0,bio:0,summe:0},
     ec:{rasen:0,bio:0,summe:0},
     all:{rasen:0,bio:0,summe:0},
   };
 
-  // Tabelle bauen: Gruppierung nach Ort + Zwischensummen je Ort
   let html = `<table>
     <thead>
       <tr>
@@ -670,7 +653,6 @@ function renderHeute(){
 
   function flushOrtSum(){
     if(currentOrt === null) return;
-    // Ort-Zwischensumme
     html += `
       <tr class="sumRow">
         <td></td>
@@ -690,7 +672,6 @@ function renderHeute(){
     heute.forEach(e=>{
       const ort = e.ort || "(ohne Ort)";
       if(currentOrt !== ort){
-        // alte Gruppe abschließen
         if(currentOrt !== null) flushOrtSum();
         currentOrt = ort;
         html += `<tr class="groupRow"><td colspan="8">📍 ${escapeHtml(currentOrt)}</td></tr>`;
@@ -699,7 +680,6 @@ function renderHeute(){
       const zahl = (e.zahlung === "EC") ? "EC" : "Bar";
       const cls = (zahl === "EC") ? "ecRow" : "barRow";
 
-      // Summen
       const bucket = (zahl === "EC") ? "ec" : "bar";
       totals[bucket].rasen += toNum(e.rasen);
       totals[bucket].bio   += toNum(e.bio);
@@ -731,10 +711,8 @@ function renderHeute(){
       </tr>`;
     });
 
-    // letzte Gruppe schließen
     flushOrtSum();
 
-    // Gesamtsummen unten (wie du es wolltest)
     html += `
       <tr class="sumRow">
         <td></td><td><b>BAR</b></td>
@@ -780,15 +758,12 @@ function kundenKey(ort, name){
 function renderKunden(){
   const all = getAll();
 
-  // letzte Einträge pro Kunde (Ort+Name)
   const map = new Map();
   all.forEach(e=>{
     const k = kundenKey(e.ort, e.name);
-    // wir nehmen den letzten (der zuletzt gespeichert wurde)
     map.set(k, e);
   });
 
-  // sortiert nach Ort, dann Name
   const kunden = Array.from(map.values()).sort((a,b)=>{
     const oa = (a.ort||"").localeCompare(b.ort||"", "de");
     if(oa!==0) return oa;
@@ -848,7 +823,6 @@ function editEntry(id){
   $("zahlung").value = e.zahlung || "Bar";
 
   setStatus("Bearbeiten: Änderungen machen und dann Speichern.");
-  // nach oben scrollen
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -874,7 +848,6 @@ function deleteCustomer(ort, name){
 }
 
 /* =================== EXPORTS =================== */
-/* ---- Tages-CSV: alle Einträge (wie bisher) ---- */
 function exportTagesCSV() {
   const daten = getAll();
   if (!daten.length) return alert("Keine Daten");
@@ -886,33 +859,6 @@ function exportTagesCSV() {
     csv += `${e.datum || ""};${e.uhrzeit || ""};${name};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${toNum(e.bio)};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
   downloadCSV(csv, "humix_tagesliste.csv");
-}
-
-/* ---- Kunden-CSV: dup-frei Ort+Name (letzter Eintrag) ---- */
-function exportKundenCSV(){
-  const all = getAll();
-  if(!all.length) return alert("Keine Daten");
-
-  const map = new Map();
-  all.forEach(e=>{
-    const k = kundenKey(e.ort, e.name);
-    map.set(k, e);
-  });
-
-  const kunden = Array.from(map.values()).sort((a,b)=>{
-    const oa = (a.ort||"").localeCompare(b.ort||"", "de");
-    if(oa!==0) return oa;
-    return safeName(a.name).localeCompare(safeName(b.name), "de");
-  });
-
-  let csv = "Name;Telefon;Straße;Hausnr;PLZ;Ort\n";
-  kunden.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
-    const name = safeName(e.name);
-    csv += `${name};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""}\n`;
-  });
-
-  downloadCSV(csv, "humix_kundenliste.csv");
 }
 
 /* ---- Kunden-XLSX (dup-frei) ---- */
@@ -939,7 +885,7 @@ function exportKundenXLS(){
   kunden.forEach(e=>{
     sheetData.push([
       safeName(e.name),
-      String(e.telefon || ""),   // als Text
+      String(e.telefon || ""),
       e.strasse || "",
       e.hausnr || "",
       e.plz || "",
@@ -949,7 +895,6 @@ function exportKundenXLS(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-  // Spaltenbreite automatisch
   ws["!cols"] = sheetData[0].map((_,i)=>({
     wch: Math.max(...sheetData.map(r=>String(r[i]||"").length))+2
   }));
@@ -959,7 +904,7 @@ function exportKundenXLS(){
   XLSX.writeFile(wb, "humix_kundenliste.xlsx");
 }
 
-/* ---- Tageszusammenfassung CSV: Bar/EC/GESAMT + gekauft ---- */
+/* ---- ✅ Tagessummen CSV (Tageszusammenfassung) ---- */
 function exportZusammenfassungCSV(){
   const daten = getAll().filter(e => isToday(e.datum)); // heutiger Tag
   if (!daten.length) return alert("Keine Daten für heute");
@@ -973,8 +918,6 @@ function exportZusammenfassungCSV(){
     else { bR+=zr; bB+=zb; bS+=zs; }
   });
 
-  // „was gekauft wurde“ = Mengen + Werte getrennt
-  // (Preise sind fest: 45/30)
   const gR = bR + eR;
   const gB = bB + eB;
   const gS = bS + eS;
@@ -985,13 +928,12 @@ function exportZusammenfassungCSV(){
   csv += `${datum};EC;${eR};${eB};${eS}\n`;
   csv += `${datum};GESAMT;${gR};${gB};${gS}\n\n`;
 
-  // Zusatzblock „Was gekauft wurde“ (für Vorschau/Excel sauber)
   csv += "Artikel;Menge;Einzelpreis €;Wert €\n";
   csv += `Rasen Spezial;${gR};${PRICE_RASEN};${gR*PRICE_RASEN}\n`;
   csv += `Bio-Volldünger;${gB};${PRICE_BIO};${gB*PRICE_BIO}\n`;
-  csv += `GESAMT;; ;${gS}\n`;
+  csv += `GESAMT;;;${gS}\n`;
 
-  downloadCSV(csv, "humix_tageszusammenfassung.csv");
+  downloadCSV(csv, "humix_tagessummen.csv");
 }
 
 /* =================== CSV DOWNLOAD (UTF-8 + BOM, Excel-freundlich) =================== */
@@ -1005,14 +947,7 @@ function downloadCSV(text, name){
   a.remove();
 }
 
-/* =================== EXPORT BUTTON (alte Buttons im UI sind weg, aber du wolltest CSV/XLS/ZZS weiter) =================== */
-/* Du kannst die Tageszusammenfassung jederzeit über diese Funktion auslösen:
-   - Wir hängen sie bewusst nicht in die BottomBar (Platz), aber du kannst sie oben im Browser-Menü oder per zusätzlichem Button nutzen.
-   Wenn du willst, füge ich dir dafür noch einen Button (optisch passend) ein.
-*/
-window.exportZusammenfassung = exportZusammenfassungCSV;
-
-/* =================== SAFETY: ESCAPES (für HTML Attribute/Content) =================== */
+/* =================== SAFETY: ESCAPES =================== */
 function escapeHtml(s){
   return String(s||"").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -1024,15 +959,6 @@ function escapeAttr(s){
 
 /* =================== INIT =================== */
 setEditBadge();
-</script>
-
-<!-- Extra Export Buttons (optional, oben in der Seite): -->
-<script>
-  // Falls du doch wieder die zwei zusätzlichen Exporte direkt sichtbar willst (wie früher),
-  // kannst du diese Mini-Buttons oben aktivieren. Ich lasse sie absichtlich deaktiviert,
-  // damit das Layout „modern & clean“ bleibt.
-  //
-  // Wenn du sie haben willst: sag kurz Bescheid, dann setze ich sie wieder als Buttons rein.
 </script>
 
 </body>
