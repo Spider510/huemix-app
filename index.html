@@ -112,7 +112,7 @@ button{
   max-height:0;
   transition:max-height .3s ease;
 }
-.submenu.open{ max-height:720px; }
+.submenu.open{ max-height:900px; }
 
 /* Preise: 2 Spalten, auf kleinen Handys 1 Spalte */
 .priceGrid{
@@ -234,7 +234,7 @@ thead th{
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
     <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV (Ø Preis)</button>
-    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV</button>
+    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV (Bar/EC + Summen)</button>
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
@@ -564,44 +564,125 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV ================= */
-/* Zeigt: Produkt;Preis;Menge  (auf Tagesbasis, über alle Zahlungen) */
+/* ================= EXPORT: Preis-Gruppierung CSV (Bar/EC + Summen) ================= */
 function exportPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  const groups = new Map(); // key -> qty
+  // Detail-Gruppen: Produkt + Preis + Zahlung
+  // key = Produkt|Preis|Zahlung  -> {menge, umsatz}
+  const groups = new Map();
 
-  function addGroup(prod, price, qty){
+  // Summen:
+  // pro Produkt+Zahlung (ohne Preis)
+  const sumProdPay = new Map(); // key = Produkt|Zahlung
+  // pro Produkt gesamt
+  const sumProd = new Map();    // key = Produkt
+  // pro Zahlung gesamt
+  const sumPay = new Map();     // key = Zahlung
+  // Gesamt
+  let grandMenge = 0;
+  let grandUmsatz = 0;
+
+  function add(map, key, menge, umsatz){
+    const cur = map.get(key) || {menge:0, umsatz:0};
+    cur.menge += menge;
+    cur.umsatz += umsatz;
+    map.set(key, cur);
+  }
+
+  function addDetail(prod, price, pay, qty){
     if(!qty) return;
-    const key = prod + ";" + price.toFixed(2);
-    groups.set(key, (groups.get(key) || 0) + qty);
+    const p = Number(price);
+    const u = qty * p;
+
+    // Detail
+    const key = `${prod}|${p.toFixed(2)}|${pay}`;
+    add(groups, key, qty, u);
+
+    // Summen
+    add(sumProdPay, `${prod}|${pay}`, qty, u);
+    add(sumProd, prod, qty, u);
+    add(sumPay, pay, qty, u);
+
+    grandMenge += qty;
+    grandUmsatz += u;
   }
 
   daten.forEach(e=>{
+    const pay = e.zahlung || "";
     const ras = toNum(e.rasen);
     const bi  = toNum(e.bio);
     const rp  = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp  = toNum(e.bioPreis)   || STANDARD_BIO;
 
-    addGroup("Rasen", rp, ras);
-    addGroup("Bio", bp, bi);
+    addDetail("Rasen", rp, pay, ras);
+    addDetail("Bio",   bp, pay, bi);
   });
 
-  // sort: Produkt, dann Preis
-  const rows = Array.from(groups.entries())
-    .map(([key, qty])=>{
-      const [prod, price] = key.split(";");
-      return {prod, price: Number(price), qty};
+  // Detail-Rows sortieren: Produkt, Zahlung, Preis
+  const detailRows = Array.from(groups.entries())
+    .map(([key, val])=>{
+      const [prod, price, pay] = key.split("|");
+      return {prod, pay, price: Number(price), menge: val.menge, umsatz: val.umsatz};
     })
-    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.price - b.price);
+    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.pay.localeCompare(b.pay) || a.price - b.price);
 
-  let csv = "Datum;Produkt;Preis;Menge\n";
-  rows.forEach(r=>{
-    csv += `${heuteDatum()};${r.prod};${r.price.toFixed(2)};${r.qty}\n`;
+  let csv = "Datum;Produkt;Preis;Zahlung;Menge;Umsatz\n";
+  const d = heuteDatum();
+
+  detailRows.forEach(r=>{
+    csv += `${d};${r.prod};${r.price.toFixed(2)};${r.pay};${r.menge};${r.umsatz.toFixed(2)}\n`;
   });
+
+  // Trennzeile
+  csv += ";;;;;\n";
+
+  // Summen pro Produkt+Zahlung
+  // sort: Produkt, Zahlung
+  const sppRows = Array.from(sumProdPay.entries())
+    .map(([key, val])=>{
+      const [prod, pay] = key.split("|");
+      return {prod, pay, menge: val.menge, umsatz: val.umsatz};
+    })
+    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.pay.localeCompare(b.pay));
+
+  csv += "SUMME_PRODUKT_ZAHLUNG;;;;;\n";
+  csv += "Produkt;;Zahlung;Menge;Umsatz\n";
+  sppRows.forEach(r=>{
+    csv += `${r.prod};;${r.pay};${r.menge};${r.umsatz.toFixed(2)}\n`;
+  });
+
+  csv += ";;;;;\n";
+
+  // Summen pro Produkt
+  const spRows = Array.from(sumProd.entries())
+    .map(([prod, val])=>({prod, menge: val.menge, umsatz: val.umsatz}))
+    .sort((a,b)=> a.prod.localeCompare(b.prod));
+
+  csv += "SUMME_PRODUKT;;;;;\n";
+  csv += "Produkt;;;Menge;Umsatz\n";
+  spRows.forEach(r=>{
+    csv += `${r.prod};;;${r.menge};${r.umsatz.toFixed(2)}\n`;
+  });
+
+  csv += ";;;;;\n";
+
+  // Summen pro Zahlung
+  const payRows = Array.from(sumPay.entries())
+    .map(([pay, val])=>({pay, menge: val.menge, umsatz: val.umsatz}))
+    .sort((a,b)=> a.pay.localeCompare(b.pay));
+
+  csv += "SUMME_ZAHLUNG;;;;;\n";
+  csv += "Zahlung;;;Menge;Umsatz\n";
+  payRows.forEach(r=>{
+    csv += `${r.pay};;;${r.menge};${r.umsatz.toFixed(2)}\n`;
+  });
+
+  csv += ";;;;;\n";
+  csv += `GESAMT;;;${grandMenge};${grandUmsatz.toFixed(2)}\n`;
 
   const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
