@@ -168,7 +168,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:2000px; }
+.submenu.open{ max-height:2400px; }
 
 /* Tabelle */
 .tableWrap{
@@ -181,7 +181,7 @@ button{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 1100px; /* Handy: horizontal scroll */
+  min-width: 1150px; /* Handy: horizontal scroll */
 }
 th,td{
   border-bottom:1px solid var(--border);
@@ -240,6 +240,7 @@ th{
 .view{ display:none; }
 .view.active{ display:block; }
 
+/* Details (aufklappbar) */
 .detailsRow td{
   white-space:normal;
   font-size:13px;
@@ -453,6 +454,22 @@ th{
         <button class="blue" onclick="dbSetCurrentLocation()">📍 Aktueller Ort</button>
         <div class="status" id="dbLocStatus">Noch kein aktueller Ort gesetzt.</div>
       </div>
+
+      <div>
+        <label>Navi-App auswählen</label>
+        <select id="mapProvider" onchange="setMapProvider(this.value)">
+          <option value="ask">Jedes Mal fragen</option>
+          <option value="google">Google Maps</option>
+          <option value="apple">Apple Karten</option>
+        </select>
+        <div class="hint">Für 🧭 Navigation pro Eintrag.</div>
+      </div>
+
+      <div>
+        <label>Route aus Treffern (optional)</label>
+        <button class="green" onclick="openMultiStopRouteFromResults()">🧭 Route aus Treffern öffnen</button>
+        <div class="hint">Mehrere Stopps: am besten mit Google Maps. Apple Karten ist hier eingeschränkt.</div>
+      </div>
     </div>
 
     <div class="smallRow" style="margin-top:10px;">
@@ -534,7 +551,6 @@ function fmtEUR(n){
 function normStr(s){ return String(s||"").trim().toLowerCase(); }
 
 function deToISO(de){
-  // erwartet dd.mm.yyyy
   const m = String(de||"").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
   if(!m) return "";
   const dd = String(m[1]).padStart(2,"0");
@@ -590,6 +606,128 @@ function saveAll(daten){
   localStorage.setItem("humix", JSON.stringify(daten));
 }
 
+/* ================= Navi Provider (Auswahl) ================= */
+function getMapProvider(){
+  return localStorage.getItem("humix_map_provider") || "ask";
+}
+function setMapProvider(v){
+  localStorage.setItem("humix_map_provider", v);
+}
+function initMapProviderUI(){
+  const v = getMapProvider();
+  const sel = el("mapProvider");
+  if(sel) sel.value = v;
+}
+function pickProviderInteractive(){
+  const current = getMapProvider();
+  if(current !== "ask") return current;
+
+  // Auswahl per prompt (einfach & robust auf Handy)
+  const ans = prompt("Navigation öffnen mit:\n1 = Google Maps\n2 = Apple Karten\n(Abbrechen = nichts)", "1");
+  if(ans === null) return null;
+  if(String(ans).trim() === "1") return "google";
+  if(String(ans).trim() === "2") return "apple";
+  return null;
+}
+
+function buildDestinationFromEntry(e){
+  // 1) Koordinaten
+  if(typeof e.lat==="number" && typeof e.lon==="number"){
+    return {type:"coords", value:`${e.lat},${e.lon}`};
+  }
+  // 2) Adresse
+  const addr = [e.strasse||"", e.hausnr||"", e.plz||"", e.ort||""].join(" ").trim();
+  if(addr) return {type:"addr", value:addr};
+  return null;
+}
+
+function openSingleNavigationForEntryId(id){
+  const daten = loadAll();
+  const e = daten.find(x=>x.id===id);
+  if(!e) return alert("Eintrag nicht gefunden.");
+
+  const dest = buildDestinationFromEntry(e);
+  if(!dest) return alert("Keine Navigationsdaten vorhanden (weder GPS noch Adresse).");
+
+  const provider = pickProviderInteractive();
+  if(!provider) return;
+
+  openNavigation(provider, dest);
+}
+
+function openNavigation(provider, dest){
+  // dest: {type:"coords"|"addr", value:"..."}
+  let url = "";
+  if(provider === "google"){
+    const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
+    url = `https://www.google.com/maps/dir/?api=1&destination=${d}`;
+  }else if(provider === "apple"){
+    // Apple Maps:
+    // coords: maps.apple.com/?daddr=lat,lon
+    // addr:   maps.apple.com/?daddr=ENCODED_ADDRESS
+    const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
+    url = `https://maps.apple.com/?daddr=${d}`;
+  }else{
+    return;
+  }
+  window.open(url, "_blank");
+}
+
+/* Mehrfach-Route aus Treffern (optional) */
+let dbLastResults = []; // [{e, dist}]
+function openMultiStopRouteFromResults(){
+  if(!dbLastResults.length) return alert("Keine Treffer. Bitte zuerst suchen.");
+
+  const provider = pickProviderInteractive();
+  if(!provider) return;
+
+  if(provider !== "google"){
+    alert("Mehrere Stopps sind hier am zuverlässigsten mit Google Maps. Bitte Google Maps wählen.");
+    return;
+  }
+
+  // Google Maps Waypoints: origin + destination + waypoints
+  // Wir nehmen: origin = aktueller Ort (falls gesetzt), sonst leer (Google fragt dann)
+  // destination = letzter Stopp, waypoints = alle dazwischen
+  const stops = [];
+
+  // Nimm nur Ziele mit Adresse oder GPS
+  dbLastResults.forEach(({e})=>{
+    const d = buildDestinationFromEntry(e);
+    if(!d) return;
+    // Für Google Waypoints am besten mit coords oder encoded address
+    const val = (d.type==="coords") ? d.value : d.value;
+    stops.push(val);
+  });
+
+  if(stops.length < 1) return alert("In den Treffern gibt es keine Einträge mit GPS oder Adresse.");
+  if(stops.length === 1){
+    // Single fallback
+    openNavigation("google", {type:"addr", value:stops[0]});
+    return;
+  }
+
+  // Limit, damit URL nicht explodiert
+  const MAX_STOPS = 10;
+  const sliced = stops.slice(0, MAX_STOPS);
+
+  const origin = (dbCurrentPos)
+    ? `${dbCurrentPos.lat},${dbCurrentPos.lon}`
+    : ""; // leer -> Google nimmt "Mein Standort"
+
+  const destination = sliced[sliced.length-1];
+  const waypoints = sliced.slice(0, sliced.length-1);
+
+  const params = new URLSearchParams();
+  params.set("api", "1");
+  if(origin) params.set("origin", origin);
+  params.set("destination", destination);
+  if(waypoints.length) params.set("waypoints", waypoints.join("|"));
+
+  const url = `https://www.google.com/maps/dir/?${params.toString()}`;
+  window.open(url, "_blank");
+}
+
 /* ================= GPS Tools ================= */
 let lastGpsFix = null; // {lat, lon, ts}
 function setLastGpsFix(lat, lon){
@@ -623,8 +761,8 @@ async function tryAutoGPS(){
     setLastGpsFix(lat, lon);
     return {gpsOk:true, lat, lon, msg:`Auto-GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`};
   }catch(err){
-    // fallback: wenn wir einen frischen lastGpsFix haben (z.B. vom GPS-Button vorher), nutzen wir den
-    if(lastGpsFix && (Date.now() - lastGpsFix.ts) < 1000*60*60*6){ // 6 Stunden
+    // fallback: letzter Fix (z.B. vom GPS-Button)
+    if(lastGpsFix && (Date.now() - lastGpsFix.ts) < 1000*60*60*6){
       return {gpsOk:true, lat:lastGpsFix.lat, lon:lastGpsFix.lon, msg:`Auto-GPS (Letzter Fix) OK: ${lastGpsFix.lat.toFixed(5)}, ${lastGpsFix.lon.toFixed(5)}`};
     }
     return {gpsOk:false, lat:null, lon:null, msg:`Auto-GPS nicht verfügbar (${err?.message || "unbekannt"})`};
@@ -633,7 +771,7 @@ async function tryAutoGPS(){
 
 /* ================= GPS holen + Reverse Geocoding ================= */
 function gpsHolen(){
-  neuerEintrag(); // wie bisher: neuer Eintrag, dann GPS holen
+  neuerEintrag();
   el("gpsStatus").innerText="GPS wird ermittelt…";
 
   navigator.geolocation.getCurrentPosition(pos=>{
@@ -653,7 +791,7 @@ function gpsHolen(){
       .catch(()=>{
         el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Adresse nicht geladen)`;
       });
-  }, (e)=>{
+  }, ()=>{
     el("gpsStatus").innerText="GPS nicht verfügbar";
     alert("GPS nicht verfügbar");
   }, {enableHighAccuracy:true, timeout:7000, maximumAge:30000});
@@ -696,7 +834,7 @@ async function speichern(){
     summe,
     createdAt: Date.now(),
 
-    // Neu: GPS dauerhaft im Eintrag speichern (Variante A: auch wenn nicht verfügbar)
+    // GPS dauerhaft
     gpsOk: !!gps.gpsOk,
     lat: gps.gpsOk ? gps.lat : null,
     lon: gps.gpsOk ? gps.lon : null
@@ -797,7 +935,6 @@ function bearbeiten(id){
   el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
   el("bioPreis").value   = (bp !== STANDARD_BIO) ? bp : "";
 
-  // Hinweis: Auto-GPS wird beim Speichern neu versucht (wie gewünscht)
   el("gpsAutoStatus").innerText="Auto-GPS beim Speichern: wird beim Speichern erneut versucht";
   el("editHint").innerText = "Bearbeiten aktiv (Speichern überschreibt diesen Eintrag)";
   showView("einsatz");
@@ -1133,7 +1270,6 @@ function exportPreisGruppierungXLSX(){
     wch: Math.max(...sheet.map(r => String(r[i] ?? "").length)) + 2
   }));
 
-  // Geldformat (Preis/Umätze)
   const moneyCols = [2,6,7,8];
   for(let row=3; row<=2+pack.detail.length; row++){
     moneyCols.forEach(col=>{
@@ -1143,7 +1279,6 @@ function exportPreisGruppierungXLSX(){
       }
     });
   }
-  // Zahlungsübersicht
   for(let r=0; r<sheet.length; r++){
     if(sheet[r] && sheet[r][0]==="Umsatz €"){
       [1,2,3].forEach(c=>{
@@ -1181,7 +1316,7 @@ let dbCurrentPos = null; // {lat, lon}
 
 function toRad(x){ return x * Math.PI / 180; }
 function haversineKm(lat1, lon1, lat2, lon2){
-  const R = 6371; // km
+  const R = 6371;
   const dLat = toRad(lat2-lat1);
   const dLon = toRad(lon2-lon1);
   const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
@@ -1221,25 +1356,25 @@ function dbResetFilter(){
   el("dbStatus").innerText="Filter zurückgesetzt. Bitte Suchen drücken.";
   el("dbTbody").innerHTML="";
   el("dbTfoot").innerHTML="";
+  dbLastResults = [];
 }
 
 function dbGetFiltered(){
   const daten = loadAll();
 
-  const von = el("fVon").value; // ISO
-  const bis = el("fBis").value; // ISO
+  const von = el("fVon").value;
+  const bis = el("fBis").value;
   const nameF = normStr(el("fName").value);
   const ortF  = normStr(el("fOrt").value);
   const plzF  = normStr(el("fPLZ").value);
   const payF  = el("fZahlung").value;
-  const sonderF = el("fSonder").value; // "", "1", "0"
+  const sonderF = el("fSonder").value;
   const sortF = el("fSort").value;
 
   const radiusKm = toNum(el("fRadius").value);
   const radiusActive = radiusKm > 0;
 
   let out = daten.map(e=>{
-    // distance compute if possible
     let dist = null;
     if(dbCurrentPos && e && typeof e.lat==="number" && typeof e.lon==="number"){
       dist = haversineKm(dbCurrentPos.lat, dbCurrentPos.lon, e.lat, e.lon);
@@ -1259,17 +1394,15 @@ function dbGetFiltered(){
     if(sonderF==="1" && !isSonderpreisEintrag(e)) return false;
     if(sonderF==="0" &&  isSonderpreisEintrag(e)) return false;
 
-    // Radius filter: nur wenn aktiv UND aktueller Ort gesetzt
     if(radiusActive){
-      if(!dbCurrentPos) return false;               // ohne aktuellen Ort keine Umkreissuche
-      if(dist === null) return false;               // Eintrag ohne GPS wird für Umkreis nicht angezeigt
+      if(!dbCurrentPos) return false;
+      if(dist === null) return false;
       if(dist > radiusKm) return false;
     }
 
     return true;
   });
 
-  // Sortierung
   out.sort((A,B)=>{
     const a=A.e, b=B.e;
     const aISO = entryISO(a) || "";
@@ -1299,7 +1432,7 @@ function dbGetFiltered(){
     return 0;
   });
 
-  return out; // [{e, dist}]
+  return out;
 }
 
 function dbToggleDetails(id){
@@ -1310,6 +1443,7 @@ function dbToggleDetails(id){
 
 function dbSuchen(){
   const list = dbGetFiltered();
+  dbLastResults = list;
 
   const tbody = el("dbTbody");
   const tfoot = el("dbTfoot");
@@ -1343,7 +1477,6 @@ function dbSuchen(){
         distTxt = "Kein GPS";
       }
     }else{
-      // ohne aktuellen Ort: nur anzeigen ob Eintrag GPS hat
       distTxt = (typeof e.lat==="number" && typeof e.lon==="number") ? "GPS OK" : "Kein GPS";
     }
 
@@ -1363,6 +1496,7 @@ function dbSuchen(){
         <td style="text-align:right"><b>${s.toFixed(2)}</b></td>
         <td>
           <button class="gray actionBtn" onclick="dbToggleDetails('${e.id}')">▼</button>
+          <button class="green actionBtn" onclick="openSingleNavigationForEntryId('${e.id}')">🧭</button>
           <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
           <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
         </td>
@@ -1384,7 +1518,9 @@ function dbSuchen(){
                   ? `${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}`
                   : "Kein GPS vorhanden"
               }</div></div>
-              <div class="kv"><div class="k">ID</div><div class="v">${e.id}</div></div>
+              <div class="kv"><div class="k">Navigation</div><div class="v">
+                <button class="green" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openSingleNavigationForEntryId('${e.id}')">🧭 Navigation starten</button>
+              </div></div>
             </div>
           </div>
         </td>
@@ -1422,7 +1558,6 @@ function dbSuchen(){
     </tr>
   `;
 
-  // Status-Text inkl. Hinweis auf Radius
   const radiusKm = toNum(el("fRadius").value);
   const radiusActive = radiusKm > 0;
   const radiusInfo = radiusActive
@@ -1511,6 +1646,7 @@ function exportDB_XLSX(){
 window.onload = function(){
   ladeHeute();
   dbResetFilter();
+  initMapProviderUI();
 };
 </script>
 
