@@ -25,6 +25,7 @@
   --orange:#ef6c00;
   --red:#c62828;
 }
+
 body.light{
   --bg:#f4f7f4;
   --card:#ffffff;
@@ -33,7 +34,9 @@ body.light{
   --text:#162033;
   --muted:#506079;
 }
+
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
@@ -42,6 +45,7 @@ body{
   padding:12px;
   font-size:16px;
 }
+
 .topbar{
   display:flex;
   align-items:center;
@@ -50,6 +54,7 @@ body{
   margin-bottom:10px;
 }
 h1{ margin:0; font-size:20px; }
+
 .themeBtn{
   padding:8px 12px;
   border-radius:999px;
@@ -59,6 +64,7 @@ h1{ margin:0; font-size:20px; }
   font-size:14px;
   cursor:pointer;
 }
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -67,7 +73,12 @@ h1{ margin:0; font-size:20px; }
   margin-bottom:12px;
   box-shadow:0 6px 16px rgba(0,0,0,.10);
 }
-h2{ margin:0 0 10px 0; font-size:18px; }
+
+h2{
+  margin:0 0 10px 0;
+  font-size:18px;
+}
+
 label{
   font-weight:650;
   font-size:13px;
@@ -93,6 +104,7 @@ button{
   cursor:pointer;
   font-weight:750;
 }
+
 .green { background:var(--green); }
 .blue  { background:var(--blue); }
 .gray  { background:var(--gray); }
@@ -105,6 +117,8 @@ button{
   margin-top:8px;
   color:var(--muted);
 }
+
+/* Sonderpreis-Grid */
 .priceGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -175,6 +189,7 @@ th{
 </div>
 
 <div class="card">
+
   <input type="hidden" id="editId">
 
   <label>Name</label>
@@ -201,7 +216,7 @@ th{
   <label>Bio-Volldünger – Säcke (Standard 30 €)</label>
   <input id="bio" type="number" value="0" inputmode="numeric">
 
-  <!-- Sonderpreise pro Eintrag -->
+  <!-- Sonderpreise (pro Eintrag gespeichert) -->
   <div class="priceGrid">
     <div>
       <label>Rasen Sonderpreis €/Sack (optional)</label>
@@ -238,7 +253,7 @@ th{
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
     <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV (übersichtlich)</button>
+    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV</button>
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
@@ -266,7 +281,7 @@ th{
 </div>
 
 <script>
-/* ===== Theme + Submenu ===== */
+/* ================= UI (Theme + Menü) ================= */
 function toggleTheme(){
   document.body.classList.toggle("light");
   localStorage.setItem("humix_theme", document.body.classList.contains("light") ? "light" : "dark");
@@ -278,7 +293,7 @@ function toggleSubmenu(){
   document.getElementById("submenu").classList.toggle("open");
 }
 
-/* ===== Helfer ===== */
+/* ================= Helfer ================= */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
@@ -295,7 +310,7 @@ function getPreisBio(){
   return p > 0 ? p : STANDARD_BIO;
 }
 
-/* ================= GPS ================= */
+/* ================= GPS + Reverse Geocoding ================= */
 function gpsHolen(){
   neuerEintrag();
   el("gpsStatus").innerText="GPS wird ermittelt…";
@@ -313,11 +328,13 @@ function gpsHolen(){
         el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
         el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       })
-      .catch(()=>{ el("gpsStatus").innerText="GPS OK – Adresse konnte nicht geladen werden"; });
+      .catch(()=>{
+        el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Adresse nicht geladen)`;
+      });
   }, ()=>alert("GPS nicht verfügbar"));
 }
 
-/* ================= SPEICHERN ================= */
+/* ================= Speichern (mit Edit-ID) ================= */
 function speichern(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
@@ -342,7 +359,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,               // Sonderpreise pro Eintrag
+    rasenPreis, bioPreis,
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -356,7 +373,7 @@ function speichern(){
   ladeHeute();
 }
 
-/* ================= RESET ================= */
+/* ================= Reset / Neuer Eintrag ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
@@ -369,7 +386,7 @@ function neuerEintrag(){
   el("gpsStatus").innerText="GPS noch nicht ermittelt";
 }
 
-/* ================= HEUTE + SUMMEN ================= */
+/* ================= Tabelle (Heute) + Summen ================= */
 function ladeHeute(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -446,7 +463,7 @@ function loeschen(id){
   ladeHeute();
 }
 
-/* ================= DOWNLOAD CSV (BOM für Umlaute) ================= */
+/* ================= Download CSV (BOM) ================= */
 function downloadCSV(text, name){
   const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
   const a = document.createElement("a");
@@ -457,7 +474,7 @@ function downloadCSV(text, name){
   a.remove();
 }
 
-/* ================= EXPORT: Tages-CSV ================= */
+/* ================= Export: Tages-CSV ================= */
 function exportTagesCSV(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -470,14 +487,15 @@ function exportTagesCSV(){
     const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
     const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp = toNum(e.bioPreis)   || STANDARD_BIO;
+
     csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
 
-  const dateName = new Date().toISOString().slice(0,10); // yyyy-mm-dd
+  const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
-/* ================= EXPORT: XLSX (heute + Auto-Spaltenbreite) ================= */
+/* ================= Export: XLSX ================= */
 function exportXLSX(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -510,7 +528,6 @@ function exportXLSX(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-  // Auto-Spaltenbreite
   ws["!cols"] = sheetData[0].map((_, i) => ({
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
@@ -522,7 +539,7 @@ function exportXLSX(){
   XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
 }
 
-/* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
+/* ================= Export: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
 function exportZusammenfassung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -530,6 +547,7 @@ function exportZusammenfassung(){
   if(!daten.length) return alert("Keine Daten für heute");
 
   const datum = heuteDatum();
+
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
   let bR_W=0,bB_W=0,eR_W=0,eB_W=0;
 
@@ -566,30 +584,33 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV (gleiche Infos, besser sortiert) ================= */
+/* ================= Export: Preis-Gruppierung CSV (Excel-sicher, gleiche Infos) ================= */
 function exportPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  const fmt = (n)=> (Number(n) || 0).toFixed(2).replace(".", ",");
+  // Excel-sicher: Geld & Preis als Textformel -> bleibt 1 Zelle
+  const fmtMoney = (n)=> '="'+(Number(n||0).toFixed(2).replace(".",","))+'"';
+  const fmtPrice = (n)=> '="'+(Number(n||0).toFixed(2).replace(".",","))+'"';
   const row = (arr)=> arr.join(";") + "\n";
   const d = heuteDatum();
 
-  // Gruppen nach Produkt + Preis
-  const groups = new Map(); // key = "Rasen|45.00" -> {barM, ecM, barU, ecU}
+  // Block 1: Detail nach Produkt+Preis (mit Bar/EC Säcke & Umsätze & Gesamt)
+  const groups = new Map(); // key: "Bio|30.00" => {barM, ecM, barU, ecU}
 
-  // Produktsummen (ohne Preis)
+  // Block 2: Produktsummen Mengen
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
 
-  // Geldsummen
+  // Block 3: Umsätze
   let barGes=0, ecGes=0;
 
-  function addGroup(prod, preis, zahlung, menge){
+  function add(prod, preis, zahlung, menge){
     if(!menge) return;
-    const p = Number(preis) || 0;
-    const u = menge * p;
+    const p = Number(preis)||0;
+    const u = menge*p;
+
     const key = `${prod}|${p.toFixed(2)}`;
     const cur = groups.get(key) || {barM:0, ecM:0, barU:0, ecU:0};
 
@@ -612,47 +633,52 @@ function exportPreisGruppierung(){
     const rp  = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp  = toNum(e.bioPreis)   || STANDARD_BIO;
 
-    addGroup("Rasen", rp, pay, ras);
-    addGroup("Bio",   bp, pay, bio);
+    // Detailgruppen
+    add("Bio",   bp, pay, bio);
+    add("Rasen", rp, pay, ras);
 
+    // Produktsummen
     if(pay==="Bar"){ rasBar+=ras; bioBar+=bio; }
     if(pay==="EC"){  rasEC+=ras;  bioEC+=bio;  }
   });
 
-  // Sortierte Detailzeilen
+  // Sortiert: Bio zuerst, dann Rasen; innerhalb nach Preis
   const detailRows = Array.from(groups.entries())
     .map(([k,v])=>{
       const [prod, price] = k.split("|");
+      const priceNum = Number(price);
       const gesM = v.barM + v.ecM;
       const gesU = v.barU + v.ecU;
-      return {prod, price:Number(price), ...v, gesM, gesU};
+      return {prod, priceNum, ...v, gesM, gesU};
     })
-    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.price - b.price);
+    .sort((a,b)=>{
+      const order = (x)=> x==="Bio" ? 0 : 1;
+      return order(a.prod)-order(b.prod) || (a.priceNum-b.priceNum);
+    });
 
   let csv = "";
 
-  // ===== BLOCK 1: DETAIL (alle Infos wie vorher, aber sauber) =====
+  // ===== BLOCK 1 =====
   csv += row(["DETAIL – PREISSTUFEN"]);
   csv += row(["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"]);
-
   detailRows.forEach(r=>{
     csv += row([
       d,
       r.prod,
-      fmt(r.price),
+      fmtPrice(r.priceNum),
       r.barM,
       r.ecM,
       r.gesM,
-      fmt(r.barU),
-      fmt(r.ecU),
-      fmt(r.gesU)
+      fmtMoney(r.barU),
+      fmtMoney(r.ecU),
+      fmtMoney(r.gesU)
     ]);
   });
 
   csv += row([]);
   csv += row([]);
 
-  // ===== BLOCK 2: PRODUKTSUMMEN (gleiche Infos: Mengen nach Bar/EC/Gesamt) =====
+  // ===== BLOCK 2 =====
   csv += row(["PRODUKTSUMMEN – MENGEN"]);
   csv += row(["Produkt","Bar Säcke","EC Säcke","Gesamt Säcke"]);
   csv += row(["Rasen", rasBar, rasEC, rasBar+rasEC]);
@@ -661,16 +687,16 @@ function exportPreisGruppierung(){
   csv += row([]);
   csv += row([]);
 
-  // ===== BLOCK 3: GELD-SUMMEN (gleiche Infos: Bar/EC/Gesamt) =====
+  // ===== BLOCK 3 =====
   csv += row(["ZAHLUNGSÜBERSICHT – UMSATZ"]);
   csv += row(["Kategorie","Bar","EC","Gesamt"]);
-  csv += row(["Umsatz €", fmt(barGes), fmt(ecGes), fmt(barGes+ecGes)]);
+  csv += row(["Umsatz €", fmtMoney(barGes), fmtMoney(ecGes), fmtMoney(barGes+ecGes)]);
 
   const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
 }
 
-/* ================= ALLES LÖSCHEN ================= */
+/* ================= Alles löschen ================= */
 function allesLoeschen(){
   if(confirm("Wirklich alle Daten löschen?")){
     localStorage.removeItem("humix");
