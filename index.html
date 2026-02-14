@@ -168,7 +168,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:2400px; }
+.submenu.open{ max-height:2600px; }
 
 /* Tabelle */
 .tableWrap{
@@ -470,6 +470,18 @@ th{
         <button class="green" onclick="openMultiStopRouteFromResults()">🧭 Route aus Treffern öffnen</button>
         <div class="hint">Mehrere Stopps: am besten mit Google Maps. Apple Karten ist hier eingeschränkt.</div>
       </div>
+
+      <div>
+        <label>Alte Einträge umkreistauglich machen</label>
+        <button class="orange" onclick="anreichernGPS()">🔄 Alte Einträge mit GPS anreichern</button>
+        <div class="status" id="gpsBatchStatus">Noch nicht gestartet.</div>
+        <div class="hint">Verarbeitet nur Einträge ohne GPS. 1 Anfrage/Sekunde.</div>
+      </div>
+
+      <div>
+        <label>Hinweis</label>
+        <div class="status">Für Radius werden Einträge ohne GPS nicht angezeigt – nach dem Anreichern schon.</div>
+      </div>
     </div>
 
     <div class="smallRow" style="margin-top:10px;">
@@ -622,7 +634,6 @@ function pickProviderInteractive(){
   const current = getMapProvider();
   if(current !== "ask") return current;
 
-  // Auswahl per prompt (einfach & robust auf Handy)
   const ans = prompt("Navigation öffnen mit:\n1 = Google Maps\n2 = Apple Karten\n(Abbrechen = nichts)", "1");
   if(ans === null) return null;
   if(String(ans).trim() === "1") return "google";
@@ -631,11 +642,9 @@ function pickProviderInteractive(){
 }
 
 function buildDestinationFromEntry(e){
-  // 1) Koordinaten
   if(typeof e.lat==="number" && typeof e.lon==="number"){
     return {type:"coords", value:`${e.lat},${e.lon}`};
   }
-  // 2) Adresse
   const addr = [e.strasse||"", e.hausnr||"", e.plz||"", e.ort||""].join(" ").trim();
   if(addr) return {type:"addr", value:addr};
   return null;
@@ -656,15 +665,11 @@ function openSingleNavigationForEntryId(id){
 }
 
 function openNavigation(provider, dest){
-  // dest: {type:"coords"|"addr", value:"..."}
   let url = "";
   if(provider === "google"){
     const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
     url = `https://www.google.com/maps/dir/?api=1&destination=${d}`;
   }else if(provider === "apple"){
-    // Apple Maps:
-    // coords: maps.apple.com/?daddr=lat,lon
-    // addr:   maps.apple.com/?daddr=ENCODED_ADDRESS
     const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
     url = `https://maps.apple.com/?daddr=${d}`;
   }else{
@@ -686,34 +691,25 @@ function openMultiStopRouteFromResults(){
     return;
   }
 
-  // Google Maps Waypoints: origin + destination + waypoints
-  // Wir nehmen: origin = aktueller Ort (falls gesetzt), sonst leer (Google fragt dann)
-  // destination = letzter Stopp, waypoints = alle dazwischen
   const stops = [];
-
-  // Nimm nur Ziele mit Adresse oder GPS
   dbLastResults.forEach(({e})=>{
     const d = buildDestinationFromEntry(e);
     if(!d) return;
-    // Für Google Waypoints am besten mit coords oder encoded address
-    const val = (d.type==="coords") ? d.value : d.value;
-    stops.push(val);
+    stops.push(d.type==="coords" ? d.value : d.value);
   });
 
   if(stops.length < 1) return alert("In den Treffern gibt es keine Einträge mit GPS oder Adresse.");
   if(stops.length === 1){
-    // Single fallback
     openNavigation("google", {type:"addr", value:stops[0]});
     return;
   }
 
-  // Limit, damit URL nicht explodiert
   const MAX_STOPS = 10;
   const sliced = stops.slice(0, MAX_STOPS);
 
   const origin = (dbCurrentPos)
     ? `${dbCurrentPos.lat},${dbCurrentPos.lon}`
-    : ""; // leer -> Google nimmt "Mein Standort"
+    : "";
 
   const destination = sliced[sliced.length-1];
   const waypoints = sliced.slice(0, sliced.length-1);
@@ -749,7 +745,6 @@ function getCurrentPositionPromise(opts){
 }
 
 async function tryAutoGPS(){
-  // Versuch: GPS holen, aber NICHT blockieren bei Fehler (Variante A)
   try{
     const pos = await getCurrentPositionPromise({
       enableHighAccuracy: true,
@@ -761,7 +756,6 @@ async function tryAutoGPS(){
     setLastGpsFix(lat, lon);
     return {gpsOk:true, lat, lon, msg:`Auto-GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`};
   }catch(err){
-    // fallback: letzter Fix (z.B. vom GPS-Button)
     if(lastGpsFix && (Date.now() - lastGpsFix.ts) < 1000*60*60*6){
       return {gpsOk:true, lat:lastGpsFix.lat, lon:lastGpsFix.lon, msg:`Auto-GPS (Letzter Fix) OK: ${lastGpsFix.lat.toFixed(5)}, ${lastGpsFix.lon.toFixed(5)}`};
     }
@@ -833,8 +827,6 @@ async function speichern(){
     zahlung: el("zahlung").value,
     summe,
     createdAt: Date.now(),
-
-    // GPS dauerhaft
     gpsOk: !!gps.gpsOk,
     lat: gps.gpsOk ? gps.lat : null,
     lon: gps.gpsOk ? gps.lon : null
@@ -1018,7 +1010,6 @@ function exportXLSX(){
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
 
-  // Geldformat Summe (Spalte O = 14)
   for(let r=2; r<=sheetData.length; r++){
     const addr = XLSX.utils.encode_cell({r:r-1, c:14});
     if(ws[addr] && typeof ws[addr].v==="number"){
@@ -1357,6 +1348,7 @@ function dbResetFilter(){
   el("dbTbody").innerHTML="";
   el("dbTfoot").innerHTML="";
   dbLastResults = [];
+  const s = el("gpsBatchStatus"); if(s) s.innerText = "Noch nicht gestartet.";
 }
 
 function dbGetFiltered(){
@@ -1627,7 +1619,6 @@ function exportDB_XLSX(){
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
 
-  // Geldformat Summe (Spalte O = 14)
   for(let r=2; r<=sheetData.length; r++){
     const addr = XLSX.utils.encode_cell({r:r-1, c:14});
     if(ws[addr] && typeof ws[addr].v==="number"){
@@ -1640,6 +1631,68 @@ function exportDB_XLSX(){
 
   const dateName = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `humix_db_export_${dateName}.xlsx`);
+}
+
+/* ================= GPS Batch-Anreicherung (alte Einträge) ================= */
+async function anreichernGPS(){
+  const daten = loadAll();
+
+  const ohneGPS = daten.filter(e =>
+    !(typeof e.lat === "number" && typeof e.lon === "number")
+  );
+
+  if(!ohneGPS.length){
+    alert("Alle Einträge haben bereits GPS.");
+    return;
+  }
+
+  if(!confirm(`${ohneGPS.length} Einträge ohne GPS gefunden.\nJetzt anreichern?`)) return;
+
+  let count = 0;
+  const total = ohneGPS.length;
+  el("gpsBatchStatus").innerText = "Starte GPS-Anreicherung...";
+
+  for(const e of ohneGPS){
+    const adresse = [
+      e.strasse || "",
+      e.hausnr || "",
+      e.plz || "",
+      e.ort || ""
+    ].join(" ").trim();
+
+    if(!adresse){
+      count++;
+      el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total} (ohne Adresse übersprungen)`;
+      await new Promise(r => setTimeout(r, 1000));
+      continue;
+    }
+
+    try{
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adresse)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if(data && data.length){
+        e.lat = parseFloat(data[0].lat);
+        e.lon = parseFloat(data[0].lon);
+        e.gpsOk = true;
+      }
+    }catch(err){
+      console.log("Fehler bei Adresse:", adresse, err);
+    }
+
+    count++;
+    el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total}`;
+    await new Promise(r => setTimeout(r, 1000)); // 1 Anfrage/Sekunde
+  }
+
+  saveAll(daten);
+  el("gpsBatchStatus").innerText = `Fertig. ${count} Einträge geprüft / ergänzt.`;
+  alert("GPS-Anreicherung abgeschlossen.");
+
+  if(document.getElementById("viewDB")?.classList.contains("active")){
+    dbSuchen();
+  }
 }
 
 /* ================= Start ================= */
