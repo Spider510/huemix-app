@@ -9,103 +9,396 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; background:#f4f7f4; margin:0; padding:10px; }
-h1,h2 { color:#2e7d32; }
-label { font-weight:bold; display:block; margin-top:10px; }
-input, select, button {
-  width:100%; padding:10px; margin-top:5px;
-  font-size:16px; box-sizing:border-box;
+/* ================= Modern UI (nur Design, keine Logik) ================= */
+:root{
+  --bg: #0b1220;
+  --surface: rgba(255,255,255,.06);
+  --surface2: rgba(255,255,255,.09);
+  --border: rgba(255,255,255,.12);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.70);
+
+  --primary: #2e7d32;   /* HÜMIX grün */
+  --blue: #1976d2;
+  --gray: #455a64;
+  --purple: #6a1b9a;
+  --orange: #ef6c00;
+  --red: #c62828;
+
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --radius: 16px;
 }
-button { border:none; color:#fff; cursor:pointer; margin-top:10px; }
-.green { background:#2e7d32; }
-.blue { background:#1976d2; }
-.gray { background:#455a64; }
-.purple { background:#6a1b9a; }
-.orange { background:#ef6c00; }
-.red { background:#c62828; }
 
-table { width:100%; border-collapse:collapse; margin-top:15px; background:#fff; }
-th,td { border:1px solid #ccc; padding:6px; font-size:14px; }
-th { background:#e8f5e9; }
-.bar { background:#e8f5e9; }
-.ec { background:#e3f2fd; }
-.summe { font-weight:bold; background:#f1f8e9; }
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
 
-.actionBtn { padding:4px 6px; font-size:12px; width:auto; }
-.status { font-size:14px; margin-top:6px; }
+body{
+  margin:0;
+  padding:18px 14px 26px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background:
+    radial-gradient(900px 500px at 20% 0%, rgba(46,125,50,.35), transparent 55%),
+    radial-gradient(900px 500px at 100% 15%, rgba(25,118,210,.25), transparent 60%),
+    radial-gradient(1100px 700px at 40% 110%, rgba(106,27,154,.18), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+.container{
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom: 14px;
+}
+
+h1{
+  margin:0;
+  font-size: 26px;
+  letter-spacing: .2px;
+  line-height: 1.15;
+}
+.subtitle{
+  margin-top:6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.card{
+  background: linear-gradient(180deg, var(--surface), rgba(255,255,255,.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
+
+@media (min-width: 720px){
+  .grid{ grid-template-columns: repeat(12, 1fr); }
+  .col-6{ grid-column: span 6; }
+  .col-4{ grid-column: span 4; }
+  .col-3{ grid-column: span 3; }
+  .col-12{ grid-column: span 12; }
+}
+
+.sectionTitle{
+  margin: 18px 0 10px;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: .2px;
+}
+
+label{
+  display:block;
+  font-weight: 650;
+  font-size: 12px;
+  letter-spacing: .2px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input, select, button{
+  font-size: 16px;
+}
+
+input, select{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s ease, transform .05s ease, background .15s ease;
+}
+
+input::placeholder{ color: rgba(255,255,255,.45); }
+
+input:focus, select:focus{
+  border-color: rgba(46,125,50,.85);
+  background: rgba(0,0,0,.26);
+}
+
+select{
+  appearance:none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,.7) 50%),
+    linear-gradient(135deg, rgba(255,255,255,.7) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+  padding-right: 34px;
+}
+
+.btnRow{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  margin-top: 10px;
+}
+
+@media (min-width: 720px){
+  .btnRow{ grid-template-columns: repeat(12, 1fr); }
+  .btnSpan6{ grid-column: span 6; }
+  .btnSpan4{ grid-column: span 4; }
+  .btnSpan3{ grid-column: span 3; }
+  .btnSpan12{ grid-column: span 12; }
+}
+
+button{
+  width:100%;
+  padding: 12px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  color:#fff;
+  cursor:pointer;
+  transition: transform .06s ease, filter .15s ease, opacity .15s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+  font-weight: 700;
+  letter-spacing: .15px;
+}
+
+button:hover{ filter: brightness(1.05); }
+button:active{ transform: translateY(1px); }
+
+.green { background: linear-gradient(180deg, rgba(46,125,50,1), rgba(27,94,32,1)); }
+.blue  { background: linear-gradient(180deg, rgba(25,118,210,1), rgba(13,71,161,1)); }
+.gray  { background: linear-gradient(180deg, rgba(69,90,100,1), rgba(38,50,56,1)); }
+.purple{ background: linear-gradient(180deg, rgba(106,27,154,1), rgba(74,20,140,1)); }
+.orange{ background: linear-gradient(180deg, rgba(239,108,0,1), rgba(230,81,0,1)); }
+.red   { background: linear-gradient(180deg, rgba(198,40,40,1), rgba(183,28,28,1)); }
+
+.status{
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.14);
+}
+
+.tableCard{
+  margin-top: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tableWrap{
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  min-width: 760px;
+}
+
+th, td{
+  padding: 10px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  white-space: nowrap;
+}
+
+thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(10,16,28,.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,.9);
+  text-align:left;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+tbody tr:hover{
+  background: rgba(255,255,255,.04);
+}
+
+.bar { background: rgba(46,125,50,.12); }
+.ec  { background: rgba(25,118,210,.12); }
+
+.summe{
+  font-weight: 900;
+  background: rgba(255,255,255,.06);
+}
+
+tfoot tr td{
+  position: sticky;
+  bottom: 0;
+  background: rgba(10,16,28,.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.actionBtn{
+  padding: 8px 10px;
+  font-size: 12px;
+  width:auto;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.badgeRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.badge{
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  padding: 8px 10px;
+  border-radius: 999px;
+}
+
+/* schöner Abstand am Ende */
+.spacer{ height: 14px; }
 </style>
 </head>
 
 <body>
+  <div class="container">
 
-<h1>🌱 HÜMIX Einsatz</h1>
+    <div class="header">
+      <div>
+        <h1>🌱 HÜMIX Einsatz</h1>
+        <div class="subtitle">Schnell erfassen, speichern und als CSV/XLSX exportieren – alles lokal im Browser.</div>
+      </div>
+      <div class="badgeRow">
+        <div class="badge">📦 Rasen: 45 €</div>
+        <div class="badge">🌿 Bio: 30 €</div>
+      </div>
+    </div>
 
-<input type="hidden" id="editId">
+    <div class="card">
+      <input type="hidden" id="editId">
 
-<label>Name</label>
-<input id="name" placeholder="optional">
+      <div class="grid">
+        <div class="col-6">
+          <label>Name</label>
+          <input id="name" placeholder="optional">
+        </div>
 
-<label>Telefon</label>
-<input id="telefon" inputmode="tel">
+        <div class="col-6">
+          <label>Telefon</label>
+          <input id="telefon" inputmode="tel">
+        </div>
 
-<label>Straße</label>
-<input id="strasse">
+        <div class="col-6">
+          <label>Straße</label>
+          <input id="strasse">
+        </div>
 
-<label>Hausnummer</label>
-<input id="hausnr">
+        <div class="col-3">
+          <label>Hausnummer</label>
+          <input id="hausnr">
+        </div>
 
-<label>PLZ</label>
-<input id="plz">
+        <div class="col-3">
+          <label>PLZ</label>
+          <input id="plz">
+        </div>
 
-<label>Ort</label>
-<input id="ort">
+        <div class="col-6">
+          <label>Ort</label>
+          <input id="ort">
+        </div>
 
-<label>Rasen Spezial – Säcke (45 €)</label>
-<input id="rasen" type="number" value="0">
+        <div class="col-3">
+          <label>Rasen Spezial – Säcke (45 €)</label>
+          <input id="rasen" type="number" value="0">
+        </div>
 
-<label>Bio-Volldünger – Säcke (30 €)</label>
-<input id="bio" type="number" value="0">
+        <div class="col-3">
+          <label>Bio-Volldünger – Säcke (30 €)</label>
+          <input id="bio" type="number" value="0">
+        </div>
 
-<label>Ausgestreut</label>
-<select id="ausgestreut">
-  <option>Ja</option>
-  <option>Nein</option>
-</select>
+        <div class="col-3">
+          <label>Ausgestreut</label>
+          <select id="ausgestreut">
+            <option>Ja</option>
+            <option>Nein</option>
+          </select>
+        </div>
 
-<label>Zahlungsart</label>
-<select id="zahlung">
-  <option>Bar</option>
-  <option>EC</option>
-</select>
+        <div class="col-3">
+          <label>Zahlungsart</label>
+          <select id="zahlung">
+            <option>Bar</option>
+            <option>EC</option>
+          </select>
+        </div>
 
-<button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
-<div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
+        <div class="col-12 btnRow">
+          <div class="btnSpan6">
+            <button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
+            <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
+          </div>
 
-<button class="green" onclick="speichern()">💾 Speichern</button>
-<button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+          <div class="btnSpan6" style="display:grid; gap:10px;">
+            <button class="green" onclick="speichern()">💾 Speichern</button>
+            <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+          </div>
 
-<button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
-<button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-<button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-<button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+          <div class="btnSpan3"><button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button></div>
+          <div class="btnSpan3"><button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button></div>
+          <div class="btnSpan3"><button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button></div>
+          <div class="btnSpan3"><button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button></div>
+        </div>
+      </div>
+    </div>
 
-<h2>📋 Heutige Einträge</h2>
+    <div class="spacer"></div>
 
-<table>
-<thead>
-<tr>
-<th>Uhrzeit</th>
-<th>Ort – Name</th>
-<th>Rasen</th>
-<th>Bio</th>
-<th>Zahlung</th>
-<th>€</th>
-<th>Aktion</th>
-</tr>
-</thead>
-<tbody id="tabelleHeute"></tbody>
-<tfoot id="summenHeute"></tfoot>
-</table>
+    <div class="sectionTitle">📋 Heutige Einträge</div>
+
+    <div class="card tableCard">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Uhrzeit</th>
+              <th>Ort – Name</th>
+              <th>Rasen</th>
+              <th>Bio</th>
+              <th>Zahlung</th>
+              <th>€</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="tabelleHeute"></tbody>
+          <tfoot id="summenHeute"></tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div>
 
 <script>
 function el(id){ return document.getElementById(id); }
