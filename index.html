@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ===== Modernes Smartphone-Layout ===== */
+/* ===== Modernes Smartphone-Layout (Funktionen bleiben) ===== */
 :root{
   --bg:#0f172a;
   --card:#111c2f;
@@ -74,7 +74,10 @@ h1{ margin:0; font-size:20px; }
   box-shadow:0 6px 16px rgba(0,0,0,.10);
 }
 
-h2{ margin:0 0 10px 0; font-size:18px; }
+h2{
+  margin:0 0 10px 0;
+  font-size:18px;
+}
 
 label{
   font-weight:650;
@@ -83,7 +86,6 @@ label{
   display:block;
   margin-top:10px;
 }
-
 input, select, button{
   width:100%;
   padding:14px;
@@ -91,13 +93,11 @@ input, select, button{
   font-size:16px; /* iOS Zoom verhindern */
   border-radius:12px;
 }
-
 input, select{
   background:transparent;
   border:1px solid var(--border);
   color:var(--text);
 }
-
 button{
   border:none;
   color:#fff;
@@ -189,6 +189,7 @@ th{
 </div>
 
 <div class="card">
+
   <input type="hidden" id="editId">
 
   <label>Name</label>
@@ -252,7 +253,7 @@ th{
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
     <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV</button>
+    <button class="blue" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
@@ -263,15 +264,15 @@ th{
   <div class="tableWrap">
     <table>
       <thead>
-        <tr>
-          <th>Uhrzeit</th>
-          <th>Ort – Name</th>
-          <th>Rasen</th>
-          <th>Bio</th>
-          <th>Zahlung</th>
-          <th>€</th>
-          <th>Aktion</th>
-        </tr>
+      <tr>
+        <th>Uhrzeit</th>
+        <th>Ort – Name</th>
+        <th>Rasen</th>
+        <th>Bio</th>
+        <th>Zahlung</th>
+        <th>€</th>
+        <th>Aktion</th>
+      </tr>
       </thead>
       <tbody id="tabelleHeute"></tbody>
       <tfoot id="summenHeute"></tfoot>
@@ -483,13 +484,14 @@ function exportTagesCSV(){
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
 
   daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
+    const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
     const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp = toNum(e.bioPreis)   || STANDARD_BIO;
+
     csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
 
-  const dateName = new Date().toISOString().slice(0,10);
+  const dateName = new Date().toISOString().slice(0,10); // yyyy-mm-dd
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
@@ -526,6 +528,7 @@ function exportXLSX(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
+  // Auto-Spaltenbreite
   ws["!cols"] = sheetData[0].map((_, i) => ({
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
@@ -581,109 +584,90 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV (TAB-getrennt -> keine Spaltenfehler) ================= */
-function exportPreisGruppierung(){
+/* ================= PREIS-GRUPPIERUNG als XLSX (DETAIL zusammengefasst) ================= */
+function exportPreisGruppierungXLSX(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  // TAB als Trenner -> Excel/Numbers zerlegen Dezimalzahlen nicht mehr
-  const SEP = "\t";
-  const NL  = "\n";
-  const d   = heuteDatum();
+  const datum = heuteDatum();
 
-  const fmtDE = (n)=> (Number(n||0)).toFixed(2).replace(".",","); // Anzeige wie gewohnt (deutsch)
-
-  // Gruppen nach Produkt + Preis
-  const groups = new Map(); // key: "Bio|30,00" -> {barM, ecM, barU, ecU}
+  // key = Produkt|Preis
+  const groups = new Map(); // -> {prod, preis, barM, ecM, barU, ecU}
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
 
   function add(prod, preis, zahlung, menge){
+    menge = toNum(menge);
     if(!menge) return;
     const p = Number(preis)||0;
     const u = menge*p;
-    const key = `${prod}|${fmtDE(p)}`;
-    const cur = groups.get(key) || {barM:0, ecM:0, barU:0, ecU:0};
+
+    const key = `${prod}|${p.toFixed(2)}`;
+    if(!groups.has(key)){
+      groups.set(key, {prod, preis:p, barM:0, ecM:0, barU:0, ecU:0});
+    }
+    const g = groups.get(key);
 
     if(zahlung==="Bar"){
-      cur.barM += menge;
-      cur.barU += u;
+      g.barM += menge;
+      g.barU += u;
       barGes += u;
+      if(prod==="Rasen") rasBar += menge;
+      if(prod==="Bio")   bioBar += menge;
     } else if(zahlung==="EC"){
-      cur.ecM += menge;
-      cur.ecU += u;
+      g.ecM += menge;
+      g.ecU += u;
       ecGes += u;
+      if(prod==="Rasen") rasEC += menge;
+      if(prod==="Bio")   bioEC += menge;
     }
-    groups.set(key, cur);
   }
 
   daten.forEach(e=>{
     const pay = e.zahlung || "";
-    const ras = toNum(e.rasen);
-    const bio = toNum(e.bio);
-    const rp  = toNum(e.rasenPreis) || STANDARD_RASEN;
-    const bp  = toNum(e.bioPreis)   || STANDARD_BIO;
-
-    add("Bio",   bp, pay, bio);
-    add("Rasen", rp, pay, ras);
-
-    if(pay==="Bar"){ rasBar+=ras; bioBar+=bio; }
-    if(pay==="EC"){  rasEC+=ras;  bioEC+=bio;  }
+    add("Rasen", (toNum(e.rasenPreis) || STANDARD_RASEN), pay, e.rasen);
+    add("Bio",   (toNum(e.bioPreis)   || STANDARD_BIO),   pay, e.bio);
   });
 
-  // sortiert: Bio zuerst, dann Rasen; Preis aufsteigend
-  const order = (x)=> x==="Bio" ? 0 : 1;
-  const detailRows = Array.from(groups.entries())
-    .map(([k,v])=>{
-      const [prod, preisTxt] = k.split("|");
-      const gesM = v.barM + v.ecM;
-      const gesU = v.barU + v.ecU;
-      // preisTxt ist schon "deutsch" (z.B. 37,50)
-      const preisNum = Number(String(preisTxt).replace(",","."));
-      return {prod, preisTxt, preisNum, ...v, gesM, gesU};
-    })
-    .sort((a,b)=> order(a.prod)-order(b.prod) || a.preisNum-b.preisNum);
+  const sheet = [];
+  sheet.push(["DETAIL – PREISSTUFEN"]);
+  sheet.push(["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"]);
 
-  let out = "";
+  const orderProd = (p)=> p==="Rasen" ? 0 : 1;
 
-  // Block 1
-  out += "DETAIL – PREISSTUFEN" + NL;
-  out += ["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"].join(SEP) + NL;
+  Array.from(groups.values())
+    .sort((a,b)=> orderProd(a.prod)-orderProd(b.prod) || a.preis-b.preis)
+    .forEach(g=>{
+      const gesM = g.barM + g.ecM;
+      const gesU = g.barU + g.ecU;
+      sheet.push([datum, g.prod, g.preis, g.barM, g.ecM, gesM, g.barU, g.ecU, gesU]);
+    });
 
-  detailRows.forEach(r=>{
-    out += [
-      d,
-      r.prod,
-      r.preisTxt,
-      r.barM,
-      r.ecM,
-      r.gesM,
-      fmtDE(r.barU),
-      fmtDE(r.ecU),
-      fmtDE(r.gesU)
-    ].join(SEP) + NL;
-  });
+  sheet.push([]);
+  sheet.push(["PRODUKTSUMMEN – MENGEN"]);
+  sheet.push(["Produkt","Bar Säcke","EC Säcke","Gesamt Säcke"]);
+  sheet.push(["Rasen", rasBar, rasEC, rasBar+rasEC]);
+  sheet.push(["Bio",   bioBar, bioEC, bioBar+bioEC]);
 
-  out += NL + NL;
+  sheet.push([]);
+  sheet.push(["ZAHLUNGSÜBERSICHT – UMSATZ"]);
+  sheet.push(["Kategorie","Bar","EC","Gesamt"]);
+  sheet.push(["Umsatz €", barGes, ecGes, barGes+ecGes]);
 
-  // Block 2
-  out += "PRODUKTSUMMEN – MENGEN" + NL;
-  out += ["Produkt","Bar Säcke","EC Säcke","Gesamt Säcke"].join(SEP) + NL;
-  out += ["Rasen", rasBar, rasEC, rasBar+rasEC].join(SEP) + NL;
-  out += ["Bio",   bioBar, bioEC, bioBar+bioEC].join(SEP) + NL;
+  const ws = XLSX.utils.aoa_to_sheet(sheet);
 
-  out += NL + NL;
+  // Spaltenbreite
+  ws["!cols"] = sheet[1].map((_, i) => ({
+    wch: Math.max(...sheet.map(r => String(r[i] ?? "").length)) + 2
+  }));
 
-  // Block 3
-  out += "ZAHLUNGSÜBERSICHT – UMSATZ" + NL;
-  out += ["Kategorie","Bar","EC","Gesamt"].join(SEP) + NL;
-  out += ["Umsatz €", fmtDE(barGes), fmtDE(ecGes), fmtDE(barGes+ecGes)].join(SEP) + NL;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Preis Gruppierung");
 
   const dateName = new Date().toISOString().slice(0,10);
-  // bleibt .csv (wie du es willst), Inhalt ist tab-getrennt
-  downloadCSV(out, `humix_preis_gruppierung_${dateName}.csv`);
+  XLSX.writeFile(wb, `humix_preis_gruppierung_${dateName}.xlsx`);
 }
 
 /* ================= ALLES LÖSCHEN ================= */
