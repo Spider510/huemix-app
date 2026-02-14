@@ -26,7 +26,7 @@ body.light{
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
   background:var(--bg);
   color:var(--text);
   padding:12px;
@@ -37,6 +37,7 @@ h1{margin:0;font-size:20px}
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
   margin-bottom:12px;
 }
 .themeToggle{
@@ -56,7 +57,7 @@ h1{margin:0;font-size:20px}
 }
 label{
   font-size:13px;
-  font-weight:600;
+  font-weight:650;
   color:var(--muted);
   margin-bottom:4px;
   display:block;
@@ -75,11 +76,12 @@ button{
   width:100%;
   padding:16px;
   font-size:16px;
-  font-weight:600;
+  font-weight:700;
   border:none;
   border-radius:14px;
   margin-top:8px;
   color:#fff;
+  cursor:pointer;
 }
 .green{background:#2e7d32}
 .blue{background:#1976d2}
@@ -87,10 +89,11 @@ button{
 .purple{background:#6a1b9a}
 .orange{background:#ef6c00}
 .red{background:#c62828}
+
 .status{
   font-size:13px;
   color:var(--muted);
-  margin-bottom:10px;
+  margin:6px 0 10px;
 }
 
 /* Untermenü */
@@ -101,25 +104,51 @@ button{
 }
 .submenu.open{ max-height:520px; }
 
+/* Tabelle */
+.tableWrap{ overflow:auto; -webkit-overflow-scrolling:touch; }
 table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
+  min-width: 760px; /* horizontal scroll auf Handy */
 }
 th,td{
   padding:8px;
   border-bottom:1px solid var(--border);
   text-align:left;
   vertical-align:top;
+  white-space:nowrap;
+}
+thead th{
+  position:sticky;
+  top:0;
+  background:var(--card);
+  z-index:1;
 }
 .bar{background:rgba(46,125,50,.15)}
 .ec{background:rgba(25,118,210,.15)}
-.summe{font-weight:bold}
+.summe{font-weight:800}
 .actionBtn{
-  padding:8px;
-  font-size:14px;
+  padding:8px 10px;
+  font-size:13px;
   border-radius:10px;
   width:auto;
+  margin:0 4px 0 0;
+}
+
+/* kleine 2-Spalten-Felder für Preise */
+.priceGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media (max-width:420px){
+  .priceGrid{ grid-template-columns:1fr; }
+}
+.hint{
+  font-size:12px;
+  color:var(--muted);
+  margin:-6px 0 10px;
 }
 </style>
 </head>
@@ -152,11 +181,24 @@ th,td{
   <label>Ort</label>
   <input id="ort">
 
-  <label>Rasen Spezial – Säcke (45 €)</label>
+  <label>Rasen Spezial – Säcke</label>
   <input id="rasen" type="number" value="0" inputmode="numeric">
 
-  <label>Bio-Volldünger – Säcke (30 €)</label>
+  <label>Bio-Volldünger – Säcke</label>
   <input id="bio" type="number" value="0" inputmode="numeric">
+
+  <div class="priceGrid">
+    <div>
+      <label>Rasen Sonderpreis €/Sack (optional)</label>
+      <input id="rasenPreis" type="number" step="0.01" inputmode="decimal" placeholder="Standard 45">
+      <div class="hint">Leer lassen = 45 €/Sack</div>
+    </div>
+    <div>
+      <label>Bio Sonderpreis €/Sack (optional)</label>
+      <input id="bioPreis" type="number" step="0.01" inputmode="decimal" placeholder="Standard 30">
+      <div class="hint">Leer lassen = 30 €/Sack</div>
+    </div>
+  </div>
 
   <label>Ausgestreut</label>
   <select id="ausgestreut">
@@ -177,33 +219,33 @@ th,td{
   <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
 
   <button class="gray" onclick="toggleSubmenu()">⚙️ Mehr Optionen</button>
-
   <div class="submenu" id="submenu">
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung</button>
-    <button class="red" onclick="allesLoeschen()">🗑 Alle löschen</button>
+    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
+    <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
 
 <div class="card">
   <h2 style="margin:0 0 10px;font-size:18px">📋 Heutige Einträge</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Uhr</th>
-        <th>Ort – Name</th>
-        <th>R</th>
-        <th>B</th>
-        <th>Z</th>
-        <th>€</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="tabelleHeute"></tbody>
-    <tfoot id="summenHeute"></tfoot>
-  </table>
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Uhrzeit</th>
+          <th>Ort – Name</th>
+          <th>Rasen</th>
+          <th>Bio</th>
+          <th>Zahlung</th>
+          <th>€</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="tabelleHeute"></tbody>
+      <tfoot id="summenHeute"></tfoot>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -214,18 +256,29 @@ function toggleTheme(){
     document.body.classList.contains("light") ? "light" : "dark");
 }
 (function(){
-  if(localStorage.getItem("theme")==="light")
-    document.body.classList.add("light");
+  if(localStorage.getItem("theme")==="light") document.body.classList.add("light");
 })();
-
 function toggleSubmenu(){
   document.getElementById("submenu").classList.toggle("open");
 }
 
-/* ================= ORIGINAL FUNKTIONEN ================= */
+/* ================= ORIGINAL HELPERS ================= */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+
+/* Preise (Standard + Sonderpreis pro Eintrag) */
+const STANDARD_RASEN = 45;
+const STANDARD_BIO   = 30;
+
+function getPreisRasen(){
+  const p = toNum(el("rasenPreis").value);
+  return p > 0 ? p : STANDARD_RASEN;
+}
+function getPreisBio(){
+  const p = toNum(el("bioPreis").value);
+  return p > 0 ? p : STANDARD_BIO;
+}
 
 /* ================= GPS ================= */
 function gpsHolen(){
@@ -254,7 +307,11 @@ function speichern(){
 
   const rasen = toNum(el("rasen").value || 0);
   const bio   = toNum(el("bio").value || 0);
-  const summe = rasen*45 + bio*30;
+
+  const rasenPreis = getPreisRasen(); // tatsächlicher Preis
+  const bioPreis   = getPreisBio();   // tatsächlicher Preis
+
+  const summe = rasen*rasenPreis + bio*bioPreis;
 
   const id = el("editId").value || (Date.now()+"_"+Math.random());
 
@@ -269,6 +326,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
+    rasenPreis, bioPreis,                 // <-- NEU dauerhaft gespeichert
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -288,6 +346,10 @@ function neuerEintrag(){
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
   el("rasen").value=0;
   el("bio").value=0;
+  el("rasenPreis").value="";
+  el("bioPreis").value="";
+  el("ausgestreut").value="Ja";
+  el("zahlung").value="Bar";
   el("gpsStatus").innerText="GPS noch nicht ermittelt";
 }
 
@@ -318,7 +380,7 @@ function ladeHeute(){
         <td>${ras}</td>
         <td>${bi}</td>
         <td>${e.zahlung||""}</td>
-        <td>${su}</td>
+        <td>${su.toFixed ? su.toFixed(2) : su}</td>
         <td>
           <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
           <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
@@ -328,13 +390,13 @@ function ladeHeute(){
 
   tfoot.innerHTML = `
     <tr class="summe bar">
-      <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td>
+      <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS.toFixed(2)}</td><td></td>
     </tr>
     <tr class="summe ec">
-      <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td>
+      <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS.toFixed(2)}</td><td></td>
     </tr>
     <tr class="summe">
-      <td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td>
+      <td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${(bS+eS).toFixed(2)}</td><td></td>
     </tr>`;
 }
 
@@ -354,6 +416,12 @@ function bearbeiten(id){
   el("bio").value = toNum(e.bio);
   el("ausgestreut").value = e.ausgestreut || "Ja";
   el("zahlung").value = e.zahlung || "Bar";
+
+  // Sonderpreise wieder laden (wenn Standard, optional leer lassen)
+  const rp = toNum(e.rasenPreis);
+  const bp = toNum(e.bioPreis);
+  el("rasenPreis").value = (rp && rp !== STANDARD_RASEN) ? rp : "";
+  el("bioPreis").value   = (bp && bp !== STANDARD_BIO) ? bp : "";
 }
 
 function loeschen(id){
@@ -381,14 +449,17 @@ function exportTagesCSV(){
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
+  // NEU: Sonderpreis-Spalten
+  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
 
   daten.forEach(e=>{
     const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
-    csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${toNum(e.bio)};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
+    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
+    const bp = toNum(e.bioPreis) || STANDARD_BIO;
+    csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
 
-  const dateName = new Date().toISOString().slice(0,10); // yyyy-mm-dd
+  const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
@@ -400,7 +471,7 @@ function exportXLSX(){
   if(!daten.length) return alert("Keine Daten für heute");
 
   const sheetData = [
-    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €"]
+    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","RasenPreis","Bio","BioPreis","Ausgestreut","Zahlung","Summe €"]
   ];
 
   daten.forEach(e=>{
@@ -414,7 +485,9 @@ function exportXLSX(){
       e.plz || "",
       e.ort || "",
       toNum(e.rasen),
+      (toNum(e.rasenPreis) || STANDARD_RASEN),
       toNum(e.bio),
+      (toNum(e.bioPreis) || STANDARD_BIO),
       e.ausgestreut || "",
       e.zahlung || "",
       toNum(e.summe)
