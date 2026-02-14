@@ -15,7 +15,6 @@
   --text:#f1f5f9;
   --muted:#94a3b8;
 }
-
 body.light{
   --bg:#f1f5f9;
   --card:#ffffff;
@@ -23,9 +22,7 @@ body.light{
   --text:#1e293b;
   --muted:#64748b;
 }
-
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
@@ -34,16 +31,13 @@ body{
   padding:12px;
   font-size:16px;
 }
-
 h1{margin:0;font-size:20px}
-
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:12px;
 }
-
 .themeToggle{
   padding:8px 12px;
   border-radius:18px;
@@ -52,7 +46,6 @@ h1{margin:0;font-size:20px}
   color:var(--text);
   font-size:14px;
 }
-
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -60,7 +53,6 @@ h1{margin:0;font-size:20px}
   padding:14px;
   margin-bottom:12px;
 }
-
 label{
   font-size:13px;
   font-weight:600;
@@ -68,7 +60,6 @@ label{
   margin-bottom:4px;
   display:block;
 }
-
 input,select{
   width:100%;
   padding:14px;
@@ -76,10 +67,9 @@ input,select{
   border:1px solid var(--border);
   background:transparent;
   color:var(--text);
-  font-size:16px; /* verhindert iOS Zoom */
+  font-size:16px;
   margin-bottom:10px;
 }
-
 button{
   width:100%;
   padding:16px;
@@ -90,26 +80,26 @@ button{
   margin-top:8px;
   color:#fff;
 }
-
 .green{background:#2e7d32}
 .blue{background:#1976d2}
 .gray{background:#455a64}
 .purple{background:#6a1b9a}
 .orange{background:#ef6c00}
 .red{background:#c62828}
-
 .status{
   font-size:13px;
   color:var(--muted);
   margin-bottom:10px;
 }
 
-/* Sticky Action Buttons unten */
-.actions{
-  position:sticky;
-  bottom:0;
-  background:var(--bg);
-  padding-top:10px;
+/* SUBMENU */
+.submenu{
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .3s ease;
+}
+.submenu.open{
+  max-height:500px;
 }
 
 table{
@@ -117,17 +107,14 @@ table{
   border-collapse:collapse;
   font-size:14px;
 }
-
 th,td{
   padding:8px;
   border-bottom:1px solid var(--border);
   text-align:left;
 }
-
 .bar{background:rgba(46,125,50,.15)}
 .ec{background:rgba(25,118,210,.15)}
 .summe{font-weight:bold}
-
 .actionBtn{
   padding:8px;
   font-size:14px;
@@ -166,10 +153,10 @@ th,td{
 <input id="ort">
 
 <label>Rasen Spezial – Säcke (45 €)</label>
-<input id="rasen" type="number" value="0" inputmode="numeric">
+<input id="rasen" type="number" value="0">
 
 <label>Bio-Volldünger – Säcke (30 €)</label>
-<input id="bio" type="number" value="0" inputmode="numeric">
+<input id="bio" type="number" value="0">
 
 <label>Ausgestreut</label>
 <select id="ausgestreut">
@@ -186,9 +173,12 @@ th,td{
 <button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
 <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
 
-<div class="actions">
 <button class="green" onclick="speichern()">💾 Speichern</button>
 <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+
+<button class="gray" onclick="toggleSubmenu()">⚙️ Mehr Optionen</button>
+
+<div class="submenu" id="submenu">
 <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
 <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
 <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung</button>
@@ -199,7 +189,6 @@ th,td{
 
 <div class="card">
 <h2 style="margin-top:0;font-size:18px">📋 Heutige Einträge</h2>
-
 <table>
 <thead>
 <tr>
@@ -215,7 +204,6 @@ th,td{
 <tbody id="tabelleHeute"></tbody>
 <tfoot id="summenHeute"></tfoot>
 </table>
-
 </div>
 
 <script>
@@ -229,7 +217,11 @@ if(localStorage.getItem("theme")==="light")
 document.body.classList.add("light");
 })();
 
-/* ======== ORIGINAL FUNKTIONEN UNVERÄNDERT ======== */
+function toggleSubmenu(){
+document.getElementById("submenu").classList.toggle("open");
+}
+
+/* ======== ORIGINAL FUNKTIONEN ======== */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
@@ -248,7 +240,7 @@ el("strasse").value=d.address?.road||"";
 el("hausnr").value=d.address?.house_number||"";
 el("plz").value=d.address?.postcode||"";
 el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-el("gpsStatus").innerText=`GPS OK`;
+el("gpsStatus").innerText="GPS OK";
 });
 },()=>alert("GPS nicht verfügbar"));
 }
@@ -280,7 +272,7 @@ neuerEintrag();
 ladeHeute();
 }
 
-/* Rest wie gehabt */
+/* Rest unverändert */
 function neuerEintrag(){
 el("editId").value="";
 ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
