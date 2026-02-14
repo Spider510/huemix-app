@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ===== Modernes Smartphone-Layout ===== */
 :root{
   --bg:#0f172a;
   --card:#111c2f;
@@ -25,7 +24,6 @@
   --orange:#ef6c00;
   --red:#c62828;
 }
-
 body.light{
   --bg:#f4f7f4;
   --card:#ffffff;
@@ -34,9 +32,7 @@ body.light{
   --text:#162033;
   --muted:#506079;
 }
-
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
@@ -45,7 +41,6 @@ body{
   padding:12px;
   font-size:16px;
 }
-
 .topbar{
   display:flex;
   align-items:center;
@@ -54,7 +49,6 @@ body{
   margin-bottom:10px;
 }
 h1{ margin:0; font-size:20px; }
-
 .themeBtn{
   padding:8px 12px;
   border-radius:999px;
@@ -64,7 +58,6 @@ h1{ margin:0; font-size:20px; }
   font-size:14px;
   cursor:pointer;
 }
-
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -73,9 +66,7 @@ h1{ margin:0; font-size:20px; }
   margin-bottom:12px;
   box-shadow:0 6px 16px rgba(0,0,0,.10);
 }
-
 h2{ margin:0 0 10px 0; font-size:18px; }
-
 label{
   font-weight:650;
   font-size:13px;
@@ -83,42 +74,35 @@ label{
   display:block;
   margin-top:10px;
 }
-
 input, select, button{
   width:100%;
   padding:14px;
   margin-top:6px;
-  font-size:16px; /* iOS Zoom verhindern */
+  font-size:16px;
   border-radius:12px;
 }
-
 input, select{
   background:transparent;
   border:1px solid var(--border);
   color:var(--text);
 }
-
 button{
   border:none;
   color:#fff;
   cursor:pointer;
   font-weight:750;
 }
-
 .green { background:var(--green); }
 .blue  { background:var(--blue); }
 .gray  { background:var(--gray); }
 .purple{ background:var(--purple); }
 .orange{ background:var(--orange); }
 .red   { background:var(--red); }
-
 .status{
   font-size:14px;
   margin-top:8px;
   color:var(--muted);
 }
-
-/* Sonderpreis-Grid */
 .priceGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -132,8 +116,6 @@ button{
   font-size:12px;
   color:var(--muted);
 }
-
-/* Untermenü */
 .submenu{
   overflow:hidden;
   max-height:0;
@@ -141,8 +123,6 @@ button{
   margin-top:8px;
 }
 .submenu.open{ max-height:1400px; }
-
-/* Tabelle */
 .tableWrap{
   overflow:auto;
   -webkit-overflow-scrolling:touch;
@@ -153,7 +133,7 @@ button{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 860px; /* Handy: horizontal scroll */
+  min-width: 860px;
 }
 th,td{
   border-bottom:1px solid var(--border);
@@ -170,7 +150,6 @@ th{
 .bar { background:rgba(46,125,50,.12); }
 .ec  { background:rgba(25,118,210,.12); }
 .summe { font-weight:800; }
-
 .actionBtn{
   padding:8px 10px;
   font-size:13px;
@@ -215,7 +194,6 @@ th{
   <label>Bio-Volldünger – Säcke (Standard 30 €)</label>
   <input id="bio" type="number" value="0" inputmode="numeric">
 
-  <!-- Sonderpreise (pro Eintrag gespeichert) -->
   <div class="priceGrid">
     <div>
       <label>Rasen Sonderpreis €/Sack (optional)</label>
@@ -280,7 +258,7 @@ th{
 </div>
 
 <script>
-/* ================= UI (Theme + Menü) ================= */
+/* ================= UI ================= */
 function toggleTheme(){
   document.body.classList.toggle("light");
   localStorage.setItem("humix_theme", document.body.classList.contains("light") ? "light" : "dark");
@@ -309,7 +287,7 @@ function getPreisBio(){
   return p > 0 ? p : STANDARD_BIO;
 }
 
-/* ================= GPS + Reverse Geocoding ================= */
+/* ================= GPS ================= */
 function gpsHolen(){
   neuerEintrag();
   el("gpsStatus").innerText="GPS wird ermittelt…";
@@ -327,13 +305,11 @@ function gpsHolen(){
         el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
         el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
       })
-      .catch(()=>{
-        el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Adresse nicht geladen)`;
-      });
+      .catch(()=>{ el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Adresse nicht geladen)`; });
   }, ()=>alert("GPS nicht verfügbar"));
 }
 
-/* ================= SPEICHERN (mit Edit-ID) ================= */
+/* ================= SPEICHERN ================= */
 function speichern(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
@@ -358,7 +334,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,               // Sonderpreise pro Eintrag
+    rasenPreis, bioPreis,
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -493,7 +469,7 @@ function exportTagesCSV(){
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
-/* ================= EXPORT: XLSX (heute + Auto-Spaltenbreite) ================= */
+/* ================= EXPORT: XLSX ================= */
 function exportXLSX(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -525,7 +501,6 @@ function exportXLSX(){
   });
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
   ws["!cols"] = sheetData[0].map((_, i) => ({
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
@@ -537,7 +512,7 @@ function exportXLSX(){
   XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
 }
 
-/* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
+/* ================= EXPORT: Tageszusammenfassung CSV ================= */
 function exportZusammenfassung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -545,6 +520,7 @@ function exportZusammenfassung(){
   if(!daten.length) return alert("Keine Daten für heute");
 
   const datum = heuteDatum();
+
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
   let bR_W=0,bB_W=0,eR_W=0,eB_W=0;
 
@@ -581,22 +557,33 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV (TAB-getrennt -> keine Spaltenfehler) ================= */
+/* ================= EXPORT: Preis-Gruppierung CSV (FIX ohne "=") ================= */
 function exportPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  // TAB als Trenner -> Excel/Numbers zerlegen Dezimalzahlen nicht mehr
-  const SEP = "\t";
-  const NL  = "\n";
-  const d   = heuteDatum();
+  // CSV-escaping + saubere Darstellung als "150,00" (KEIN =… mehr)
+  const csvCell = (v) => {
+    const s = String(v ?? "");
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const fmtMoney = (n)=> csvCell((Number(n||0)).toFixed(2).replace(".",","));
+  const fmtPrice = (n)=> csvCell((Number(n||0)).toFixed(2).replace(".",","));
+  const row = (arr)=> arr.map(csvCellIfNeeded).join(";") + "\n";
 
-  const fmtDE = (n)=> (Number(n||0)).toFixed(2).replace(".",","); // Anzeige wie gewohnt (deutsch)
+  function csvCellIfNeeded(x){
+    // Zahlen (Mengen) ohne Quotes ok, Text/Geld/Preis schon gequotet
+    // Wir geben Preis/Geld bereits gequotet zurück (fmtMoney/fmtPrice),
+    // deswegen hier nur "roh" für Mengen/Datum/Produkt/Kopfzeilen.
+    return String(x ?? "");
+  }
 
-  // Gruppen nach Produkt + Preis
-  const groups = new Map(); // key: "Bio|30,00" -> {barM, ecM, barU, ecU}
+  const d = heuteDatum();
+
+  // Gruppen nach Produkt+Preis
+  const groups = new Map(); // key => {barM, ecM, barU, ecU}
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
 
@@ -604,7 +591,8 @@ function exportPreisGruppierung(){
     if(!menge) return;
     const p = Number(preis)||0;
     const u = menge*p;
-    const key = `${prod}|${fmtDE(p)}`;
+
+    const key = `${prod}|${p.toFixed(2)}`;
     const cur = groups.get(key) || {barM:0, ecM:0, barU:0, ecU:0};
 
     if(zahlung==="Bar"){
@@ -633,57 +621,62 @@ function exportPreisGruppierung(){
     if(pay==="EC"){  rasEC+=ras;  bioEC+=bio;  }
   });
 
-  // sortiert: Bio zuerst, dann Rasen; Preis aufsteigend
   const order = (x)=> x==="Bio" ? 0 : 1;
   const detailRows = Array.from(groups.entries())
     .map(([k,v])=>{
-      const [prod, preisTxt] = k.split("|");
-      const gesM = v.barM + v.ecM;
-      const gesU = v.barU + v.ecU;
-      // preisTxt ist schon "deutsch" (z.B. 37,50)
-      const preisNum = Number(String(preisTxt).replace(",","."));
-      return {prod, preisTxt, preisNum, ...v, gesM, gesU};
+      const [prod, price] = k.split("|");
+      const priceNum = Number(price);
+      return {
+        prod,
+        priceNum,
+        ...v,
+        gesM: v.barM + v.ecM,
+        gesU: v.barU + v.ecU
+      };
     })
-    .sort((a,b)=> order(a.prod)-order(b.prod) || a.preisNum-b.preisNum);
+    .sort((a,b)=> order(a.prod)-order(b.prod) || a.priceNum-b.priceNum);
 
-  let out = "";
+  let csv = "";
 
-  // Block 1
-  out += "DETAIL – PREISSTUFEN" + NL;
-  out += ["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"].join(SEP) + NL;
+  // Block 1: Detail
+  csv += "DETAIL – PREISSTUFEN\n";
+  csv += "Datum;Produkt;Preis;Bar Säcke;EC Säcke;Gesamt Säcke;Bar Umsatz;EC Umsatz;Gesamt Umsatz\n";
 
   detailRows.forEach(r=>{
-    out += [
+    csv += [
       d,
       r.prod,
-      r.preisTxt,
+      (Number(r.priceNum||0)).toFixed(2).replace(".",","),
       r.barM,
       r.ecM,
       r.gesM,
-      fmtDE(r.barU),
-      fmtDE(r.ecU),
-      fmtDE(r.gesU)
-    ].join(SEP) + NL;
+      (Number(r.barU||0)).toFixed(2).replace(".",","),
+      (Number(r.ecU||0)).toFixed(2).replace(".",","),
+      (Number(r.gesU||0)).toFixed(2).replace(".",",")
+    ].map(csvCell).join(";") + "\n";
   });
 
-  out += NL + NL;
+  csv += "\n\n";
 
-  // Block 2
-  out += "PRODUKTSUMMEN – MENGEN" + NL;
-  out += ["Produkt","Bar Säcke","EC Säcke","Gesamt Säcke"].join(SEP) + NL;
-  out += ["Rasen", rasBar, rasEC, rasBar+rasEC].join(SEP) + NL;
-  out += ["Bio",   bioBar, bioEC, bioBar+bioEC].join(SEP) + NL;
+  // Block 2: Produktsummen
+  csv += "PRODUKTSUMMEN – MENGEN\n";
+  csv += "Produkt;Bar Säcke;EC Säcke;Gesamt Säcke\n";
+  csv += [ "Rasen", rasBar, rasEC, rasBar+rasEC ].map(csvCell).join(";") + "\n";
+  csv += [ "Bio",   bioBar, bioEC, bioBar+bioEC ].map(csvCell).join(";") + "\n";
 
-  out += NL + NL;
+  csv += "\n\n";
 
-  // Block 3
-  out += "ZAHLUNGSÜBERSICHT – UMSATZ" + NL;
-  out += ["Kategorie","Bar","EC","Gesamt"].join(SEP) + NL;
-  out += ["Umsatz €", fmtDE(barGes), fmtDE(ecGes), fmtDE(barGes+ecGes)].join(SEP) + NL;
+  // Block 3: Zahlungsübersicht
+  csv += "ZAHLUNGSÜBERSICHT – UMSATZ\n";
+  csv += "Kategorie;Bar;EC;Gesamt\n";
+  csv += [ "Umsatz €",
+           (barGes).toFixed(2).replace(".",","),
+           (ecGes).toFixed(2).replace(".",","),
+           (barGes+ecGes).toFixed(2).replace(".",",")
+         ].map(csvCell).join(";") + "\n";
 
   const dateName = new Date().toISOString().slice(0,10);
-  // bleibt .csv (wie du es willst), Inhalt ist tab-getrennt
-  downloadCSV(out, `humix_preis_gruppierung_${dateName}.csv`);
+  downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
 }
 
 /* ================= ALLES LÖSCHEN ================= */
