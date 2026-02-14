@@ -9,23 +9,31 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
+/* ===== Modernes Smartphone-Layout (ohne Funktionsänderung) ===== */
 :root{
   --bg:#0f172a;
-  --card:#1e293b;
-  --border:#334155;
-  --text:#f1f5f9;
-  --muted:#94a3b8;
+  --card:#111c2f;
+  --card2:#0b1426;
+  --border:#22314f;
+  --text:#eef2ff;
+  --muted:#a7b0c6;
+  --green:#2e7d32;
+  --blue:#1976d2;
+  --gray:#455a64;
+  --purple:#6a1b9a;
+  --orange:#ef6c00;
+  --red:#c62828;
 }
 body.light{
-  --bg:#f1f5f9;
+  --bg:#f4f7f4;
   --card:#ffffff;
-  --border:#e2e8f0;
-  --text:#1e293b;
-  --muted:#64748b;
+  --card2:#ffffff;
+  --border:#d7dde6;
+  --text:#162033;
+  --muted:#506079;
 }
 
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
@@ -37,16 +45,18 @@ body{
 
 .topbar{
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
   gap:10px;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
-h1{ margin:0; font-size:20px; }
-
-.themeToggle{
+h1{
+  margin:0;
+  font-size:20px;
+}
+.themeBtn{
   padding:8px 12px;
-  border-radius:18px;
+  border-radius:999px;
   border:1px solid var(--border);
   background:var(--card);
   color:var(--text);
@@ -57,64 +67,56 @@ h1{ margin:0; font-size:20px; }
 .card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:14px;
+  border-radius:16px;
   padding:14px;
   margin-bottom:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,.10);
+}
+h2{
+  margin:0 0 10px 0;
+  font-size:18px;
 }
 
 label{
-  font-size:13px;
   font-weight:650;
+  font-size:13px;
   color:var(--muted);
-  margin-bottom:4px;
   display:block;
+  margin-top:10px;
 }
-
-input,select{
+input, select, button{
   width:100%;
   padding:14px;
+  margin-top:6px;
+  font-size:16px;     /* verhindert iOS-Input-Zoom */
+  box-sizing:border-box;
   border-radius:12px;
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--text);
-  font-size:16px; /* verhindert iOS Zoom */
-  margin-bottom:10px;
 }
-
+input, select{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text);
+}
 button{
-  width:100%;
-  padding:16px;
-  font-size:16px;
-  font-weight:700;
   border:none;
-  border-radius:14px;
-  margin-top:8px;
   color:#fff;
   cursor:pointer;
+  font-weight:750;
 }
-
-.green{background:#2e7d32}
-.blue{background:#1976d2}
-.gray{background:#455a64}
-.purple{background:#6a1b9a}
-.orange{background:#ef6c00}
-.red{background:#c62828}
+.green { background:var(--green); }
+.blue  { background:var(--blue); }
+.gray  { background:var(--gray); }
+.purple{ background:var(--purple); }
+.orange{ background:var(--orange); }
+.red   { background:var(--red); }
 
 .status{
-  font-size:13px;
+  font-size:14px;
+  margin-top:8px;
   color:var(--muted);
-  margin:6px 0 10px;
 }
 
-/* Untermenü */
-.submenu{
-  overflow:hidden;
-  max-height:0;
-  transition:max-height .3s ease;
-}
-.submenu.open{ max-height:900px; }
-
-/* Preise: 2 Spalten, auf kleinen Handys 1 Spalte */
+/* Sonderpreis-Felder nebeneinander, auf sehr kleinen Displays untereinander */
 .priceGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -124,41 +126,56 @@ button{
   .priceGrid{ grid-template-columns:1fr; }
 }
 .hint{
+  margin-top:4px;
   font-size:12px;
   color:var(--muted);
-  margin:-6px 0 10px;
 }
 
-/* Tabelle + horizontal scroll am Handy */
-.tableWrap{ overflow:auto; -webkit-overflow-scrolling:touch; }
+/* Untermenü */
+.submenu{
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .25s ease;
+  margin-top:8px;
+}
+.submenu.open{ max-height:900px; }
+
+/* Tabelle */
+.tableWrap{
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:var(--card2);
+}
 table{
   width:100%;
   border-collapse:collapse;
-  font-size:14px;
-  min-width: 860px;
+  margin-top:0;
+  background:transparent;
+  min-width: 860px; /* Handy: horizontal scroll */
 }
 th,td{
-  padding:8px;
   border-bottom:1px solid var(--border);
-  text-align:left;
-  vertical-align:top;
+  padding:10px;
+  font-size:14px;
   white-space:nowrap;
 }
-thead th{
+th{
   position:sticky;
   top:0;
   background:var(--card);
   z-index:1;
 }
-.bar{background:rgba(46,125,50,.15)}
-.ec{background:rgba(25,118,210,.15)}
-.summe{font-weight:800}
+.bar { background:rgba(46,125,50,.12); }
+.ec  { background:rgba(25,118,210,.12); }
+.summe { font-weight:800; }
 
 .actionBtn{
   padding:8px 10px;
   font-size:13px;
-  border-radius:10px;
   width:auto;
+  border-radius:10px;
   margin-right:6px;
 }
 </style>
@@ -168,7 +185,7 @@ thead th{
 
 <div class="topbar">
   <h1>🌱 HÜMIX Einsatz</h1>
-  <button class="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+  <button class="themeBtn" onclick="toggleTheme()">🌙 / ☀️</button>
 </div>
 
 <div class="card">
@@ -192,22 +209,23 @@ thead th{
   <label>Ort</label>
   <input id="ort">
 
-  <label>Rasen Spezial – Säcke (Standard 45 €)</label>
+  <label>Rasen Spezial – Säcke (45 €)</label>
   <input id="rasen" type="number" value="0" inputmode="numeric">
 
-  <label>Bio-Volldünger – Säcke (Standard 30 €)</label>
+  <label>Bio-Volldünger – Säcke (30 €)</label>
   <input id="bio" type="number" value="0" inputmode="numeric">
 
+  <!-- NEU: Sonderpreise -->
   <div class="priceGrid">
     <div>
       <label>Rasen Sonderpreis €/Sack (optional)</label>
       <input id="rasenPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 45">
-      <div class="hint">Leer lassen = 45 €/Sack</div>
+      <div class="hint">Leer lassen = Standard 45 €</div>
     </div>
     <div>
       <label>Bio Sonderpreis €/Sack (optional)</label>
       <input id="bioPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 30">
-      <div class="hint">Leer lassen = 30 €/Sack</div>
+      <div class="hint">Leer lassen = Standard 30 €</div>
     </div>
   </div>
 
@@ -229,18 +247,19 @@ thead th{
   <button class="green" onclick="speichern()">💾 Speichern</button>
   <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
 
-  <button class="gray" onclick="toggleSubmenu()">⚙️ Mehr Optionen</button>
+  <!-- NEU: Untermenü -->
+  <button class="gray" onclick="toggleSubmenu()">☰ Export / Löschen</button>
   <div class="submenu" id="submenu">
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV (Ø Preis)</button>
-    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV (Bar/EC + Summen)</button>
+    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
+    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV</button>
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
 
 <div class="card">
-  <h2 style="margin:0 0 10px;font-size:18px">📋 Heutige Einträge</h2>
+  <h2>📋 Heutige Einträge</h2>
 
   <div class="tableWrap">
     <table>
@@ -262,31 +281,35 @@ thead th{
 </div>
 
 <script>
-/* ================= THEME + SUBMENU ================= */
+/* ===== Theme + Submenu (nur UI) ===== */
 function toggleTheme(){
   document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+  localStorage.setItem("humix_theme",
+    document.body.classList.contains("light") ? "light" : "dark");
 }
 (function(){
-  if(localStorage.getItem("theme")==="light") document.body.classList.add("light");
+  if(localStorage.getItem("humix_theme")==="light"){
+    document.body.classList.add("light");
+  }
 })();
 function toggleSubmenu(){
   document.getElementById("submenu").classList.toggle("open");
 }
 
-/* ================= HELPERS ================= */
+/* ===== Original Helper ===== */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 
+/* ===== Preise ===== */
 const STANDARD_RASEN = 45;
 const STANDARD_BIO   = 30;
 
-function getPreisRasen(){
+function preisRasenAktuell(){
   const p = toNum(el("rasenPreis").value);
   return p > 0 ? p : STANDARD_RASEN;
 }
-function getPreisBio(){
+function preisBioAktuell(){
   const p = toNum(el("bioPreis").value);
   return p > 0 ? p : STANDARD_BIO;
 }
@@ -319,8 +342,9 @@ function speichern(){
   const rasen = toNum(el("rasen").value || 0);
   const bio   = toNum(el("bio").value || 0);
 
-  const rasenPreis = getPreisRasen();
-  const bioPreis   = getPreisBio();
+  // Sonderpreise (oder Standard)
+  const rasenPreis = preisRasenAktuell();
+  const bioPreis   = preisBioAktuell();
 
   const summe = rasen*rasenPreis + bio*bioPreis;
 
@@ -337,7 +361,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,     // Sonderpreise dauerhaft speichern
+    rasenPreis, bioPreis, // NEU dauerhaft speichern
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -428,7 +452,7 @@ function bearbeiten(id){
   el("ausgestreut").value = e.ausgestreut || "Ja";
   el("zahlung").value = e.zahlung || "Bar";
 
-  // Sonderpreise wieder laden (nur anzeigen, wenn vom Standard abweichend)
+  // Sonderpreise wieder laden: nur anzeigen, wenn abweichend
   const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
   const bp = toNum(e.bioPreis)   || STANDARD_BIO;
   el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
@@ -460,10 +484,11 @@ function exportTagesCSV(){
 
   if(!daten.length) return alert("Keine Daten für heute");
 
+  // NEU: rasenPreis/bioPreis Spalten
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
 
   daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
+    const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
     const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp = toNum(e.bioPreis)   || STANDARD_BIO;
 
@@ -507,6 +532,7 @@ function exportXLSX(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
+  // Auto-Spaltenbreite
   ws["!cols"] = sheetData[0].map((_, i) => ({
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
@@ -518,7 +544,7 @@ function exportXLSX(){
   XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
 }
 
-/* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
+/* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis, Bar/EC) ================= */
 function exportZusammenfassung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -534,7 +560,6 @@ function exportZusammenfassung(){
     const ras = toNum(e.rasen);
     const bi  = toNum(e.bio);
     const su  = toNum(e.summe);
-
     const rp  = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp  = toNum(e.bioPreis)   || STANDARD_BIO;
 
@@ -564,51 +589,42 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV (Bar/EC + Summen) ================= */
+/* ================= EXPORT: Preis-Gruppierung CSV (Bar/EC + Summen unten) ================= */
 function exportPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
-  // Detail-Gruppen: Produkt + Preis + Zahlung
-  // key = Produkt|Preis|Zahlung  -> {menge, umsatz}
+  // Detail: Produkt|Preis|Zahlung -> {menge, umsatz}
   const groups = new Map();
 
-  // Summen:
-  // pro Produkt+Zahlung (ohne Preis)
-  const sumProdPay = new Map(); // key = Produkt|Zahlung
-  // pro Produkt gesamt
-  const sumProd = new Map();    // key = Produkt
-  // pro Zahlung gesamt
-  const sumPay = new Map();     // key = Zahlung
-  // Gesamt
-  let grandMenge = 0;
-  let grandUmsatz = 0;
+  // Summen, wie gewünscht:
+  let rasenMengeGes = 0;
+  let bioMengeGes   = 0;
+  let barUmsatzGes  = 0;
+  let ecUmsatzGes   = 0;
+  let umsatzGes     = 0;
 
-  function add(map, key, menge, umsatz){
-    const cur = map.get(key) || {menge:0, umsatz:0};
+  function addDetail(prod, preis, zahlung, menge){
+    if(!menge) return;
+    const p = Number(preis);
+    const u = menge * p;
+
+    const key = `${prod}|${p.toFixed(2)}|${zahlung}`;
+    const cur = groups.get(key) || {menge:0, umsatz:0};
     cur.menge += menge;
-    cur.umsatz += umsatz;
-    map.set(key, cur);
-  }
+    cur.umsatz += u;
+    groups.set(key, cur);
 
-  function addDetail(prod, price, pay, qty){
-    if(!qty) return;
-    const p = Number(price);
-    const u = qty * p;
+    // Summen:
+    if(prod === "Rasen") rasenMengeGes += menge;
+    if(prod === "Bio")   bioMengeGes   += menge;
 
-    // Detail
-    const key = `${prod}|${p.toFixed(2)}|${pay}`;
-    add(groups, key, qty, u);
+    if(zahlung === "Bar") barUmsatzGes += u;
+    if(zahlung === "EC")  ecUmsatzGes  += u;
 
-    // Summen
-    add(sumProdPay, `${prod}|${pay}`, qty, u);
-    add(sumProd, prod, qty, u);
-    add(sumPay, pay, qty, u);
-
-    grandMenge += qty;
-    grandUmsatz += u;
+    umsatzGes += u;
   }
 
   daten.forEach(e=>{
@@ -622,67 +638,30 @@ function exportPreisGruppierung(){
     addDetail("Bio",   bp, pay, bi);
   });
 
-  // Detail-Rows sortieren: Produkt, Zahlung, Preis
-  const detailRows = Array.from(groups.entries())
+  // Detail-Zeilen sortiert: Produkt, Zahlung, Preis
+  const rows = Array.from(groups.entries())
     .map(([key, val])=>{
       const [prod, price, pay] = key.split("|");
-      return {prod, pay, price: Number(price), menge: val.menge, umsatz: val.umsatz};
+      return {prod, pay, price:Number(price), menge:val.menge, umsatz:val.umsatz};
     })
     .sort((a,b)=> a.prod.localeCompare(b.prod) || a.pay.localeCompare(b.pay) || a.price - b.price);
 
-  let csv = "Datum;Produkt;Preis;Zahlung;Menge;Umsatz\n";
   const d = heuteDatum();
-
-  detailRows.forEach(r=>{
+  let csv = "Datum;Produkt;Preis;Zahlung;Menge;Umsatz\n";
+  rows.forEach(r=>{
     csv += `${d};${r.prod};${r.price.toFixed(2)};${r.pay};${r.menge};${r.umsatz.toFixed(2)}\n`;
   });
 
-  // Trennzeile
+  // Summen unten (genau wie du wolltest)
   csv += ";;;;;\n";
-
-  // Summen pro Produkt+Zahlung
-  // sort: Produkt, Zahlung
-  const sppRows = Array.from(sumProdPay.entries())
-    .map(([key, val])=>{
-      const [prod, pay] = key.split("|");
-      return {prod, pay, menge: val.menge, umsatz: val.umsatz};
-    })
-    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.pay.localeCompare(b.pay));
-
-  csv += "SUMME_PRODUKT_ZAHLUNG;;;;;\n";
-  csv += "Produkt;;Zahlung;Menge;Umsatz\n";
-  sppRows.forEach(r=>{
-    csv += `${r.prod};;${r.pay};${r.menge};${r.umsatz.toFixed(2)}\n`;
-  });
-
+  csv += "GESAMTSUMMEN;;;;;\n";
+  csv += `Anzahl Rasen gesamt;;;;${rasenMengeGes};\n`;
+  csv += `Anzahl Bio gesamt;;;;${bioMengeGes};\n`;
   csv += ";;;;;\n";
-
-  // Summen pro Produkt
-  const spRows = Array.from(sumProd.entries())
-    .map(([prod, val])=>({prod, menge: val.menge, umsatz: val.umsatz}))
-    .sort((a,b)=> a.prod.localeCompare(b.prod));
-
-  csv += "SUMME_PRODUKT;;;;;\n";
-  csv += "Produkt;;;Menge;Umsatz\n";
-  spRows.forEach(r=>{
-    csv += `${r.prod};;;${r.menge};${r.umsatz.toFixed(2)}\n`;
-  });
-
+  csv += `Geld Bar gesamt;;;;;${barUmsatzGes.toFixed(2)}\n`;
+  csv += `Geld EC gesamt;;;;;${ecUmsatzGes.toFixed(2)}\n`;
   csv += ";;;;;\n";
-
-  // Summen pro Zahlung
-  const payRows = Array.from(sumPay.entries())
-    .map(([pay, val])=>({pay, menge: val.menge, umsatz: val.umsatz}))
-    .sort((a,b)=> a.pay.localeCompare(b.pay));
-
-  csv += "SUMME_ZAHLUNG;;;;;\n";
-  csv += "Zahlung;;;Menge;Umsatz\n";
-  payRows.forEach(r=>{
-    csv += `${r.pay};;;${r.menge};${r.umsatz.toFixed(2)}\n`;
-  });
-
-  csv += ";;;;;\n";
-  csv += `GESAMT;;;${grandMenge};${grandUmsatz.toFixed(2)}\n`;
+  csv += `Geld gesamt;;;;;${umsatzGes.toFixed(2)}\n`;
 
   const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
