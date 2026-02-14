@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ===== Modernes Smartphone-Layout (Funktionen bleiben gleich) ===== */
+/* ===== Modernes Smartphone-Layout (Funktionen bleiben) ===== */
 :root{
   --bg:#0f172a;
   --card:#111c2f;
@@ -25,6 +25,7 @@
   --orange:#ef6c00;
   --red:#c62828;
 }
+
 body.light{
   --bg:#f4f7f4;
   --card:#ffffff;
@@ -138,7 +139,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:1000px; }
+.submenu.open{ max-height:1200px; }
 
 /* Tabelle */
 .tableWrap{
@@ -257,6 +258,7 @@ th{
 
 <div class="card">
   <h2>📋 Heutige Einträge</h2>
+
   <div class="tableWrap">
     <table>
       <thead>
@@ -306,7 +308,7 @@ function getPreisBio(){
   return p > 0 ? p : STANDARD_BIO;
 }
 
-/* ================= GPS (wie Original) ================= */
+/* ================= GPS ================= */
 function gpsHolen(){
   neuerEintrag();
   el("gpsStatus").innerText="GPS wird ermittelt…";
@@ -328,7 +330,7 @@ function gpsHolen(){
   }, ()=>alert("GPS nicht verfügbar"));
 }
 
-/* ================= SPEICHERN (wie Original + Sonderpreise) ================= */
+/* ================= SPEICHERN ================= */
 function speichern(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
 
@@ -353,7 +355,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,               // NEU dauerhaft im Eintrag
+    rasenPreis, bioPreis,
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -367,7 +369,7 @@ function speichern(){
   ladeHeute();
 }
 
-/* ================= RESET (wie Original + Sonderpreis reset) ================= */
+/* ================= RESET ================= */
 function neuerEintrag(){
   el("editId").value="";
   ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
@@ -380,7 +382,7 @@ function neuerEintrag(){
   el("gpsStatus").innerText="GPS noch nicht ermittelt";
 }
 
-/* ================= HEUTE + SUMMEN (wie Original) ================= */
+/* ================= HEUTE + SUMMEN ================= */
 function ladeHeute(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -444,7 +446,6 @@ function bearbeiten(id){
   el("ausgestreut").value = e.ausgestreut || "Ja";
   el("zahlung").value = e.zahlung || "Bar";
 
-  // Sonderpreise wieder laden (nur anzeigen, wenn abweichend)
   const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
   const bp = toNum(e.bioPreis)   || STANDARD_BIO;
   el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
@@ -469,7 +470,7 @@ function downloadCSV(text, name){
   a.remove();
 }
 
-/* ================= EXPORT: Tages-CSV (wie Original + Sonderpreis-Spalten) ================= */
+/* ================= EXPORT: Tages-CSV ================= */
 function exportTagesCSV(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -479,9 +480,10 @@ function exportTagesCSV(){
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
 
   daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
+    const tel = String(e.telefon || "").replace(/"/g,'""');
     const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp = toNum(e.bioPreis)   || STANDARD_BIO;
+
     csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
 
@@ -489,7 +491,7 @@ function exportTagesCSV(){
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
-/* ================= EXPORT: XLSX (wie Original + Auto-Spaltenbreite) ================= */
+/* ================= EXPORT: XLSX ================= */
 function exportXLSX(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -578,50 +580,60 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= EXPORT: Preis-Gruppierung CSV (Bar/EC Spalten + Summen unten) =================
-   Pro Produkt + Preis:
-   Bar Säcke | EC Säcke | Bar Umsatz | EC Umsatz | Gesamt Säcke | Gesamt Umsatz
-*/
+/* ================= EXPORT: Preis-Gruppierung CSV (EXCEL-FIX: IMMER 9 SPALTEN) ================= */
 function exportPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
   if(!daten.length) return alert("Keine Daten für heute");
 
+  // 9 feste Spalten:
+  // Datum | Produkt | Preis | Bar Säcke | EC Säcke | Bar Umsatz | EC Umsatz | Gesamt Säcke | Gesamt Umsatz
+  const COLS = 9;
+
+  // deutsche Darstellung (Komma) für Excel
+  const fmtMoney = (n) => (Number(n) || 0).toFixed(2).replace(".", ",");
+  const fmtPrice = (n) => (Number(n) || 0).toFixed(2).replace(".", ",");
+
+  const row = (arr) => {
+    const a = (arr || []).slice(0, COLS);
+    while(a.length < COLS) a.push("");
+    return a.join(";") + "\n";
+  };
+
   // key = Produkt|Preis -> {barM, ecM, barU, ecU}
   const groups = new Map();
 
-  let rasenMengeGes = 0;
-  let bioMengeGes   = 0;
-  let barUmsatzGes  = 0;
-  let ecUmsatzGes   = 0;
-  let umsatzGes     = 0;
+  let rasenGes = 0;
+  let bioGes   = 0;
+  let barGes   = 0;
+  let ecGes    = 0;
+  let gesamt   = 0;
 
   function add(prod, preis, zahlung, menge){
     if(!menge) return;
-
     const p = Number(preis);
     const u = menge * p;
-    const key = `${prod}|${p.toFixed(2)}`;
 
+    const key = `${prod}|${p.toFixed(2)}`;
     const cur = groups.get(key) || {barM:0, ecM:0, barU:0, ecU:0};
 
     if(zahlung === "Bar"){
       cur.barM += menge;
       cur.barU += u;
-      barUmsatzGes += u;
+      barGes   += u;
     } else if(zahlung === "EC"){
       cur.ecM += menge;
       cur.ecU += u;
-      ecUmsatzGes += u;
+      ecGes   += u;
     }
 
     groups.set(key, cur);
 
-    if(prod === "Rasen") rasenMengeGes += menge;
-    if(prod === "Bio")   bioMengeGes   += menge;
+    if(prod === "Rasen") rasenGes += menge;
+    if(prod === "Bio")   bioGes   += menge;
 
-    umsatzGes += u;
+    gesamt += u;
   }
 
   daten.forEach(e=>{
@@ -635,6 +647,7 @@ function exportPreisGruppierung(){
     add("Bio",   bp, pay, bi);
   });
 
+  // sortiert nach Produkt + Preis
   const rows = Array.from(groups.entries())
     .map(([key, v])=>{
       const [prod, price] = key.split("|");
@@ -645,21 +658,37 @@ function exportPreisGruppierung(){
     .sort((a,b)=> a.prod.localeCompare(b.prod) || a.price - b.price);
 
   const d = heuteDatum();
-  let csv = "Datum;Produkt;Preis;Bar Säcke;EC Säcke;Bar Umsatz;EC Umsatz;Gesamt Säcke;Gesamt Umsatz\n";
+  let csv = "";
+  csv += row(["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Bar Umsatz","EC Umsatz","Gesamt Säcke","Gesamt Umsatz"]);
 
   rows.forEach(r=>{
-    csv += `${d};${r.prod};${r.price.toFixed(2)};${r.barM};${r.ecM};${r.barU.toFixed(2)};${r.ecU.toFixed(2)};${r.gesM};${r.gesU.toFixed(2)}\n`;
+    csv += row([
+      d,
+      r.prod,
+      fmtPrice(r.price),
+      r.barM,
+      r.ecM,
+      fmtMoney(r.barU),
+      fmtMoney(r.ecU),
+      r.gesM,
+      fmtMoney(r.gesU)
+    ]);
   });
 
-  csv += ";;;;;;;;\n";
-  csv += "GESAMTSUMMEN;;;;;;;;\n";
-  csv += `Anzahl Rasen gesamt;;;;;;;${rasenMengeGes}\n`;
-  csv += `Anzahl Bio gesamt;;;;;;;${bioMengeGes}\n`;
-  csv += ";;;;;;;;\n";
-  csv += `Geld Bar gesamt;;;;;${barUmsatzGes.toFixed(2)};;\n`;
-  csv += `Geld EC gesamt;;;;;;${ecUmsatzGes.toFixed(2)};\n`;
-  csv += ";;;;;;;;\n";
-  csv += `Geld gesamt;;;;;;;;${umsatzGes.toFixed(2)}\n`;
+  // Leerzeile sauber (9 Spalten)
+  csv += row([]);
+
+  // Summenblock – Werte in den passenden Spalten
+  csv += row(["GESAMTSUMMEN","","","","","","","",""]);
+  csv += row(["Anzahl Rasen gesamt","","","","","","", rasenGes, ""]);
+  csv += row(["Anzahl Bio gesamt","","","","","","", bioGes, ""]);
+  csv += row([]);
+
+  csv += row(["Geld Bar gesamt","","","","", fmtMoney(barGes), "", "", ""]);
+  csv += row(["Geld EC gesamt","","","","","", fmtMoney(ecGes), "", ""]);
+  csv += row([]);
+
+  csv += row(["Geld gesamt","","","","","","","", fmtMoney(gesamt)]);
 
   const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
