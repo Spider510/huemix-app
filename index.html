@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ===== Modernes Smartphone-Layout (Funktionen bleiben) ===== */
+/* ===== Modernes Smartphone-Layout (Funktionen bleiben unverändert) ===== */
 :root{
   --bg:#0f172a;
   --card:#111c2f;
@@ -140,7 +140,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:1400px; }
+.submenu.open{ max-height:1600px; }
 
 /* Tabelle */
 .tableWrap{
@@ -153,7 +153,7 @@ button{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 860px; /* Handy: horizontal scroll */
+  min-width: 920px; /* Handy: horizontal scroll */
 }
 th,td{
   border-bottom:1px solid var(--border);
@@ -189,7 +189,6 @@ th{
 </div>
 
 <div class="card">
-
   <input type="hidden" id="editId">
 
   <label>Name</label>
@@ -253,7 +252,10 @@ th{
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
     <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-    <button class="blue" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
+
+    <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
+    <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
+
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
@@ -297,6 +299,9 @@ function toggleSubmenu(){
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function fmtEUR(n){
+  return (Number(n||0)).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+}
 
 const STANDARD_RASEN = 45;
 const STANDARD_BIO   = 30;
@@ -584,16 +589,14 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= PREIS-GRUPPIERUNG als XLSX (DETAIL zusammengefasst) ================= */
-function exportPreisGruppierungXLSX(){
+/* ================= Preis-Gruppierung Daten (gemeinsam für Vorschau & XLSX) ================= */
+function buildPreisGruppierung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
 
-  if(!daten.length) return alert("Keine Daten für heute");
-
   const datum = heuteDatum();
 
-  // key = Produkt|Preis
+  // key = Produkt|Preis (Preis auf 2 Stellen)
   const groups = new Map(); // -> {prod, preis, barM, ecM, barU, ecU}
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
@@ -601,6 +604,7 @@ function exportPreisGruppierungXLSX(){
   function add(prod, preis, zahlung, menge){
     menge = toNum(menge);
     if(!menge) return;
+
     const p = Number(preis)||0;
     const u = menge*p;
 
@@ -631,30 +635,155 @@ function exportPreisGruppierungXLSX(){
     add("Bio",   (toNum(e.bioPreis)   || STANDARD_BIO),   pay, e.bio);
   });
 
+  const orderProd = p => (p==="Rasen" ? 0 : 1);
+
+  const detail = Array.from(groups.values())
+    .sort((a,b)=> orderProd(a.prod)-orderProd(b.prod) || a.preis-b.preis)
+    .map(g=>{
+      const gesM = g.barM + g.ecM;
+      const gesU = g.barU + g.ecU;
+      return {
+        datum,
+        prod: g.prod,
+        preis: g.preis,
+        barM: g.barM,
+        ecM: g.ecM,
+        gesM,
+        barU: g.barU,
+        ecU: g.ecU,
+        gesU
+      };
+    });
+
+  return {
+    datum,
+    detail,
+    rasBar, rasEC, bioBar, bioEC,
+    barGes, ecGes,
+    gesGes: barGes + ecGes,
+    datenCount: daten.length
+  };
+}
+
+/* ================= Preis-Gruppierung Vorschau (druckbar) ================= */
+function previewPreisGruppierung(){
+  const pack = buildPreisGruppierung();
+  if(!pack.datenCount) return alert("Keine Daten für heute");
+
+  const rows = pack.detail.map(r=>`
+    <tr>
+      <td>${r.datum}</td>
+      <td>${r.prod}</td>
+      <td style="text-align:right">${fmtEUR(r.preis)}</td>
+      <td style="text-align:right">${r.barM}</td>
+      <td style="text-align:right">${r.ecM}</td>
+      <td style="text-align:right"><b>${r.gesM}</b></td>
+      <td style="text-align:right">${fmtEUR(r.barU)}</td>
+      <td style="text-align:right">${fmtEUR(r.ecU)}</td>
+      <td style="text-align:right"><b>${fmtEUR(r.gesU)}</b></td>
+    </tr>
+  `).join("");
+
+  const html = `
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HÜMIX Preis-Gruppierung</title>
+<style>
+  body{font-family:Arial, sans-serif; padding:18px; color:#111;}
+  .top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+  .title{font-size:20px; font-weight:800; margin:0;}
+  .meta{font-size:12px; color:#444; text-align:right;}
+  .btn{padding:10px 12px; border:0; border-radius:10px; background:#1976d2; color:#fff; font-weight:700; cursor:pointer;}
+  h2{margin:18px 0 8px 0; font-size:14px; letter-spacing:.2px;}
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th,td{border:1px solid #222; padding:6px 6px; vertical-align:middle;}
+  th{background:#f2f2f2; text-align:center;}
+  .subtable th,.subtable td{text-align:right;}
+  .subtable td:first-child,.subtable th:first-child{text-align:left;}
+  @media print{
+    .btnrow{display:none;}
+    @page{ size:A4 landscape; margin:10mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <p class="title">HÜMIX – Preis-Gruppierung</p>
+      <div class="meta">Datum: ${pack.datum}</div>
+    </div>
+    <div class="btnrow">
+      <button class="btn" onclick="window.print()">🖨 Drucken</button>
+    </div>
+  </div>
+
+  <h2>DETAIL – PREISSTUFEN</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Datum</th><th>Produkt</th><th>Preis</th>
+        <th>Bar Säcke</th><th>EC Säcke</th><th>Gesamt Säcke</th>
+        <th>Bar Umsatz</th><th>EC Umsatz</th><th>Gesamt Umsatz</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <h2>PRODUKTSUMMEN – MENGEN</h2>
+  <table class="subtable">
+    <thead><tr><th>Produkt</th><th>Bar Säcke</th><th>EC Säcke</th><th>Gesamt Säcke</th></tr></thead>
+    <tbody>
+      <tr><td>Rasen</td><td>${pack.rasBar}</td><td>${pack.rasEC}</td><td><b>${pack.rasBar+pack.rasEC}</b></td></tr>
+      <tr><td>Bio</td><td>${pack.bioBar}</td><td>${pack.bioEC}</td><td><b>${pack.bioBar+pack.bioEC}</b></td></tr>
+    </tbody>
+  </table>
+
+  <h2>ZAHLUNGSÜBERSICHT – UMSATZ</h2>
+  <table class="subtable">
+    <thead><tr><th>Kategorie</th><th>Bar</th><th>EC</th><th>Gesamt</th></tr></thead>
+    <tbody>
+      <tr><td>Umsatz €</td><td>${fmtEUR(pack.barGes)}</td><td>${fmtEUR(pack.ecGes)}</td><td><b>${fmtEUR(pack.gesGes)}</b></td></tr>
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if(!win) return alert("Popup blockiert. Bitte Popups erlauben.");
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+/* ================= Preis-Gruppierung XLSX (saubere Vorschau/Excel) ================= */
+function exportPreisGruppierungXLSX(){
+  const pack = buildPreisGruppierung();
+  if(!pack.datenCount) return alert("Keine Daten für heute");
+
   const sheet = [];
+
   sheet.push(["DETAIL – PREISSTUFEN"]);
   sheet.push(["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"]);
 
-  const orderProd = (p)=> p==="Rasen" ? 0 : 1;
-
-  Array.from(groups.values())
-    .sort((a,b)=> orderProd(a.prod)-orderProd(b.prod) || a.preis-b.preis)
-    .forEach(g=>{
-      const gesM = g.barM + g.ecM;
-      const gesU = g.barU + g.ecU;
-      sheet.push([datum, g.prod, g.preis, g.barM, g.ecM, gesM, g.barU, g.ecU, gesU]);
-    });
+  pack.detail.forEach(r=>{
+    sheet.push([r.datum, r.prod, r.preis, r.barM, r.ecM, r.gesM, r.barU, r.ecU, r.gesU]);
+  });
 
   sheet.push([]);
   sheet.push(["PRODUKTSUMMEN – MENGEN"]);
   sheet.push(["Produkt","Bar Säcke","EC Säcke","Gesamt Säcke"]);
-  sheet.push(["Rasen", rasBar, rasEC, rasBar+rasEC]);
-  sheet.push(["Bio",   bioBar, bioEC, bioBar+bioEC]);
+  sheet.push(["Rasen", pack.rasBar, pack.rasEC, pack.rasBar+pack.rasEC]);
+  sheet.push(["Bio",   pack.bioBar, pack.bioEC, pack.bioBar+pack.bioEC]);
 
   sheet.push([]);
   sheet.push(["ZAHLUNGSÜBERSICHT – UMSATZ"]);
   sheet.push(["Kategorie","Bar","EC","Gesamt"]);
-  sheet.push(["Umsatz €", barGes, ecGes, barGes+ecGes]);
+  sheet.push(["Umsatz €", pack.barGes, pack.ecGes, pack.gesGes]);
 
   const ws = XLSX.utils.aoa_to_sheet(sheet);
 
@@ -662,6 +791,33 @@ function exportPreisGruppierungXLSX(){
   ws["!cols"] = sheet[1].map((_, i) => ({
     wch: Math.max(...sheet.map(r => String(r[i] ?? "").length)) + 2
   }));
+
+  // Zahlenformat: Preis/Umätze als € (so weit möglich)
+  // Spalten: Preis (C), Bar Umsatz (G), EC Umsatz (H), Gesamt Umsatz (I)
+  const moneyCols = [2,6,7,8];
+  for(let R=3; R<=2+pack.detail.length; R++){
+    moneyCols.forEach(C=>{
+      const addr = XLSX.utils.encode_cell({r:R-1, c:C});
+      if(ws[addr] && typeof ws[addr].v === "number"){
+        ws[addr].z = '#,##0.00" €"';
+      }
+    });
+  }
+
+  // Zahlungsübersicht (letzte Zeile) – Geldformat
+  // Wir suchen die Zeile "Umsatz €"
+  for(let r=0; r<sheet.length; r++){
+    if(sheet[r] && sheet[r][0]==="Umsatz €"){
+      const base = r; // 0-index
+      [1,2,3].forEach(c=>{
+        const addr = XLSX.utils.encode_cell({r:base, c});
+        if(ws[addr] && typeof ws[addr].v === "number"){
+          ws[addr].z = '#,##0.00" €"';
+        }
+      });
+      break;
+    }
+  }
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Preis Gruppierung");
