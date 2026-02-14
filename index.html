@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ===== Modernes Smartphone-Layout (Funktionen bleiben unverändert) ===== */
 :root{
   --bg:#0f172a;
   --card:#111c2f;
@@ -24,6 +23,8 @@
   --purple:#6a1b9a;
   --orange:#ef6c00;
   --red:#c62828;
+
+  --shadow: 0 6px 16px rgba(0,0,0,.10);
 }
 
 body.light{
@@ -33,6 +34,7 @@ body.light{
   --border:#d7dde6;
   --text:#162033;
   --muted:#506079;
+  --shadow: 0 6px 16px rgba(0,0,0,.06);
 }
 
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -53,6 +55,7 @@ body{
   gap:10px;
   margin-bottom:10px;
 }
+
 h1{ margin:0; font-size:20px; }
 
 .themeBtn{
@@ -65,13 +68,35 @@ h1{ margin:0; font-size:20px; }
   cursor:pointer;
 }
 
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.tabBtn{
+  flex:1;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-weight:750;
+  cursor:pointer;
+}
+
+.tabBtn.active{
+  outline:2px solid rgba(25,118,210,.35);
+  border-color: rgba(25,118,210,.55);
+}
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:16px;
   padding:14px;
   margin-bottom:12px;
-  box-shadow:0 6px 16px rgba(0,0,0,.10);
+  box-shadow:var(--shadow);
 }
 
 h2{
@@ -86,6 +111,7 @@ label{
   display:block;
   margin-top:10px;
 }
+
 input, select, button{
   width:100%;
   padding:14px;
@@ -93,11 +119,13 @@ input, select, button{
   font-size:16px; /* iOS Zoom verhindern */
   border-radius:12px;
 }
+
 input, select{
   background:transparent;
   border:1px solid var(--border);
   color:var(--text);
 }
+
 button{
   border:none;
   color:#fff;
@@ -133,7 +161,7 @@ button{
   color:var(--muted);
 }
 
-/* Untermenü */
+/* Untermenü (Einsatz) */
 .submenu{
   overflow:hidden;
   max-height:0;
@@ -153,7 +181,7 @@ button{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 920px; /* Handy: horizontal scroll */
+  min-width: 980px; /* Handy: horizontal scroll */
 }
 th,td{
   border-bottom:1px solid var(--border);
@@ -178,6 +206,38 @@ th{
   border-radius:10px;
   margin-right:6px;
 }
+
+/* Datenbank Filter Grid */
+.filterGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media (max-width:520px){
+  .filterGrid{ grid-template-columns:1fr; }
+}
+
+.smallRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.smallRow > button{
+  flex:1;
+  min-width: 160px;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:12px;
+  margin-top:8px;
+}
+.view{ display:none; }
+.view.active{ display:block; }
 </style>
 </head>
 
@@ -188,102 +248,210 @@ th{
   <button class="themeBtn" onclick="toggleTheme()">🌙 / ☀️</button>
 </div>
 
-<div class="card">
-  <input type="hidden" id="editId">
-
-  <label>Name</label>
-  <input id="name" placeholder="optional">
-
-  <label>Telefon</label>
-  <input id="telefon" inputmode="tel">
-
-  <label>Straße</label>
-  <input id="strasse">
-
-  <label>Hausnummer</label>
-  <input id="hausnr">
-
-  <label>PLZ</label>
-  <input id="plz" inputmode="numeric">
-
-  <label>Ort</label>
-  <input id="ort">
-
-  <label>Rasen Spezial – Säcke (Standard 45 €)</label>
-  <input id="rasen" type="number" value="0" inputmode="numeric">
-
-  <label>Bio-Volldünger – Säcke (Standard 30 €)</label>
-  <input id="bio" type="number" value="0" inputmode="numeric">
-
-  <!-- Sonderpreise (pro Eintrag gespeichert) -->
-  <div class="priceGrid">
-    <div>
-      <label>Rasen Sonderpreis €/Sack (optional)</label>
-      <input id="rasenPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 45">
-      <div class="hint">Leer lassen = 45 €/Sack</div>
-    </div>
-    <div>
-      <label>Bio Sonderpreis €/Sack (optional)</label>
-      <input id="bioPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 30">
-      <div class="hint">Leer lassen = 30 €/Sack</div>
-    </div>
-  </div>
-
-  <label>Ausgestreut</label>
-  <select id="ausgestreut">
-    <option>Ja</option>
-    <option>Nein</option>
-  </select>
-
-  <label>Zahlungsart</label>
-  <select id="zahlung">
-    <option>Bar</option>
-    <option>EC</option>
-  </select>
-
-  <button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
-  <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
-
-  <button class="green" onclick="speichern()">💾 Speichern</button>
-  <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
-
-  <button class="gray" onclick="toggleSubmenu()">☰ Export / Löschen</button>
-  <div class="submenu" id="submenu">
-    <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
-    <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-
-    <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
-    <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
-
-    <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
-  </div>
+<div class="tabs">
+  <button id="tabEinsatz" class="tabBtn active" onclick="showView('einsatz')">Einsatz</button>
+  <button id="tabDB" class="tabBtn" onclick="showView('db')">Datenbank</button>
 </div>
 
-<div class="card">
-  <h2>📋 Heutige Einträge</h2>
+<!-- ===================== VIEW: EINSATZ ===================== -->
+<div id="viewEinsatz" class="view active">
 
-  <div class="tableWrap">
-    <table>
-      <thead>
-      <tr>
-        <th>Uhrzeit</th>
-        <th>Ort – Name</th>
-        <th>Rasen</th>
-        <th>Bio</th>
-        <th>Zahlung</th>
-        <th>€</th>
-        <th>Aktion</th>
-      </tr>
-      </thead>
-      <tbody id="tabelleHeute"></tbody>
-      <tfoot id="summenHeute"></tfoot>
-    </table>
+  <div class="card">
+    <input type="hidden" id="editId">
+
+    <label>Name</label>
+    <input id="name" placeholder="optional">
+
+    <label>Telefon</label>
+    <input id="telefon" inputmode="tel">
+
+    <label>Straße</label>
+    <input id="strasse">
+
+    <label>Hausnummer</label>
+    <input id="hausnr">
+
+    <label>PLZ</label>
+    <input id="plz" inputmode="numeric">
+
+    <label>Ort</label>
+    <input id="ort">
+
+    <label>Rasen Spezial – Säcke (Standard 45 €)</label>
+    <input id="rasen" type="number" value="0" inputmode="numeric">
+
+    <label>Bio-Volldünger – Säcke (Standard 30 €)</label>
+    <input id="bio" type="number" value="0" inputmode="numeric">
+
+    <div class="priceGrid">
+      <div>
+        <label>Rasen Sonderpreis €/Sack (optional)</label>
+        <input id="rasenPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 45">
+        <div class="hint">Leer lassen = 45 €/Sack</div>
+      </div>
+      <div>
+        <label>Bio Sonderpreis €/Sack (optional)</label>
+        <input id="bioPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 30">
+        <div class="hint">Leer lassen = 30 €/Sack</div>
+      </div>
+    </div>
+
+    <label>Ausgestreut</label>
+    <select id="ausgestreut">
+      <option>Ja</option>
+      <option>Nein</option>
+    </select>
+
+    <label>Zahlungsart</label>
+    <select id="zahlung">
+      <option>Bar</option>
+      <option>EC</option>
+    </select>
+
+    <button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
+    <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
+
+    <button class="green" onclick="speichern()">💾 Speichern</button>
+    <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
+
+    <button class="gray" onclick="toggleSubmenu()">☰ Export / Löschen</button>
+    <div class="submenu" id="submenu">
+      <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
+      <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
+      <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
+
+      <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
+      <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
+
+      <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+    </div>
+
+    <span class="badge" id="editHint">Neuer Eintrag</span>
   </div>
+
+  <div class="card">
+    <h2>📋 Heutige Einträge</h2>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Uhrzeit</th>
+          <th>Ort – Name</th>
+          <th>Rasen</th>
+          <th>Bio</th>
+          <th>Zahlung</th>
+          <th>€</th>
+          <th>Aktion</th>
+        </tr>
+        </thead>
+        <tbody id="tabelleHeute"></tbody>
+        <tfoot id="summenHeute"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== VIEW: DATENBANK ===================== -->
+<div id="viewDB" class="view">
+
+  <div class="card">
+    <h2>📂 Datenbank durchsuchen</h2>
+
+    <div class="filterGrid">
+      <div>
+        <label>Von Datum</label>
+        <input id="fVon" type="date">
+      </div>
+      <div>
+        <label>Bis Datum</label>
+        <input id="fBis" type="date">
+      </div>
+
+      <div>
+        <label>Name enthält</label>
+        <input id="fName" placeholder="z.B. Müller">
+      </div>
+      <div>
+        <label>Ort enthält</label>
+        <input id="fOrt" placeholder="z.B. Kirchen">
+      </div>
+
+      <div>
+        <label>PLZ</label>
+        <input id="fPLZ" inputmode="numeric" placeholder="z.B. 57548">
+      </div>
+
+      <div>
+        <label>Zahlung</label>
+        <select id="fZahlung">
+          <option value="">Alle</option>
+          <option value="Bar">Bar</option>
+          <option value="EC">EC</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Nur Sonderpreis</label>
+        <select id="fSonder">
+          <option value="">Alle</option>
+          <option value="1">Ja (mind. 1 Sonderpreis)</option>
+          <option value="0">Nein (nur Standard)</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Sortierung</label>
+        <select id="fSort">
+          <option value="datum_desc">Datum neu → alt</option>
+          <option value="datum_asc">Datum alt → neu</option>
+          <option value="summe_desc">Summe hoch → niedrig</option>
+          <option value="summe_asc">Summe niedrig → hoch</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="smallRow" style="margin-top:10px;">
+      <button class="blue" onclick="dbSuchen()">🔍 Suchen</button>
+      <button class="gray" onclick="dbResetFilter()">↩️ Filter zurücksetzen</button>
+      <button class="orange" onclick="exportDB_XLSX()">📊 Export gefiltert XLSX</button>
+      <button class="purple" onclick="exportDB_CSV()">📄 Export gefiltert CSV</button>
+    </div>
+
+    <div class="status" id="dbStatus">Noch keine Suche durchgeführt.</div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Treffer</h2>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Uhrzeit</th>
+            <th>Name</th>
+            <th>Ort</th>
+            <th>PLZ</th>
+            <th>Rasen</th>
+            <th>Bio</th>
+            <th>Rasen €</th>
+            <th>Bio €</th>
+            <th>Zahlung</th>
+            <th>Summe €</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody id="dbTbody"></tbody>
+        <tfoot id="dbTfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <script>
-/* ================= UI (Theme + Menü) ================= */
+/* ================= UI (Theme + Views) ================= */
 function toggleTheme(){
   document.body.classList.toggle("light");
   localStorage.setItem("humix_theme", document.body.classList.contains("light") ? "light" : "dark");
@@ -291,6 +459,22 @@ function toggleTheme(){
 (function(){
   if(localStorage.getItem("humix_theme")==="light") document.body.classList.add("light");
 })();
+function showView(which){
+  const ve = document.getElementById("viewEinsatz");
+  const vd = document.getElementById("viewDB");
+  const te = document.getElementById("tabEinsatz");
+  const td = document.getElementById("tabDB");
+
+  if(which==="einsatz"){
+    ve.classList.add("active"); vd.classList.remove("active");
+    te.classList.add("active"); td.classList.remove("active");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }else{
+    vd.classList.add("active"); ve.classList.remove("active");
+    td.classList.add("active"); te.classList.remove("active");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+}
 function toggleSubmenu(){
   document.getElementById("submenu").classList.toggle("open");
 }
@@ -298,9 +482,43 @@ function toggleSubmenu(){
 /* ================= Helfer ================= */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
+function heuteISO(){ return new Date().toISOString().slice(0,10); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 function fmtEUR(n){
   return (Number(n||0)).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+}
+function normStr(s){
+  return String(s||"").trim().toLowerCase();
+}
+function deToISO(de){
+  // erwartet dd.mm.yyyy
+  const m = String(de||"").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if(!m) return "";
+  const dd = String(m[1]).padStart(2,"0");
+  const mm = String(m[2]).padStart(2,"0");
+  const yyyy = m[3];
+  return `${yyyy}-${mm}-${dd}`;
+}
+function entryISO(e){
+  // Abwärtskompatibel für alte Einträge ohne datumISO
+  if(e && e.datumISO) return e.datumISO;
+  const iso = deToISO(e?.datum);
+  return iso || "";
+}
+function ensureDatumISO(daten){
+  let changed=false;
+  daten.forEach(e=>{
+    if(e && !e.datumISO){
+      const iso = deToISO(e.datum);
+      if(iso){ e.datumISO = iso; changed=true; }
+    }
+    if(e && !e.createdAt){
+      // optionaler Zeitstempel (für Stabilität), ohne Funktionen zu verändern
+      e.createdAt = Date.now();
+      changed=true;
+    }
+  });
+  return changed;
 }
 
 const STANDARD_RASEN = 45;
@@ -313,6 +531,22 @@ function getPreisRasen(){
 function getPreisBio(){
   const p = toNum(el("bioPreis").value);
   return p > 0 ? p : STANDARD_BIO;
+}
+function isSonderpreisEintrag(e){
+  const rp = toNum(e?.rasenPreis) || STANDARD_RASEN;
+  const bp = toNum(e?.bioPreis)   || STANDARD_BIO;
+  return (rp !== STANDARD_RASEN) || (bp !== STANDARD_BIO);
+}
+
+/* ================= Daten lesen/schreiben ================= */
+function loadAll(){
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  const changed = ensureDatumISO(daten);
+  if(changed) localStorage.setItem("humix", JSON.stringify(daten));
+  return daten;
+}
+function saveAll(daten){
+  localStorage.setItem("humix", JSON.stringify(daten));
 }
 
 /* ================= GPS + Reverse Geocoding ================= */
@@ -341,7 +575,7 @@ function gpsHolen(){
 
 /* ================= SPEICHERN (mit Edit-ID) ================= */
 function speichern(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  const daten = loadAll();
 
   const rasen = toNum(el("rasen").value || 0);
   const bio   = toNum(el("bio").value || 0);
@@ -356,6 +590,7 @@ function speichern(){
   const eintrag = {
     id,
     datum: heuteDatum(),
+    datumISO: heuteISO(),
     uhrzeit: new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
     name: (el("name").value || "").trim() || "(kein Name)",
     telefon: el("telefon").value || "",
@@ -364,18 +599,24 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,               // Sonderpreise pro Eintrag
+    rasenPreis, bioPreis,
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
-    summe
+    summe,
+    createdAt: Date.now()
   };
 
   const i = daten.findIndex(e=>e.id===id);
   if(i>=0) daten[i]=eintrag; else daten.push(eintrag);
 
-  localStorage.setItem("humix", JSON.stringify(daten));
+  saveAll(daten);
   neuerEintrag();
   ladeHeute();
+
+  // Falls Datenbank offen ist: Status/Tabelle aktualisieren
+  if(document.getElementById("viewDB").classList.contains("active")){
+    dbSuchen();
+  }
 }
 
 /* ================= RESET ================= */
@@ -389,12 +630,12 @@ function neuerEintrag(){
   el("ausgestreut").value="Ja";
   el("zahlung").value="Bar";
   el("gpsStatus").innerText="GPS noch nicht ermittelt";
+  el("editHint").innerText="Neuer Eintrag";
 }
 
 /* ================= HEUTE + SUMMEN ================= */
 function ladeHeute(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
 
   const tbody = el("tabelleHeute");
   const tfoot = el("summenHeute");
@@ -439,7 +680,7 @@ function ladeHeute(){
 }
 
 function bearbeiten(id){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
+  const daten = loadAll();
   const e = daten.find(x=>x.id===id);
   if(!e) return;
 
@@ -459,13 +700,20 @@ function bearbeiten(id){
   const bp = toNum(e.bioPreis)   || STANDARD_BIO;
   el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
   el("bioPreis").value   = (bp !== STANDARD_BIO) ? bp : "";
+
+  el("editHint").innerText = "Bearbeiten aktiv (Speichern überschreibt diesen Eintrag)";
+  showView("einsatz");
 }
 
 function loeschen(id){
   if(!confirm("Eintrag löschen?")) return;
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]").filter(e=>e.id!==id);
-  localStorage.setItem("humix", JSON.stringify(daten));
+  const daten = loadAll().filter(e=>e.id!==id);
+  saveAll(daten);
   ladeHeute();
+
+  if(document.getElementById("viewDB").classList.contains("active")){
+    dbSuchen();
+  }
 }
 
 /* ================= DOWNLOAD CSV (BOM für Umlaute) ================= */
@@ -481,30 +729,26 @@ function downloadCSV(text, name){
 
 /* ================= EXPORT: Tages-CSV ================= */
 function exportTagesCSV(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
   if(!daten.length) return alert("Keine Daten für heute");
 
   let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
 
   daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""'); // Excel-freundlich
+    const tel = String(e.telefon || "").replace(/"/g,'""');
     const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
     const bp = toNum(e.bioPreis)   || STANDARD_BIO;
 
     csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
   });
 
-  const dateName = new Date().toISOString().slice(0,10); // yyyy-mm-dd
+  const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
 }
 
 /* ================= EXPORT: XLSX (heute + Auto-Spaltenbreite) ================= */
 function exportXLSX(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
   if(!daten.length) return alert("Keine Daten für heute");
 
   const sheetData = [
@@ -533,7 +777,6 @@ function exportXLSX(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-  // Auto-Spaltenbreite
   ws["!cols"] = sheetData[0].map((_, i) => ({
     wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
   }));
@@ -547,9 +790,7 @@ function exportXLSX(){
 
 /* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
 function exportZusammenfassung(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
   if(!daten.length) return alert("Keine Daten für heute");
 
   const datum = heuteDatum();
@@ -589,15 +830,12 @@ function exportZusammenfassung(){
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
 }
 
-/* ================= Preis-Gruppierung Daten (gemeinsam für Vorschau & XLSX) ================= */
+/* ================= Preis-Gruppierung (heute) ================= */
 function buildPreisGruppierung(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
   const datum = heuteDatum();
 
-  // key = Produkt|Preis (Preis auf 2 Stellen)
-  const groups = new Map(); // -> {prod, preis, barM, ecM, barU, ecU}
+  const groups = new Map(); // key Produkt|Preis -> {prod, preis, barM, ecM, barU, ecU}
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
 
@@ -636,7 +874,6 @@ function buildPreisGruppierung(){
   });
 
   const orderProd = p => (p==="Rasen" ? 0 : 1);
-
   const detail = Array.from(groups.values())
     .sort((a,b)=> orderProd(a.prod)-orderProd(b.prod) || a.preis-b.preis)
     .map(g=>{
@@ -665,7 +902,6 @@ function buildPreisGruppierung(){
   };
 }
 
-/* ================= Preis-Gruppierung Vorschau (druckbar) ================= */
 function previewPreisGruppierung(){
   const pack = buildPreisGruppierung();
   if(!pack.datenCount) return alert("Keine Daten für heute");
@@ -760,13 +996,11 @@ function previewPreisGruppierung(){
   win.document.close();
 }
 
-/* ================= Preis-Gruppierung XLSX (saubere Vorschau/Excel) ================= */
 function exportPreisGruppierungXLSX(){
   const pack = buildPreisGruppierung();
   if(!pack.datenCount) return alert("Keine Daten für heute");
 
   const sheet = [];
-
   sheet.push(["DETAIL – PREISSTUFEN"]);
   sheet.push(["Datum","Produkt","Preis","Bar Säcke","EC Säcke","Gesamt Säcke","Bar Umsatz","EC Umsatz","Gesamt Umsatz"]);
 
@@ -787,31 +1021,26 @@ function exportPreisGruppierungXLSX(){
 
   const ws = XLSX.utils.aoa_to_sheet(sheet);
 
-  // Spaltenbreite
   ws["!cols"] = sheet[1].map((_, i) => ({
     wch: Math.max(...sheet.map(r => String(r[i] ?? "").length)) + 2
   }));
 
-  // Zahlenformat: Preis/Umätze als € (so weit möglich)
-  // Spalten: Preis (C), Bar Umsatz (G), EC Umsatz (H), Gesamt Umsatz (I)
+  // Geldformat (Preis/Umätze)
   const moneyCols = [2,6,7,8];
-  for(let R=3; R<=2+pack.detail.length; R++){
-    moneyCols.forEach(C=>{
-      const addr = XLSX.utils.encode_cell({r:R-1, c:C});
-      if(ws[addr] && typeof ws[addr].v === "number"){
+  for(let row=3; row<=2+pack.detail.length; row++){
+    moneyCols.forEach(col=>{
+      const addr = XLSX.utils.encode_cell({r:row-1, c:col});
+      if(ws[addr] && typeof ws[addr].v==="number"){
         ws[addr].z = '#,##0.00" €"';
       }
     });
   }
-
-  // Zahlungsübersicht (letzte Zeile) – Geldformat
-  // Wir suchen die Zeile "Umsatz €"
+  // Zahlungsübersicht
   for(let r=0; r<sheet.length; r++){
     if(sheet[r] && sheet[r][0]==="Umsatz €"){
-      const base = r; // 0-index
       [1,2,3].forEach(c=>{
-        const addr = XLSX.utils.encode_cell({r:base, c});
-        if(ws[addr] && typeof ws[addr].v === "number"){
+        const addr = XLSX.utils.encode_cell({r, c});
+        if(ws[addr] && typeof ws[addr].v==="number"){
           ws[addr].z = '#,##0.00" €"';
         }
       });
@@ -832,11 +1061,234 @@ function allesLoeschen(){
     localStorage.removeItem("humix");
     neuerEintrag();
     ladeHeute();
+    // Datenbank aktualisieren
+    if(document.getElementById("viewDB").classList.contains("active")){
+      dbSuchen();
+    }
     alert("Gelöscht");
   }
 }
 
-window.onload = ladeHeute;
+/* ================= DATENBANK: Filter + Liste + Summen ================= */
+function dbResetFilter(){
+  el("fVon").value="";
+  el("fBis").value="";
+  el("fName").value="";
+  el("fOrt").value="";
+  el("fPLZ").value="";
+  el("fZahlung").value="";
+  el("fSonder").value="";
+  el("fSort").value="datum_desc";
+  el("dbStatus").innerText="Filter zurückgesetzt. Bitte Suchen drücken.";
+  el("dbTbody").innerHTML="";
+  el("dbTfoot").innerHTML="";
+}
+
+function dbGetFiltered(){
+  const daten = loadAll();
+
+  const von = el("fVon").value; // ISO
+  const bis = el("fBis").value; // ISO
+  const nameF = normStr(el("fName").value);
+  const ortF  = normStr(el("fOrt").value);
+  const plzF  = normStr(el("fPLZ").value);
+  const payF  = el("fZahlung").value;
+  const sonderF = el("fSonder").value; // "", "1", "0"
+  const sortF = el("fSort").value;
+
+  let out = daten.filter(e=>{
+    const iso = entryISO(e);
+    if(von && (!iso || iso < von)) return false;
+    if(bis && (!iso || iso > bis)) return false;
+
+    if(nameF && !normStr(e.name).includes(nameF)) return false;
+    if(ortF  && !normStr(e.ort).includes(ortF)) return false;
+    if(plzF  && !normStr(e.plz).includes(plzF)) return false;
+
+    if(payF && (e.zahlung !== payF)) return false;
+
+    if(sonderF==="1" && !isSonderpreisEintrag(e)) return false;
+    if(sonderF==="0" &&  isSonderpreisEintrag(e)) return false;
+
+    return true;
+  });
+
+  // Sortierung
+  out.sort((a,b)=>{
+    const aISO = entryISO(a) || "";
+    const bISO = entryISO(b) || "";
+    if(sortF==="datum_desc"){
+      if(aISO!==bISO) return bISO.localeCompare(aISO);
+      return String(b.uhrzeit||"").localeCompare(String(a.uhrzeit||""));
+    }
+    if(sortF==="datum_asc"){
+      if(aISO!==bISO) return aISO.localeCompare(bISO);
+      return String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||""));
+    }
+    if(sortF==="summe_desc") return (toNum(b.summe)-toNum(a.summe));
+    if(sortF==="summe_asc")  return (toNum(a.summe)-toNum(b.summe));
+    return 0;
+  });
+
+  return out;
+}
+
+function dbSuchen(){
+  const list = dbGetFiltered();
+
+  const tbody = el("dbTbody");
+  const tfoot = el("dbTfoot");
+  tbody.innerHTML="";
+  tfoot.innerHTML="";
+
+  let sum=0, bar=0, ec=0;
+  let rS=0, bS=0;
+  let rBar=0, rEC=0, bBar=0, bEC=0;
+
+  list.forEach(e=>{
+    const s = toNum(e.summe);
+    sum += s;
+    if(e.zahlung==="Bar") bar += s;
+    if(e.zahlung==="EC")  ec  += s;
+
+    const ras = toNum(e.rasen);
+    const bio = toNum(e.bio);
+    rS += ras; bS += bio;
+    if(e.zahlung==="Bar"){ rBar+=ras; bBar+=bio; }
+    if(e.zahlung==="EC"){  rEC +=ras; bEC +=bio; }
+
+    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
+    const bp = toNum(e.bioPreis)   || STANDARD_BIO;
+
+    tbody.innerHTML += `
+      <tr class="${e.zahlung==="Bar" ? "bar" : "ec"}">
+        <td>${e.datum || ""}</td>
+        <td>${e.uhrzeit || ""}</td>
+        <td>${e.name || ""}</td>
+        <td>${e.ort || ""}</td>
+        <td>${e.plz || ""}</td>
+        <td style="text-align:right">${ras}</td>
+        <td style="text-align:right">${bio}</td>
+        <td style="text-align:right">${rp.toFixed(2)}</td>
+        <td style="text-align:right">${bp.toFixed(2)}</td>
+        <td>${e.zahlung || ""}</td>
+        <td style="text-align:right"><b>${s.toFixed(2)}</b></td>
+        <td>
+          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tfoot.innerHTML = `
+    <tr class="summe">
+      <td colspan="5">GESAMT (Treffer: ${list.length})</td>
+      <td style="text-align:right">${rS}</td>
+      <td style="text-align:right">${bS}</td>
+      <td></td><td></td>
+      <td></td>
+      <td style="text-align:right">${sum.toFixed(2)}</td>
+      <td></td>
+    </tr>
+    <tr class="summe bar">
+      <td colspan="5">BAR Summen</td>
+      <td style="text-align:right">${rBar}</td>
+      <td style="text-align:right">${bBar}</td>
+      <td></td><td></td>
+      <td></td>
+      <td style="text-align:right">${bar.toFixed(2)}</td>
+      <td></td>
+    </tr>
+    <tr class="summe ec">
+      <td colspan="5">EC Summen</td>
+      <td style="text-align:right">${rEC}</td>
+      <td style="text-align:right">${bEC}</td>
+      <td></td><td></td>
+      <td></td>
+      <td style="text-align:right">${ec.toFixed(2)}</td>
+      <td></td>
+    </tr>
+  `;
+
+  el("dbStatus").innerText =
+    list.length
+      ? `Treffer: ${list.length} | Gesamt: ${fmtEUR(sum)} | Bar: ${fmtEUR(bar)} | EC: ${fmtEUR(ec)}`
+      : "Keine Treffer.";
+}
+
+/* ================= DATENBANK Export gefiltert ================= */
+function exportDB_CSV(){
+  const list = dbGetFiltered();
+  if(!list.length) return alert("Keine Treffer zum Export.");
+
+  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Summe €\n";
+
+  list.forEach(e=>{
+    const tel = String(e.telefon || "").replace(/"/g,'""');
+    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
+    const bp = toNum(e.bioPreis)   || STANDARD_BIO;
+    csv += `${e.datum||""};${e.uhrzeit||""};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
+  });
+
+  const dateName = new Date().toISOString().slice(0,10);
+  downloadCSV(csv, `humix_db_export_${dateName}.csv`);
+}
+
+function exportDB_XLSX(){
+  const list = dbGetFiltered();
+  if(!list.length) return alert("Keine Treffer zum Export.");
+
+  const sheetData = [
+    ["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","RasenPreis","Bio","BioPreis","Ausgestreut","Zahlung","Summe €"]
+  ];
+
+  list.forEach(e=>{
+    sheetData.push([
+      e.datum || "",
+      e.uhrzeit || "",
+      e.name || "",
+      e.telefon || "",
+      e.strasse || "",
+      e.hausnr || "",
+      e.plz || "",
+      e.ort || "",
+      toNum(e.rasen),
+      (toNum(e.rasenPreis) || STANDARD_RASEN),
+      toNum(e.bio),
+      (toNum(e.bioPreis) || STANDARD_BIO),
+      e.ausgestreut || "",
+      e.zahlung || "",
+      toNum(e.summe)
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  ws["!cols"] = sheetData[0].map((_, i) => ({
+    wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2
+  }));
+
+  // Geldformat Summe (Spalte O = 14)
+  for(let r=2; r<=sheetData.length; r++){
+    const addr = XLSX.utils.encode_cell({r:r-1, c:14});
+    if(ws[addr] && typeof ws[addr].v==="number"){
+      ws[addr].z = '#,##0.00" €"';
+    }
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DB Export");
+
+  const dateName = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `humix_db_export_${dateName}.xlsx`);
+}
+
+/* ================= Start ================= */
+window.onload = function(){
+  ladeHeute();
+  dbResetFilter();
+};
 </script>
 
 </body>
