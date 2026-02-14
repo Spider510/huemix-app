@@ -112,15 +112,30 @@ button{
   max-height:0;
   transition:max-height .3s ease;
 }
-.submenu.open{ max-height:560px; }
+.submenu.open{ max-height:720px; }
 
-/* Tabelle */
+/* Preise: 2 Spalten, auf kleinen Handys 1 Spalte */
+.priceGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media (max-width:420px){
+  .priceGrid{ grid-template-columns:1fr; }
+}
+.hint{
+  font-size:12px;
+  color:var(--muted);
+  margin:-6px 0 10px;
+}
+
+/* Tabelle + horizontal scroll am Handy */
 .tableWrap{ overflow:auto; -webkit-overflow-scrolling:touch; }
 table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
-  min-width: 780px; /* horizontal scroll am Handy */
+  min-width: 860px;
 }
 th,td{
   padding:8px;
@@ -145,21 +160,6 @@ thead th{
   border-radius:10px;
   width:auto;
   margin-right:6px;
-}
-
-/* kleine 2-Spalten-Anordnung für Sonderpreise */
-.priceGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-@media (max-width:420px){
-  .priceGrid{ grid-template-columns:1fr; }
-}
-.hint{
-  font-size:12px;
-  color:var(--muted);
-  margin:-6px 0 10px;
 }
 </style>
 </head>
@@ -233,7 +233,8 @@ thead th{
   <div class="submenu" id="submenu">
     <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
     <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
+    <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV (Ø Preis)</button>
+    <button class="blue" onclick="exportPreisGruppierung()">📊 Preis-Gruppierung CSV</button>
     <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
   </div>
 </div>
@@ -336,7 +337,7 @@ function speichern(){
     plz: el("plz").value || "",
     ort: el("ort").value || "",
     rasen, bio,
-    rasenPreis, bioPreis,            // <-- Sonderpreise dauerhaft speichern
+    rasenPreis, bioPreis,     // Sonderpreise dauerhaft speichern
     ausgestreut: el("ausgestreut").value,
     zahlung: el("zahlung").value,
     summe
@@ -517,8 +518,7 @@ function exportXLSX(){
   XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
 }
 
-/* ================= EXPORT: Tageszusammenfassung CSV (heute) ================= */
-/* -> Sonderpreis korrekt: gewichteter Ø-Preis pro Zahlungsart */
+/* ================= EXPORT: Tageszusammenfassung CSV (gewichteter Ø-Preis) ================= */
 function exportZusammenfassung(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]")
     .filter(e=>e.datum===heuteDatum());
@@ -527,10 +527,7 @@ function exportZusammenfassung(){
 
   const datum = heuteDatum();
 
-  // Mengen + Summen
   let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  // Wertsumme für gewichtete Ø-Preise (Menge * Preis)
   let bR_W=0,bB_W=0,eR_W=0,eB_W=0;
 
   daten.forEach(e=>{
@@ -565,6 +562,49 @@ function exportZusammenfassung(){
 
   const dateName = new Date().toISOString().slice(0,10);
   downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
+}
+
+/* ================= EXPORT: Preis-Gruppierung CSV ================= */
+/* Zeigt: Produkt;Preis;Menge  (auf Tagesbasis, über alle Zahlungen) */
+function exportPreisGruppierung(){
+  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
+    .filter(e=>e.datum===heuteDatum());
+
+  if(!daten.length) return alert("Keine Daten für heute");
+
+  const groups = new Map(); // key -> qty
+
+  function addGroup(prod, price, qty){
+    if(!qty) return;
+    const key = prod + ";" + price.toFixed(2);
+    groups.set(key, (groups.get(key) || 0) + qty);
+  }
+
+  daten.forEach(e=>{
+    const ras = toNum(e.rasen);
+    const bi  = toNum(e.bio);
+    const rp  = toNum(e.rasenPreis) || STANDARD_RASEN;
+    const bp  = toNum(e.bioPreis)   || STANDARD_BIO;
+
+    addGroup("Rasen", rp, ras);
+    addGroup("Bio", bp, bi);
+  });
+
+  // sort: Produkt, dann Preis
+  const rows = Array.from(groups.entries())
+    .map(([key, qty])=>{
+      const [prod, price] = key.split(";");
+      return {prod, price: Number(price), qty};
+    })
+    .sort((a,b)=> a.prod.localeCompare(b.prod) || a.price - b.price);
+
+  let csv = "Datum;Produkt;Preis;Menge\n";
+  rows.forEach(r=>{
+    csv += `${heuteDatum()};${r.prod};${r.price.toFixed(2)};${r.qty}\n`;
+  });
+
+  const dateName = new Date().toISOString().slice(0,10);
+  downloadCSV(csv, `humix_preis_gruppierung_${dateName}.csv`);
 }
 
 /* ================= ALLES LÖSCHEN ================= */
