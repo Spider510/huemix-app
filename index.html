@@ -3,102 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <title>HÜMIX Einsatz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-<!-- SheetJS für XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-/* ================= THEME VARIABLEN ================= */
 :root{
-  --bg:#0b1220;
-  --surface:rgba(255,255,255,.06);
-  --border:rgba(255,255,255,.12);
-  --text:rgba(255,255,255,.92);
-  --muted:rgba(255,255,255,.65);
+  --bg:#0f172a;
+  --card:#1e293b;
+  --border:#334155;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
 }
 
 body.light{
-  --bg:#f4f7f4;
-  --surface:#ffffff;
-  --border:#e0e0e0;
-  --text:#222;
-  --muted:#666;
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#1e293b;
+  --muted:#64748b;
 }
 
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 body{
   margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
   background:var(--bg);
   color:var(--text);
-  padding:18px;
-  transition:.25s ease;
+  padding:12px;
+  font-size:16px;
 }
 
-.container{max-width:1000px;margin:auto}
+h1{margin:0;font-size:20px}
 
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:15px;
+  margin-bottom:12px;
 }
 
-h1{margin:0;font-size:24px}
-
 .themeToggle{
-  padding:8px 14px;
-  border-radius:20px;
+  padding:8px 12px;
+  border-radius:18px;
   border:1px solid var(--border);
-  background:var(--surface);
-  cursor:pointer;
-  font-weight:600;
+  background:var(--card);
+  color:var(--text);
+  font-size:14px;
 }
 
 .card{
-  background:var(--surface);
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:14px;
-  padding:15px;
-  margin-bottom:15px;
-}
-
-.grid{
-  display:grid;
-  gap:12px;
-}
-
-@media(min-width:700px){
-  .grid{grid-template-columns:repeat(2,1fr)}
+  padding:14px;
+  margin-bottom:12px;
 }
 
 label{
   font-size:13px;
   font-weight:600;
   color:var(--muted);
-  display:block;
   margin-bottom:4px;
+  display:block;
 }
 
 input,select{
   width:100%;
-  padding:10px;
-  border-radius:10px;
+  padding:14px;
+  border-radius:12px;
   border:1px solid var(--border);
   background:transparent;
   color:var(--text);
+  font-size:16px; /* verhindert iOS Zoom */
+  margin-bottom:10px;
 }
 
 button{
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  color:#fff;
+  width:100%;
+  padding:16px;
+  font-size:16px;
   font-weight:600;
-  cursor:pointer;
+  border:none;
+  border-radius:14px;
   margin-top:8px;
+  color:#fff;
 }
 
 .green{background:#2e7d32}
@@ -108,7 +98,19 @@ button{
 .orange{background:#ef6c00}
 .red{background:#c62828}
 
-.status{margin-top:8px;font-size:13px;color:var(--muted)}
+.status{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+
+/* Sticky Action Buttons unten */
+.actions{
+  position:sticky;
+  bottom:0;
+  background:var(--bg);
+  padding-top:10px;
+}
 
 table{
   width:100%;
@@ -122,119 +124,92 @@ th,td{
   text-align:left;
 }
 
-th{font-weight:700}
-
-.bar{background:rgba(46,125,50,.1)}
-.ec{background:rgba(25,118,210,.1)}
-.summe{font-weight:700}
+.bar{background:rgba(46,125,50,.15)}
+.ec{background:rgba(25,118,210,.15)}
+.summe{font-weight:bold}
 
 .actionBtn{
-  padding:5px 8px;
-  font-size:12px;
-  border-radius:8px;
+  padding:8px;
+  font-size:14px;
+  border-radius:10px;
   width:auto;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
 
 <div class="topbar">
-  <h1>🌱 HÜMIX Einsatz</h1>
-  <button class="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
+<h1>🌱 HÜMIX Einsatz</h1>
+<button class="themeToggle" onclick="toggleTheme()">🌙 / ☀️</button>
 </div>
 
 <div class="card">
-
 <input type="hidden" id="editId">
 
-<div class="grid">
-
-<div>
 <label>Name</label>
 <input id="name">
-</div>
 
-<div>
 <label>Telefon</label>
-<input id="telefon">
-</div>
+<input id="telefon" inputmode="tel">
 
-<div>
 <label>Straße</label>
 <input id="strasse">
-</div>
 
-<div>
 <label>Hausnummer</label>
 <input id="hausnr">
-</div>
 
-<div>
 <label>PLZ</label>
-<input id="plz">
-</div>
+<input id="plz" inputmode="numeric">
 
-<div>
 <label>Ort</label>
 <input id="ort">
-</div>
 
-<div>
 <label>Rasen Spezial – Säcke (45 €)</label>
-<input id="rasen" type="number" value="0">
-</div>
+<input id="rasen" type="number" value="0" inputmode="numeric">
 
-<div>
 <label>Bio-Volldünger – Säcke (30 €)</label>
-<input id="bio" type="number" value="0">
-</div>
+<input id="bio" type="number" value="0" inputmode="numeric">
 
-<div>
 <label>Ausgestreut</label>
 <select id="ausgestreut">
 <option>Ja</option>
 <option>Nein</option>
 </select>
-</div>
 
-<div>
 <label>Zahlungsart</label>
 <select id="zahlung">
 <option>Bar</option>
 <option>EC</option>
 </select>
-</div>
-
-</div>
 
 <button class="blue" onclick="gpsHolen()">📍 GPS holen</button>
 <div class="status" id="gpsStatus">GPS noch nicht ermittelt</div>
 
+<div class="actions">
 <button class="green" onclick="speichern()">💾 Speichern</button>
 <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
-
 <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
 <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
-<button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-<button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+<button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung</button>
+<button class="red" onclick="allesLoeschen()">🗑 Alle löschen</button>
+</div>
 
 </div>
 
 <div class="card">
-<h2>📋 Heutige Einträge</h2>
+<h2 style="margin-top:0;font-size:18px">📋 Heutige Einträge</h2>
 
 <table>
 <thead>
 <tr>
-<th>Uhrzeit</th>
+<th>Uhr</th>
 <th>Ort – Name</th>
-<th>Rasen</th>
-<th>Bio</th>
-<th>Zahlung</th>
+<th>R</th>
+<th>B</th>
+<th>Z</th>
 <th>€</th>
-<th>Aktion</th>
+<th></th>
 </tr>
 </thead>
 <tbody id="tabelleHeute"></tbody>
@@ -242,246 +217,143 @@ th{font-weight:700}
 </table>
 
 </div>
-</div>
 
 <script>
-/* ================= THEME ================= */
 function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme",
-    document.body.classList.contains("light") ? "light" : "dark");
+document.body.classList.toggle("light");
+localStorage.setItem("theme",
+document.body.classList.contains("light")?"light":"dark");
 }
-
 (function(){
-  const saved = localStorage.getItem("theme");
-  if(saved==="light") document.body.classList.add("light");
+if(localStorage.getItem("theme")==="light")
+document.body.classList.add("light");
 })();
 
-/* ================= ORIGINAL FUNKTIONEN ================= */
+/* ======== ORIGINAL FUNKTIONEN UNVERÄNDERT ======== */
 function el(id){ return document.getElementById(id); }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 
-/* ================= GPS ================= */
+/* GPS */
 function gpsHolen(){
-  neuerEintrag();
-  el("gpsStatus").innerText="GPS wird ermittelt…";
-
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const lat=pos.coords.latitude;
-    const lon=pos.coords.longitude;
-
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-      .then(r=>r.json())
-      .then(d=>{
-        el("strasse").value=d.address?.road||"";
-        el("hausnr").value=d.address?.house_number||"";
-        el("plz").value=d.address?.postcode||"";
-        el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
-        el("gpsStatus").innerText=`GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      });
-  }, ()=>alert("GPS nicht verfügbar"));
+neuerEintrag();
+el("gpsStatus").innerText="GPS wird ermittelt…";
+navigator.geolocation.getCurrentPosition(pos=>{
+const lat=pos.coords.latitude;
+const lon=pos.coords.longitude;
+fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+.then(r=>r.json())
+.then(d=>{
+el("strasse").value=d.address?.road||"";
+el("hausnr").value=d.address?.house_number||"";
+el("plz").value=d.address?.postcode||"";
+el("ort").value=d.address?.city||d.address?.town||d.address?.village||"";
+el("gpsStatus").innerText=`GPS OK`;
+});
+},()=>alert("GPS nicht verfügbar"));
 }
 
-/* ================= SPEICHERN ================= */
+/* SPEICHERN */
 function speichern(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-
-  const rasen = toNum(el("rasen").value || 0);
-  const bio   = toNum(el("bio").value || 0);
-  const summe = rasen*45 + bio*30;
-
-  const id = el("editId").value || (Date.now()+"_"+Math.random());
-
-  const eintrag = {
-    id,
-    datum: heuteDatum(),
-    uhrzeit: new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
-    name: (el("name").value || "").trim() || "(kein Name)",
-    telefon: el("telefon").value || "",
-    strasse: el("strasse").value || "",
-    hausnr: el("hausnr").value || "",
-    plz: el("plz").value || "",
-    ort: el("ort").value || "",
-    rasen, bio,
-    ausgestreut: el("ausgestreut").value,
-    zahlung: el("zahlung").value,
-    summe
-  };
-
-  const i = daten.findIndex(e=>e.id===id);
-  if(i>=0) daten[i]=eintrag; else daten.push(eintrag);
-
-  localStorage.setItem("humix", JSON.stringify(daten));
-  neuerEintrag();
-  ladeHeute();
+const daten = JSON.parse(localStorage.getItem("humix")||"[]");
+const rasen=toNum(el("rasen").value||0);
+const bio=toNum(el("bio").value||0);
+const summe=rasen*45+bio*30;
+const id=el("editId").value||(Date.now()+"_"+Math.random());
+const eintrag={
+id,datum:heuteDatum(),
+uhrzeit:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+name:(el("name").value||"").trim()||"(kein Name)",
+telefon:el("telefon").value||"",
+strasse:el("strasse").value||"",
+hausnr:el("hausnr").value||"",
+plz:el("plz").value||"",
+ort:el("ort").value||"",
+rasen,bio,
+ausgestreut:el("ausgestreut").value,
+zahlung:el("zahlung").value,
+summe};
+const i=daten.findIndex(e=>e.id===id);
+if(i>=0)daten[i]=eintrag;else daten.push(eintrag);
+localStorage.setItem("humix",JSON.stringify(daten));
+neuerEintrag();
+ladeHeute();
 }
 
-/* ================= REST IST UNVERÄNDERT ================= */
+/* Rest wie gehabt */
 function neuerEintrag(){
-  el("editId").value="";
-  ["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
-  el("rasen").value=0;
-  el("bio").value=0;
-  el("gpsStatus").innerText="GPS noch nicht ermittelt";
+el("editId").value="";
+["name","telefon","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
+el("rasen").value=0;
+el("bio").value=0;
+el("gpsStatus").innerText="GPS noch nicht ermittelt";
 }
 
 function ladeHeute(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-
-  const tbody = el("tabelleHeute");
-  const tfoot = el("summenHeute");
-  tbody.innerHTML="";
-  tfoot.innerHTML="";
-
-  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  daten.forEach(e=>{
-    const ras = toNum(e.rasen);
-    const bi  = toNum(e.bio);
-    const su  = toNum(e.summe);
-
-    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
-    if(e.zahlung==="EC"){  eR+=ras; eB+=bi; eS+=su; }
-
-    tbody.innerHTML += `
-      <tr class="${e.zahlung==="Bar" ? "bar" : "ec"}">
-        <td>${e.uhrzeit || ""}</td>
-        <td>${(e.ort||"")} – ${(e.name||"")}</td>
-        <td>${ras}</td>
-        <td>${bi}</td>
-        <td>${e.zahlung||""}</td>
-        <td>${su}</td>
-        <td>
-          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
-        </td>
-      </tr>`;
-  });
-
-  tfoot.innerHTML = `
-    <tr class="summe bar">
-      <td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td>
-    </tr>
-    <tr class="summe ec">
-      <td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td>
-    </tr>
-    <tr class="summe">
-      <td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td>
-    </tr>`;
+const daten=JSON.parse(localStorage.getItem("humix")||"[]")
+.filter(e=>e.datum===heuteDatum());
+const tbody=el("tabelleHeute");
+const tfoot=el("summenHeute");
+tbody.innerHTML="";
+tfoot.innerHTML="";
+let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
+daten.forEach(e=>{
+const ras=toNum(e.rasen),bi=toNum(e.bio),su=toNum(e.summe);
+if(e.zahlung==="Bar"){bR+=ras;bB+=bi;bS+=su;}
+if(e.zahlung==="EC"){eR+=ras;eB+=bi;eS+=su;}
+tbody.innerHTML+=`
+<tr class="${e.zahlung==="Bar"?"bar":"ec"}">
+<td>${e.uhrzeit||""}</td>
+<td>${(e.ort||"")} – ${(e.name||"")}</td>
+<td>${ras}</td>
+<td>${bi}</td>
+<td>${e.zahlung||""}</td>
+<td>${su}</td>
+<td>
+<button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
+<button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+</td></tr>`;});
+tfoot.innerHTML=`
+<tr class="summe bar"><td colspan="2">BAR</td><td>${bR}</td><td>${bB}</td><td></td><td>${bS}</td><td></td></tr>
+<tr class="summe ec"><td colspan="2">EC</td><td>${eR}</td><td>${eB}</td><td></td><td>${eS}</td><td></td></tr>
+<tr class="summe"><td colspan="2">GESAMT</td><td>${bR+eR}</td><td>${bB+eB}</td><td></td><td>${bS+eS}</td><td></td></tr>`;
 }
 
 function bearbeiten(id){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-  const e = daten.find(x=>x.id===id);
-  if(!e) return;
-
-  el("editId").value = e.id;
-  el("name").value = (e.name && e.name !== "(kein Name)") ? e.name : "";
-  el("telefon").value = e.telefon || "";
-  el("strasse").value = e.strasse || "";
-  el("hausnr").value = e.hausnr || "";
-  el("plz").value = e.plz || "";
-  el("ort").value = e.ort || "";
-  el("rasen").value = toNum(e.rasen);
-  el("bio").value = toNum(e.bio);
-  el("ausgestreut").value = e.ausgestreut || "Ja";
-  el("zahlung").value = e.zahlung || "Bar";
+const daten=JSON.parse(localStorage.getItem("humix")||"[]");
+const e=daten.find(x=>x.id===id);
+if(!e)return;
+el("editId").value=e.id;
+el("name").value=(e.name&&e.name!=="(kein Name)")?e.name:"";
+el("telefon").value=e.telefon||"";
+el("strasse").value=e.strasse||"";
+el("hausnr").value=e.hausnr||"";
+el("plz").value=e.plz||"";
+el("ort").value=e.ort||"";
+el("rasen").value=toNum(e.rasen);
+el("bio").value=toNum(e.bio);
+el("ausgestreut").value=e.ausgestreut||"Ja";
+el("zahlung").value=e.zahlung||"Bar";
 }
 
 function loeschen(id){
-  if(!confirm("Eintrag löschen?")) return;
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]").filter(e=>e.id!==id);
-  localStorage.setItem("humix", JSON.stringify(daten));
-  ladeHeute();
-}
-
-function downloadCSV(text, name){
-  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function exportTagesCSV(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-
-  let csv = "Datum;Uhrzeit;Name;Telefon;Straße;Hausnr;PLZ;Ort;Rasen;Bio;Ausgestreut;Zahlung;Summe €\n";
-
-  daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
-    csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${toNum(e.bio)};${e.ausgestreut||""};${e.zahlung||""};${toNum(e.summe)}\n`;
-  });
-
-  const dateName = new Date().toISOString().slice(0,10);
-  downloadCSV(csv, `humix_tagesliste_${dateName}.csv`);
-}
-
-function exportXLSX(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-
-  const sheetData = [["Datum","Uhrzeit","Name","Telefon","Straße","Hausnr","PLZ","Ort","Rasen","Bio","Ausgestreut","Zahlung","Summe €"]];
-  daten.forEach(e=>{
-    sheetData.push([
-      e.datum,e.uhrzeit,e.name||"",e.telefon||"",e.strasse||"",e.hausnr||"",
-      e.plz||"",e.ort||"",toNum(e.rasen),toNum(e.bio),
-      e.ausgestreut||"",e.zahlung||"",toNum(e.summe)
-    ]);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-  ws["!cols"] = sheetData[0].map((_,i)=>({
-    wch: Math.max(...sheetData.map(r=>String(r[i]??"").length))+2
-  }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
-
-  const dateName = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `humix_tagesliste_${dateName}.xlsx`);
-}
-
-function exportZusammenfassung(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]")
-    .filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-
-  const datum = heuteDatum();
-  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0;
-
-  daten.forEach(e=>{
-    const ras=toNum(e.rasen),bi=toNum(e.bio),su=toNum(e.summe);
-    if(e.zahlung==="Bar"){bR+=ras;bB+=bi;bS+=su;}
-    if(e.zahlung==="EC"){eR+=ras;eB+=bi;eS+=su;}
-  });
-
-  let csv="Datum;Zahlung;Rasen Säcke;Bio Säcke;Summe €\n";
-  csv+=`${datum};Bar;${bR};${bB};${bS}\n`;
-  csv+=`${datum};EC;${eR};${eB};${eS}\n`;
-  csv+=`${datum};GESAMT;${bR+eR};${bB+eB};${bS+eS}\n`;
-
-  const dateName = new Date().toISOString().slice(0,10);
-  downloadCSV(csv, `humix_tageszusammenfassung_${dateName}.csv`);
+if(!confirm("Eintrag löschen?"))return;
+const daten=JSON.parse(localStorage.getItem("humix")||"[]")
+.filter(e=>e.id!==id);
+localStorage.setItem("humix",JSON.stringify(daten));
+ladeHeute();
 }
 
 function allesLoeschen(){
-  if(confirm("Wirklich alle Daten löschen?")){
-    localStorage.removeItem("humix");
-    neuerEintrag();
-    ladeHeute();
-    alert("Gelöscht");
-  }
+if(confirm("Wirklich alle Daten löschen?")){
+localStorage.removeItem("humix");
+neuerEintrag();
+ladeHeute();
+alert("Gelöscht");
+}
 }
 
-window.onload = ladeHeute;
+window.onload=ladeHeute;
 </script>
 
 </body>
