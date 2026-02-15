@@ -168,7 +168,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:3400px; }
+.submenu.open{ max-height:4200px; }
 
 /* Tabelle */
 .tableWrap{
@@ -267,6 +267,12 @@ th{
 }
 .kv .k{ color:var(--muted); font-size:12px; font-weight:700; }
 .kv .v{ margin-top:2px; font-size:13px; font-weight:800; }
+
+hr.sep{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:12px 0;
+}
 </style>
 </head>
 
@@ -353,14 +359,14 @@ th{
       <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
       <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
 
-      <hr style="border:none;border-top:1px solid var(--border); margin:12px 0;">
+      <hr class="sep">
 
       <button class="orange" onclick="backupDownload()">📦 Komplettes Backup herunterladen (JSON)</button>
       <input id="backupFile" type="file" accept="application/json" style="display:none" onchange="backupImportFromInput()">
       <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
       <div class="status" id="backupStatus">Backup: noch nicht verwendet.</div>
 
-      <hr style="border:none;border-top:1px solid var(--border); margin:12px 0;">
+      <hr class="sep">
 
       <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
     </div>
@@ -655,14 +661,12 @@ function backupDownload(){
 
   setBackupStatus(`Backup heruntergeladen (${daten.length} Einträge).`);
 }
-
 function backupPickFile(){
   const inp = el("backupFile");
   if(!inp) return;
-  inp.value = ""; // wichtig: gleiche Datei erneut wählbar
+  inp.value = "";
   inp.click();
 }
-
 function backupImportFromInput(){
   const inp = el("backupFile");
   if(!inp || !inp.files || !inp.files.length) return;
@@ -674,18 +678,14 @@ function backupImportFromInput(){
       const txt = String(reader.result || "");
       const parsed = JSON.parse(txt);
 
-      // Wir akzeptieren:
-      // - {version, data:[...]} (unser Format)
-      // - oder direkt ein Array [...]
+      // akzeptieren: Array oder {data:Array}
       let incoming = null;
       if(Array.isArray(parsed)) incoming = parsed;
       else if(parsed && Array.isArray(parsed.data)) incoming = parsed.data;
 
       if(!incoming) throw new Error("Ungültiges Backup-Format");
 
-      // Grund-Validierung: Objektliste
       incoming = incoming.filter(x => x && typeof x === "object");
-
       if(!incoming.length){
         alert("Backup enthält keine Einträge.");
         return;
@@ -693,18 +693,15 @@ function backupImportFromInput(){
 
       const overwrite = confirm("Bestehende Daten überschreiben?\nOK = überschreiben\nAbbrechen = zusammenführen");
       if(overwrite){
-        // Einmal sauber nachziehen (datumISO/createdAt)
         ensureDatumISO(incoming);
         saveAll(incoming);
         setBackupStatus(`Import OK (überschrieben): ${incoming.length} Einträge.`);
       }else{
         const existing = loadAll();
 
-        // Zusammenführen ohne Duplikate: anhand id
         const map = new Map();
         existing.forEach(e => map.set(String(e.id), e));
         incoming.forEach(e => {
-          // id fehlt? neu vergeben
           if(!e.id) e.id = Date.now()+"_"+Math.random();
           map.set(String(e.id), e);
         });
@@ -715,7 +712,6 @@ function backupImportFromInput(){
         setBackupStatus(`Import OK (zusammengeführt): jetzt ${combined.length} Einträge.`);
       }
 
-      // Refresh
       ladeHeute();
       if(el("viewDB")?.classList.contains("active")) dbSuchen();
       alert("Backup importiert.");
@@ -758,29 +754,11 @@ function buildDestinationFromEntry(e){
   if(addr) return {type:"addr", value:addr};
   return null;
 }
+
+/* ✅ FIX: IDs immer als String vergleichen (sonst "Eintrag nicht gefunden") */
 function openSingleNavigationForEntryId(id){
   const daten = loadAll();
-
   const e = daten.find(x => String(x.id) === String(id));
-
-  if(!e){
-    alert("Eintrag nicht gefunden.");
-    return;
-  }
-
-  const dest = buildDestinationFromEntry(e);
-
-  if(!dest){
-    alert("Keine Navigationsdaten vorhanden (weder GPS noch Adresse).");
-    return;
-  }
-
-  const provider = pickProviderInteractive();
-  if(!provider) return;
-
-  openNavigation(provider, dest);
-}
-
   if(!e) return alert("Eintrag nicht gefunden.");
 
   const dest = buildDestinationFromEntry(e);
@@ -835,10 +813,7 @@ function openMultiStopRouteFromResults(){
   const MAX_STOPS = 10;
   const sliced = stops.slice(0, MAX_STOPS);
 
-  const origin = (dbCurrentPos)
-    ? `${dbCurrentPos.lat},${dbCurrentPos.lon}`
-    : "";
-
+  const origin = (dbCurrentPos) ? `${dbCurrentPos.lat},${dbCurrentPos.lon}` : "";
   const destination = sliced[sliced.length-1];
   const waypoints = sliced.slice(0, sliced.length-1);
 
@@ -960,7 +935,7 @@ async function speichern(){
     lon: gps.gpsOk ? gps.lon : null
   };
 
-  const i = daten.findIndex(e=>e.id===id);
+  const i = daten.findIndex(e=>String(e.id)===String(id));
   if(i>=0) daten[i]=eintrag; else daten.push(eintrag);
 
   saveAll(daten);
@@ -1015,8 +990,8 @@ function ladeHeute(){
         <td>${e.zahlung||""}</td>
         <td>${su.toFixed(2)}</td>
         <td>
-          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+          <button class="blue actionBtn" onclick="bearbeiten('${String(e.id).replace(/'/g,"\\'")}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${String(e.id).replace(/'/g,"\\'")}')">🗑</button>
         </td>
       </tr>`;
   });
@@ -1035,7 +1010,7 @@ function ladeHeute(){
 
 function bearbeiten(id){
   const daten = loadAll();
-  const e = daten.find(x=>x.id===id);
+  const e = daten.find(x=>String(x.id)===String(id));
   if(!e) return;
 
   el("editId").value = e.id;
@@ -1062,7 +1037,7 @@ function bearbeiten(id){
 
 function loeschen(id){
   if(!confirm("Eintrag löschen?")) return;
-  const daten = loadAll().filter(e=>e.id!==id);
+  const daten = loadAll().filter(e=>String(e.id)!==String(id));
   saveAll(daten);
   ladeHeute();
 
@@ -1557,7 +1532,7 @@ function dbGetFiltered(){
 }
 
 function dbToggleDetails(id){
-  const row = document.getElementById("dbDetails_"+id);
+  const row = document.getElementById("dbDetails_"+String(id));
   if(!row) return;
   row.style.display = (row.style.display==="none" || !row.style.display) ? "table-row" : "none";
 }
@@ -1601,6 +1576,8 @@ function dbSuchen(){
       distTxt = (typeof e.lat==="number" && typeof e.lon==="number") ? "GPS OK" : "Kein GPS";
     }
 
+    const safeId = String(e.id).replace(/'/g,"\\'");
+
     tbody.innerHTML += `
       <tr class="${e.zahlung==="Bar" ? "bar" : "ec"}">
         <td>${e.datum || ""}</td>
@@ -1616,13 +1593,13 @@ function dbSuchen(){
         <td>${e.zahlung || ""}</td>
         <td style="text-align:right"><b>${s.toFixed(2)}</b></td>
         <td>
-          <button class="gray actionBtn" onclick="dbToggleDetails('${e.id}')">▼</button>
-          <button class="green actionBtn" onclick="openSingleNavigationForEntryId('${e.id}')">🧭</button>
-          <button class="blue actionBtn" onclick="bearbeiten('${e.id}')">✏️</button>
-          <button class="red actionBtn" onclick="loeschen('${e.id}')">🗑</button>
+          <button class="gray actionBtn" onclick="dbToggleDetails('${safeId}')">▼</button>
+          <button class="green actionBtn" onclick="openSingleNavigationForEntryId('${safeId}')">🧭</button>
+          <button class="blue actionBtn" onclick="bearbeiten('${safeId}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${safeId}')">🗑</button>
         </td>
       </tr>
-      <tr class="detailsRow" id="dbDetails_${e.id}" style="display:none">
+      <tr class="detailsRow" id="dbDetails_${safeId}" style="display:none">
         <td colspan="13">
           <div class="detailsBox">
             <div class="detailsGrid">
@@ -1640,7 +1617,7 @@ function dbSuchen(){
                   : "Kein GPS vorhanden"
               }</div></div>
               <div class="kv"><div class="k">Navigation</div><div class="v">
-                <button class="green" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openSingleNavigationForEntryId('${e.id}')">🧭 Navigation starten</button>
+                <button class="green" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openSingleNavigationForEntryId('${safeId}')">🧭 Navigation starten</button>
               </div></div>
             </div>
           </div>
