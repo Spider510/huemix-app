@@ -168,7 +168,7 @@ button{
   transition:max-height .25s ease;
   margin-top:8px;
 }
-.submenu.open{ max-height:2600px; }
+.submenu.open{ max-height:3400px; }
 
 /* Tabelle */
 .tableWrap{
@@ -344,7 +344,7 @@ th{
     <button class="green" onclick="speichern()">💾 Speichern</button>
     <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
 
-    <button class="gray" onclick="toggleSubmenu()">☰ Export / Löschen</button>
+    <button class="gray" onclick="toggleSubmenu()">☰ Export / Backup / Löschen</button>
     <div class="submenu" id="submenu">
       <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
       <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
@@ -352,6 +352,15 @@ th{
 
       <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
       <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
+
+      <hr style="border:none;border-top:1px solid var(--border); margin:12px 0;">
+
+      <button class="orange" onclick="backupDownload()">📦 Komplettes Backup herunterladen (JSON)</button>
+      <input id="backupFile" type="file" accept="application/json" style="display:none" onchange="backupImportFromInput()">
+      <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
+      <div class="status" id="backupStatus">Backup: noch nicht verwendet.</div>
+
+      <hr style="border:none;border-top:1px solid var(--border); margin:12px 0;">
 
       <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
     </div>
@@ -479,8 +488,10 @@ th{
       </div>
 
       <div>
-        <label>Hinweis</label>
-        <div class="status">Für Radius werden Einträge ohne GPS nicht angezeigt – nach dem Anreichern schon.</div>
+        <label>Backup</label>
+        <button class="orange" onclick="backupDownload()">📦 Backup herunterladen (JSON)</button>
+        <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
+        <div class="status" id="backupStatus2">Backup: noch nicht verwendet.</div>
       </div>
     </div>
 
@@ -616,6 +627,104 @@ function loadAll(){
 }
 function saveAll(daten){
   localStorage.setItem("humix", JSON.stringify(daten));
+}
+
+/* ================= BACKUP (JSON) ================= */
+function setBackupStatus(msg){
+  const a = el("backupStatus");  if(a) a.innerText = msg;
+  const b = el("backupStatus2"); if(b) b.innerText = msg;
+}
+function backupDownload(){
+  const daten = loadAll();
+  if(!daten.length){ alert("Keine Daten vorhanden."); return; }
+
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    count: daten.length,
+    data: daten
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `humix_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setBackupStatus(`Backup heruntergeladen (${daten.length} Einträge).`);
+}
+
+function backupPickFile(){
+  const inp = el("backupFile");
+  if(!inp) return;
+  inp.value = ""; // wichtig: gleiche Datei erneut wählbar
+  inp.click();
+}
+
+function backupImportFromInput(){
+  const inp = el("backupFile");
+  if(!inp || !inp.files || !inp.files.length) return;
+
+  const file = inp.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const txt = String(reader.result || "");
+      const parsed = JSON.parse(txt);
+
+      // Wir akzeptieren:
+      // - {version, data:[...]} (unser Format)
+      // - oder direkt ein Array [...]
+      let incoming = null;
+      if(Array.isArray(parsed)) incoming = parsed;
+      else if(parsed && Array.isArray(parsed.data)) incoming = parsed.data;
+
+      if(!incoming) throw new Error("Ungültiges Backup-Format");
+
+      // Grund-Validierung: Objektliste
+      incoming = incoming.filter(x => x && typeof x === "object");
+
+      if(!incoming.length){
+        alert("Backup enthält keine Einträge.");
+        return;
+      }
+
+      const overwrite = confirm("Bestehende Daten überschreiben?\nOK = überschreiben\nAbbrechen = zusammenführen");
+      if(overwrite){
+        // Einmal sauber nachziehen (datumISO/createdAt)
+        ensureDatumISO(incoming);
+        saveAll(incoming);
+        setBackupStatus(`Import OK (überschrieben): ${incoming.length} Einträge.`);
+      }else{
+        const existing = loadAll();
+
+        // Zusammenführen ohne Duplikate: anhand id
+        const map = new Map();
+        existing.forEach(e => map.set(String(e.id), e));
+        incoming.forEach(e => {
+          // id fehlt? neu vergeben
+          if(!e.id) e.id = Date.now()+"_"+Math.random();
+          map.set(String(e.id), e);
+        });
+
+        const combined = Array.from(map.values());
+        ensureDatumISO(combined);
+        saveAll(combined);
+        setBackupStatus(`Import OK (zusammengeführt): jetzt ${combined.length} Einträge.`);
+      }
+
+      // Refresh
+      ladeHeute();
+      if(el("viewDB")?.classList.contains("active")) dbSuchen();
+      alert("Backup importiert.");
+    }catch(err){
+      console.log(err);
+      alert("Fehler beim Import. Bitte richtige JSON-Backup-Datei wählen.");
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ================= Navi Provider (Auswahl) ================= */
@@ -1298,6 +1407,7 @@ function allesLoeschen(){
     if(document.getElementById("viewDB").classList.contains("active")){
       dbSuchen();
     }
+    setBackupStatus("Backup: noch nicht verwendet.");
     alert("Gelöscht");
   }
 }
@@ -1643,6 +1753,7 @@ async function anreichernGPS(){
 
   if(!ohneGPS.length){
     alert("Alle Einträge haben bereits GPS.");
+    el("gpsBatchStatus").innerText = "Alle Einträge haben bereits GPS.";
     return;
   }
 
@@ -1700,6 +1811,7 @@ window.onload = function(){
   ladeHeute();
   dbResetFilter();
   initMapProviderUI();
+  setBackupStatus(`Backup: bereit. Aktuell ${loadAll().length} Einträge.`);
 };
 </script>
 
