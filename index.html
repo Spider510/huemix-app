@@ -758,10 +758,29 @@ function buildDestinationFromEntry(e){
   if(addr) return {type:"addr", value:addr};
   return null;
 }
-
 function openSingleNavigationForEntryId(id){
   const daten = loadAll();
-  const e = daten.find(x=>x.id===id);
+
+  const e = daten.find(x => String(x.id) === String(id));
+
+  if(!e){
+    alert("Eintrag nicht gefunden.");
+    return;
+  }
+
+  const dest = buildDestinationFromEntry(e);
+
+  if(!dest){
+    alert("Keine Navigationsdaten vorhanden (weder GPS noch Adresse).");
+    return;
+  }
+
+  const provider = pickProviderInteractive();
+  if(!provider) return;
+
+  openNavigation(provider, dest);
+}
+
   if(!e) return alert("Eintrag nicht gefunden.");
 
   const dest = buildDestinationFromEntry(e);
