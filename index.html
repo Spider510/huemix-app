@@ -451,7 +451,7 @@ body.light .toast{
     <button class="green" onclick="speichern()">💾 Speichern</button>
     <button class="blue" onclick="neuerEintrag()">➕ Neuer Eintrag</button>
 
-    <button class="gray" onclick="toggleSubmenu()">☰ Export / Backup / Löschen</button>
+    <button class="gray" onclick="toggleSubmenu()">☰ Export / Backup</button>
     <div class="submenu" id="submenu">
       <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
       <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
@@ -467,9 +467,7 @@ body.light .toast{
       <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
       <div class="status" id="backupStatus">Backup: noch nicht verwendet.</div>
 
-      <hr class="sep">
-
-      <button class="red" onclick="allesLoeschen()">🗑 Alle Daten löschen</button>
+      <!-- ✅ "Alle Daten löschen" bewusst entfernt -->
     </div>
 
     <span class="badge" id="editHint">Neuer Eintrag</span>
@@ -2032,20 +2030,6 @@ function exportPreisGruppierungXLSX(){
 
   const dateName = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `humix_preis_gruppierung_${dateName}.xlsx`);
-}
-
-/* ================= ALLES LÖSCHEN ================= */
-function allesLoeschen(){
-  if(confirm("Wirklich alle Daten löschen?")){
-    localStorage.removeItem("humix");
-    neuerEintrag();
-    ladeHeute();
-    if(document.getElementById("viewDB").classList.contains("active")){
-      dbSuchen();
-    }
-    setBackupStatus("Backup: noch nicht verwendet.");
-    alert("Gelöscht");
-  }
 }
 
 /* ================= DB: Umkreissuche + Details ================= */
