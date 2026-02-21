@@ -165,7 +165,7 @@ button{
   color:var(--muted);
 }
 
-/* 🔴 Sonderpreis Warn-Style (damit man sich am Handy nicht vertut) */
+/* 🔴 Sonderpreis Warn-Style */
 input.sonderpreis-aktiv{
   background: #3a0f12 !important;
   border: 2px solid #c62828 !important;
@@ -840,7 +840,7 @@ function isSonderpreisEintrag(e){
   return (rp !== STANDARD_RASEN) || (bp !== STANDARD_BIO);
 }
 
-/* 🔴 Sonderpreis-Highlight: live rot, wenn Wert eingetragen */
+/* 🔴 Sonderpreis rot, wenn Feld gefüllt */
 function updateSonderpreisHighlight(){
   const rasen = el("rasenPreis");
   const bio   = el("bioPreis");
@@ -907,6 +907,7 @@ function backupImportFromInput(){
       const txt = String(reader.result || "");
       const parsed = JSON.parse(txt);
 
+      // akzeptieren: Array oder {data:Array}
       let incoming = null;
       if(Array.isArray(parsed)) incoming = parsed;
       else if(parsed && Array.isArray(parsed.data)) incoming = parsed.data;
@@ -926,6 +927,7 @@ function backupImportFromInput(){
         setBackupStatus(`Import OK (überschrieben): ${incoming.length} Einträge.`);
       }else{
         const existing = loadAll();
+
         const map = new Map();
         existing.forEach(e => map.set(String(e.id), e));
         incoming.forEach(e => {
@@ -982,7 +984,7 @@ function buildDestinationFromEntry(e){
   return null;
 }
 
-/* ✅ FIX: IDs immer als String vergleichen */
+/* ✅ FIX: IDs immer als String vergleichen (sonst "Eintrag nicht gefunden") */
 function openSingleNavigationForEntryId(id){
   const daten = loadAll();
   const e = daten.find(x => String(x.id) === String(id));
@@ -1012,7 +1014,7 @@ function openNavigation(provider, dest){
 }
 
 /* Mehrfach-Route aus Treffern (optional) */
-let dbLastResults = [];
+let dbLastResults = []; // [{e, dist}]
 function openMultiStopRouteFromResults(){
   if(!dbLastResults.length) return alert("Keine Treffer. Bitte zuerst suchen.");
 
@@ -1369,13 +1371,26 @@ function takeOrderToEinsatz(id){
   el("orderLinkHint").style.display = "block";
   el("orderLinkHint").innerText = "⚠️ Diese Eingabe ist mit einer Bestellung verknüpft. Beim Speichern wird sie automatisch als erledigt markiert.";
   el("editHint").innerText = "Bestellung übernommen (Speichern = erledigt + Tagesverlauf)";
-  el("gpsStatus").innerText = "GPS noch nicht ermittelt";
-  el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: wird versucht…";
 
   if(o.status==="neu") setOrderStatus(o.id, "intour");
 
   showView("einsatz");
   showToast("Bestellung in Einsatz übernommen", "Jetzt nur noch prüfen und Speichern drücken.");
+}
+
+/* 🧭 Navigation für Bestellungen (Offen) */
+function navigateOrder(id){
+  const orders = loadOrders();
+  const o = orders.find(x => String(x.id)===String(id));
+  if(!o) return alert("Bestellung nicht gefunden.");
+
+  const addr = [o.strasse||"", o.hausnr||"", o.plz||"", o.ort||""].join(" ").trim();
+  if(!addr) return alert("Keine Adresse für Navigation vorhanden.");
+
+  const provider = pickProviderInteractive();
+  if(!provider) return;
+
+  openNavigation(provider, {type:"addr", value: addr});
 }
 
 function ladeOrdersUI(){
@@ -1393,6 +1408,7 @@ function ladeOrdersUI(){
   }else{
     st.innerText = `Offen: ${open.length}`;
     open.forEach(o=>{
+      const safeId = String(o.id).replace(/'/g,"\\'");
       list.innerHTML += `
         <div class="orderRow">
           <div class="orderTop">
@@ -1410,10 +1426,11 @@ function ladeOrdersUI(){
           </div>
 
           <div class="orderBtns">
-            <button class="green" onclick="takeOrderToEinsatz('${String(o.id).replace(/'/g,"\\'")}')">➡️ In Einsatz übernehmen</button>
-            <button class="blue" onclick="setOrderStatus('${String(o.id).replace(/'/g,"\\'")}', 'intour')">🚚 In Tour</button>
-            <button class="orange" onclick="setOrderStatus('${String(o.id).replace(/'/g,"\\'")}', 'neu')">🟧 Neu</button>
-            <button class="red" onclick="deleteOrder('${String(o.id).replace(/'/g,"\\'")}')">🗑</button>
+            <button class="green" onclick="takeOrderToEinsatz('${safeId}')">➡️ In Einsatz übernehmen</button>
+            <button class="purple" onclick="navigateOrder('${safeId}')">🧭 Navigation</button>
+            <button class="blue" onclick="setOrderStatus('${safeId}', 'intour')">🚚 In Tour</button>
+            <button class="orange" onclick="setOrderStatus('${safeId}', 'neu')">🟧 Neu</button>
+            <button class="red" onclick="deleteOrder('${safeId}')">🗑</button>
           </div>
         </div>
       `;
@@ -1471,12 +1488,10 @@ function onOrderLinkedSaved(humixEntryId){
   updateOrderBadge();
 }
 
+/* Auto-Polling (1 Min) – nur wenn URL gespeichert */
 function initOrdersPolling(){
   const url = getOrdersUrl();
   if(!url) return;
-
-  const auto = localStorage.getItem("humix_orders_autofetch") || "1";
-  if(auto !== "1") return;
 
   setInterval(async ()=>{
     try{ await fetchOrdersSilent(); }catch(_){}
@@ -1801,7 +1816,7 @@ function buildPreisGruppierung(){
   const daten = loadAll().filter(e=>e.datum===heuteDatum());
   const datum = heuteDatum();
 
-  const groups = new Map();
+  const groups = new Map(); // key Produkt|Preis -> {prod, preis, barM, ecM, barU, ecU}
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
 
@@ -2035,6 +2050,7 @@ function allesLoeschen(){
 
 /* ================= DB: Umkreissuche + Details ================= */
 let dbCurrentPos = null; // {lat, lon}
+
 function toRad(x){ return x * Math.PI / 180; }
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -2121,6 +2137,7 @@ function dbGetFiltered(){
       if(dist === null) return false;
       if(dist > radiusKm) return false;
     }
+
     return true;
   });
 
@@ -2415,7 +2432,7 @@ async function anreichernGPS(){
 
     count++;
     el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total}`;
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1000)); // 1 Anfrage/Sekunde
   }
 
   saveAll(daten);
@@ -2443,7 +2460,7 @@ window.onload = function(){
   updateOrderBadge();
   initOrdersPolling();
 
-  // Hinweis bei neuen Bestellungen
+  // Hinweis bei neuen Bestellungen (beim Start)
   const c = countNewOrders();
   if(c>0){
     showToast("Neue Bestellungen vorhanden", `${c} neue Bestellung(en). Öffne „Bestellungen“.`);
