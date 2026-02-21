@@ -165,6 +165,18 @@ button{
   color:var(--muted);
 }
 
+/* 🔴 Sonderpreis Warn-Style (damit man sich am Handy nicht vertut) */
+input.sonderpreis-aktiv{
+  background: #3a0f12 !important;
+  border: 2px solid #c62828 !important;
+  color: #fff !important;
+}
+body.light input.sonderpreis-aktiv{
+  background: #ffd6d6 !important;
+  border: 2px solid #c62828 !important;
+  color: #000 !important;
+}
+
 /* Untermenü (Einsatz) */
 .submenu{
   overflow:hidden;
@@ -734,7 +746,6 @@ function showView(which){
   const td = document.getElementById("tabDB");
   const to = document.getElementById("tabOrders");
 
-  // reset
   [ve,vd,vo].forEach(v=>v.classList.remove("active"));
   [te,td,to].forEach(t=>t.classList.remove("active"));
 
@@ -771,8 +782,7 @@ function showToast(msg, small){
   toastTimer = setTimeout(()=>{ hideToast(); }, 4500);
 }
 function hideToast(){
-  const t = el("toast");
-  t.style.display = "none";
+  el("toast").style.display = "none";
 }
 
 /* ================= Helfer ================= */
@@ -830,6 +840,19 @@ function isSonderpreisEintrag(e){
   return (rp !== STANDARD_RASEN) || (bp !== STANDARD_BIO);
 }
 
+/* 🔴 Sonderpreis-Highlight: live rot, wenn Wert eingetragen */
+function updateSonderpreisHighlight(){
+  const rasen = el("rasenPreis");
+  const bio   = el("bioPreis");
+  if(!rasen || !bio) return;
+
+  if(toNum(rasen.value) > 0) rasen.classList.add("sonderpreis-aktiv");
+  else rasen.classList.remove("sonderpreis-aktiv");
+
+  if(toNum(bio.value) > 0) bio.classList.add("sonderpreis-aktiv");
+  else bio.classList.remove("sonderpreis-aktiv");
+}
+
 /* ================= Daten lesen/schreiben ================= */
 function loadAll(){
   const daten = JSON.parse(localStorage.getItem("humix") || "[]");
@@ -884,7 +907,6 @@ function backupImportFromInput(){
       const txt = String(reader.result || "");
       const parsed = JSON.parse(txt);
 
-      // akzeptieren: Array oder {data:Array}
       let incoming = null;
       if(Array.isArray(parsed)) incoming = parsed;
       else if(parsed && Array.isArray(parsed.data)) incoming = parsed.data;
@@ -904,7 +926,6 @@ function backupImportFromInput(){
         setBackupStatus(`Import OK (überschrieben): ${incoming.length} Einträge.`);
       }else{
         const existing = loadAll();
-
         const map = new Map();
         existing.forEach(e => map.set(String(e.id), e));
         incoming.forEach(e => {
@@ -961,7 +982,7 @@ function buildDestinationFromEntry(e){
   return null;
 }
 
-/* ✅ FIX: IDs immer als String vergleichen (sonst "Eintrag nicht gefunden") */
+/* ✅ FIX: IDs immer als String vergleichen */
 function openSingleNavigationForEntryId(id){
   const daten = loadAll();
   const e = daten.find(x => String(x.id) === String(id));
@@ -991,7 +1012,7 @@ function openNavigation(provider, dest){
 }
 
 /* Mehrfach-Route aus Treffern (optional) */
-let dbLastResults = []; // [{e, dist}]
+let dbLastResults = [];
 function openMultiStopRouteFromResults(){
   if(!dbLastResults.length) return alert("Keine Treffer. Bitte zuerst suchen.");
 
@@ -1100,24 +1121,15 @@ function gpsHolen(){
   }, {enableHighAccuracy:true, timeout:7000, maximumAge:30000});
 }
 
-/* ================= BESTELLUNGEN (neu) ================= */
+/* ================= BESTELLUNGEN ================= */
 const ORDERS_KEY = "humix_orders";
 const ORDERS_URL_KEY = "humix_orders_url";
+let pendingOrderId = null; // wenn Bestellung in Einsatz übernommen wurde
 
-let pendingOrderId = null; // wenn eine Bestellung in Einsatz übernommen wurde und beim Speichern erledigt wird
-
-function loadOrders(){
-  return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
-}
-function saveOrders(arr){
-  localStorage.setItem(ORDERS_KEY, JSON.stringify(arr));
-}
-function getOrdersUrl(){
-  return localStorage.getItem(ORDERS_URL_KEY) || "";
-}
-function setOrdersUrl(v){
-  localStorage.setItem(ORDERS_URL_KEY, (v||"").trim());
-}
+function loadOrders(){ return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]"); }
+function saveOrders(arr){ localStorage.setItem(ORDERS_KEY, JSON.stringify(arr)); }
+function getOrdersUrl(){ return localStorage.getItem(ORDERS_URL_KEY) || ""; }
+function setOrdersUrl(v){ localStorage.setItem(ORDERS_URL_KEY, (v||"").trim()); }
 
 function orderStatusLabel(s){
   if(s==="neu") return "Neu";
@@ -1131,14 +1143,14 @@ function pillClass(s){
   if(s==="erledigt") return "pill erledigt";
   return "pill";
 }
+
 function normalizeOrder(raw){
-  // akzeptiert verschiedene Feldnamen (Shop / manuell)
   const o = raw && typeof raw==="object" ? raw : {};
   const orderId = (o.orderId || o.id || o.externalId || o.number || "").toString();
   const now = Date.now();
 
-  const rasen = toNum(o.rasen ?? o.rasen_saecke ?? o.rasenSäcke ?? o.rasenSaecke ?? o.rasen_qty ?? 0);
-  const bio   = toNum(o.bio   ?? o.bio_saecke   ?? o.bioSäcke   ?? o.bioSaecke   ?? o.bio_qty   ?? 0);
+  const rasen = toNum(o.rasen ?? o.rasen_saecke ?? o.rasenSaecke ?? o.rasen_qty ?? 0);
+  const bio   = toNum(o.bio   ?? o.bio_saecke   ?? o.bioSaecke   ?? o.bio_qty   ?? 0);
 
   return {
     id: o.localId ? String(o.localId) : (orderId ? `ext_${orderId}` : `man_${now}_${Math.random()}`),
@@ -1147,7 +1159,6 @@ function normalizeOrder(raw){
     createdAt: toNum(o.createdAt) || now,
     updatedAt: now,
 
-    // Kunde
     name: (o.name || o.kunde || o.customer || "").toString().trim() || "(kein Name)",
     telefon: (o.telefon || o.phone || "").toString().trim(),
     strasse: (o.strasse || o.street || "").toString().trim(),
@@ -1155,15 +1166,12 @@ function normalizeOrder(raw){
     plz: (o.plz || o.zip || o.postcode || "").toString().trim(),
     ort: (o.ort || o.city || "").toString().trim(),
 
-    // Menge
     rasen,
     bio,
 
-    // Status
     status: (o.status || "neu"),
     viewed: !!o.viewed,
 
-    // Verknüpfung
     humixEntryId: o.humixEntryId || "",
     note: (o.note || "").toString()
   };
@@ -1182,7 +1190,6 @@ function mergeIncomingOrders(incomingArr){
 
     if(map.has(key)){
       const old = map.get(key);
-      // nur updaten wenn nicht erledigt überschreiben
       const keepStatus = old.status === "erledigt" ? "erledigt" : (n.status || old.status || "neu");
       map.set(key, {
         ...old,
@@ -1213,7 +1220,6 @@ function updateOrderBadge(){
   if(!b) return;
   b.innerText = c > 0 ? `(${c})` : "";
 }
-
 function markNewOrdersAsViewed(){
   const orders = loadOrders();
   let changed = false;
@@ -1227,7 +1233,6 @@ function initOrdersUI(){
   const inp = el("ordersUrl");
   if(inp) inp.value = getOrdersUrl();
 }
-
 function saveOrdersUrl(){
   setOrdersUrl(el("ordersUrl").value);
   showToast("Webshop-URL gespeichert", "Du kannst jetzt abrufen.");
@@ -1293,11 +1298,8 @@ function importOrdersFromPaste(){
 
     el("ordersFetchStatus").innerText = `Import OK: ${arr.length} verarbeitet, ${newCount} neu.`;
 
-    if(newCount>0){
-      showToast("Bestellungen importiert", `${newCount} neue Bestellung(en) hinzugefügt.`);
-    }else{
-      showToast("Import fertig", "Keine neuen Bestellungen.");
-    }
+    if(newCount>0) showToast("Bestellungen importiert", `${newCount} neue Bestellung(en) hinzugefügt.`);
+    else showToast("Import fertig", "Keine neuen Bestellungen.");
   }catch(e){
     console.log(e);
     alert("JSON ungültig. Bitte prüfen.");
@@ -1349,8 +1351,7 @@ function takeOrderToEinsatz(id){
   const o = orders.find(x => String(x.id)===String(id));
   if(!o) return alert("Bestellung nicht gefunden.");
 
-  // Formular füllen
-  el("editId").value = ""; // neuer Eintrag
+  el("editId").value = "";
   el("name").value = (o.name && o.name !== "(kein Name)") ? o.name : "";
   el("telefon").value = o.telefon || "";
   el("strasse").value = o.strasse || "";
@@ -1360,11 +1361,10 @@ function takeOrderToEinsatz(id){
   el("rasen").value = toNum(o.rasen);
   el("bio").value = toNum(o.bio);
 
-  // Standardpreise leer lassen (Standard)
   el("rasenPreis").value = "";
   el("bioPreis").value = "";
+  updateSonderpreisHighlight();
 
-  // Hinweis + Verknüpfung aktiv
   pendingOrderId = String(o.id);
   el("orderLinkHint").style.display = "block";
   el("orderLinkHint").innerText = "⚠️ Diese Eingabe ist mit einer Bestellung verknüpft. Beim Speichern wird sie automatisch als erledigt markiert.";
@@ -1372,7 +1372,6 @@ function takeOrderToEinsatz(id){
   el("gpsStatus").innerText = "GPS noch nicht ermittelt";
   el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: wird versucht…";
 
-  // optional: in Tour setzen
   if(o.status==="neu") setOrderStatus(o.id, "intour");
 
   showView("einsatz");
@@ -1385,7 +1384,6 @@ function ladeOrdersUI(){
   const open = orders.filter(o => o.status!=="erledigt");
   const done = orders.filter(o => o.status==="erledigt");
 
-  // Offene
   const list = el("ordersList");
   const st = el("ordersListStatus");
   list.innerHTML = "";
@@ -1422,12 +1420,11 @@ function ladeOrdersUI(){
     });
   }
 
-  // Erledigte (kurz)
   const dList = el("ordersDoneList");
   const dSt = el("ordersDoneStatus");
   dList.innerHTML = "";
 
-  const last = done.slice(0, 20); // kurz halten
+  const last = done.slice(0, 20);
   if(!last.length){
     dSt.innerText = "Noch keine erledigten Bestellungen.";
   }else{
@@ -1475,7 +1472,6 @@ function onOrderLinkedSaved(humixEntryId){
 }
 
 function initOrdersPolling(){
-  // optional: alle 60s abrufen, wenn URL gesetzt
   const url = getOrdersUrl();
   if(!url) return;
 
@@ -1483,10 +1479,7 @@ function initOrdersPolling(){
   if(auto !== "1") return;
 
   setInterval(async ()=>{
-    // nur abrufen, wenn App offen ist
-    try{
-      await fetchOrdersSilent();
-    }catch(_){}
+    try{ await fetchOrdersSilent(); }catch(_){}
   }, 60000);
 }
 
@@ -1562,7 +1555,7 @@ async function speichern(){
 
   saveAll(daten);
 
-  // ✅ falls aus Bestellungen übernommen: Bestellung als erledigt markieren und verknüpfen
+  // ✅ falls aus Bestellungen übernommen: erledigt + verknüpfen
   onOrderLinkedSaved(id);
 
   neuerEintrag();
@@ -1590,6 +1583,8 @@ function neuerEintrag(){
   pendingOrderId = null;
   el("orderLinkHint").style.display = "none";
   el("orderLinkHint").innerText = "";
+
+  updateSonderpreisHighlight();
 }
 
 /* ================= HEUTE + SUMMEN ================= */
@@ -1659,6 +1654,8 @@ function bearbeiten(id){
   const bp = toNum(e.bioPreis)   || STANDARD_BIO;
   el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
   el("bioPreis").value   = (bp !== STANDARD_BIO) ? bp : "";
+
+  updateSonderpreisHighlight();
 
   el("gpsAutoStatus").innerText="Auto-GPS beim Speichern: wird beim Speichern erneut versucht";
   el("editHint").innerText = "Bearbeiten aktiv (Speichern überschreibt diesen Eintrag)";
@@ -1804,7 +1801,7 @@ function buildPreisGruppierung(){
   const daten = loadAll().filter(e=>e.datum===heuteDatum());
   const datum = heuteDatum();
 
-  const groups = new Map(); // key Produkt|Preis -> {prod, preis, barM, ecM, barU, ecU}
+  const groups = new Map();
   let rasBar=0, rasEC=0, bioBar=0, bioEC=0;
   let barGes=0, ecGes=0;
 
@@ -2038,7 +2035,6 @@ function allesLoeschen(){
 
 /* ================= DB: Umkreissuche + Details ================= */
 let dbCurrentPos = null; // {lat, lon}
-
 function toRad(x){ return x * Math.PI / 180; }
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
@@ -2125,7 +2121,6 @@ function dbGetFiltered(){
       if(dist === null) return false;
       if(dist > radiusKm) return false;
     }
-
     return true;
   });
 
@@ -2420,7 +2415,7 @@ async function anreichernGPS(){
 
     count++;
     el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total}`;
-    await new Promise(r => setTimeout(r, 1000)); // 1 Anfrage/Sekunde
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   saveAll(daten);
@@ -2439,21 +2434,21 @@ window.onload = function(){
   initMapProviderUI();
   setBackupStatus(`Backup: bereit. Aktuell ${loadAll().length} Einträge.`);
 
+  // Sonderpreis rot live
+  el("rasenPreis").addEventListener("input", updateSonderpreisHighlight);
+  el("bioPreis").addEventListener("input", updateSonderpreisHighlight);
+  updateSonderpreisHighlight();
+
   // Bestellungen
   updateOrderBadge();
   initOrdersPolling();
 
-  // kleiner Start-Hinweis wenn neue Bestellungen da sind
+  // Hinweis bei neuen Bestellungen
   const c = countNewOrders();
   if(c>0){
     showToast("Neue Bestellungen vorhanden", `${c} neue Bestellung(en). Öffne „Bestellungen“.`);
   }
 };
-
-function ladeOrders(){
-  // alias (falls du irgendwo noch ladeOrders aufrufst)
-  ladeOrdersUI();
-}
 </script>
 
 </body>
