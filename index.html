@@ -16,16 +16,13 @@
   --border:#22314f;
   --text:#eef2ff;
   --muted:#a7b0c6;
-
   --green:#2e7d32;
   --blue:#1976d2;
   --gray:#455a64;
   --purple:#6a1b9a;
   --orange:#ef6c00;
   --red:#c62828;
-  --yellow:#b28704;
-
-  --shadow: 0 6px 16px rgba(0,0,0,.10);
+  --shadow:0 6px 16px rgba(0,0,0,.10);
 }
 body.light{
   --bg:#f4f7f4;
@@ -34,12 +31,12 @@ body.light{
   --border:#d7dde6;
   --text:#162033;
   --muted:#506079;
-  --shadow: 0 6px 16px rgba(0,0,0,.06);
+  --shadow:0 6px 16px rgba(0,0,0,.06);
 }
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
   padding:12px;
@@ -52,32 +49,33 @@ body{
   gap:10px;
   margin-bottom:10px;
 }
-h1{ margin:0; font-size:20px; }
+h1{margin:0;font-size:20px}
+h2{margin:0 0 10px 0;font-size:18px}
+.themeBtn,.tabBtn,button{
+  border:none;
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:15px;
+  cursor:pointer;
+}
 .themeBtn{
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid var(--border);
   background:var(--card);
   color:var(--text);
-  font-size:14px;
-  cursor:pointer;
+  border:1px solid var(--border);
 }
 .tabs{
   display:flex;
-  gap:8px;
-  margin-bottom:10px;
   flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
 }
 .tabBtn{
   flex:1;
-  min-width:140px;
-  padding:10px 12px;
-  border-radius:999px;
-  border:1px solid var(--border);
+  min-width:130px;
   background:var(--card);
   color:var(--text);
+  border:1px solid var(--border);
   font-weight:800;
-  cursor:pointer;
 }
 .tabBtn.active{
   outline:2px solid rgba(25,118,210,.35);
@@ -91,73 +89,67 @@ h1{ margin:0; font-size:20px; }
   margin-bottom:12px;
   box-shadow:var(--shadow);
 }
-h2{ margin:0 0 10px 0; font-size:18px; }
 label{
-  font-weight:650;
-  font-size:13px;
-  color:var(--muted);
   display:block;
   margin-top:10px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--muted);
 }
-input, select, button, textarea{
+input,select,textarea{
   width:100%;
-  padding:14px;
   margin-top:6px;
-  font-size:16px;
+  padding:13px;
   border-radius:12px;
-}
-input, select, textarea{
-  background:transparent;
   border:1px solid var(--border);
+  background:transparent;
   color:var(--text);
+  font-size:16px;
 }
-textarea{ min-height:120px; resize:vertical; }
+textarea{min-height:110px;resize:vertical}
 button{
-  border:none;
   color:#fff;
-  cursor:pointer;
   font-weight:800;
+  margin-top:10px;
 }
-.green{background:var(--green);}
-.blue{background:var(--blue);}
-.gray{background:var(--gray);}
-.purple{background:var(--purple);}
-.orange{background:var(--orange);}
-.red{background:var(--red);}
-.yellow{background:var(--yellow);}
+.green{background:var(--green)}
+.blue{background:var(--blue)}
+.gray{background:var(--gray)}
+.purple{background:var(--purple)}
+.orange{background:var(--orange)}
+.red{background:var(--red)}
 
-.status{ font-size:14px; margin-top:8px; color:var(--muted); }
+.status{font-size:14px;color:var(--muted);margin-top:8px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.badge{
+  display:inline-block;
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:12px;
+  color:var(--muted);
+  margin-top:10px;
+}
+.view{display:none}
+.view.active{display:block}
 
-.priceGrid{
+.priceGrid,.filterGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
-@media (max-width:420px){
-  .priceGrid{ grid-template-columns:1fr; }
+@media(max-width:650px){
+  .priceGrid,.filterGrid{grid-template-columns:1fr}
 }
-.hint{
-  margin-top:4px;
-  font-size:12px;
-  color:var(--muted);
+.smallRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
 }
-input.sonderpreis-aktiv{
-  background:#3a0f12 !important;
-  border:2px solid #c62828 !important;
-  color:#fff !important;
+.smallRow > button{
+  flex:1;
+  min-width:150px;
 }
-body.light input.sonderpreis-aktiv{
-  background:#ffd6d6 !important;
-  border:2px solid #c62828 !important;
-  color:#000 !important;
-}
-.submenu{
-  overflow:hidden;
-  max-height:0;
-  transition:max-height .25s ease;
-  margin-top:8px;
-}
-.submenu.open{ max-height:4200px; }
 
 .tableWrap{
   overflow:auto;
@@ -168,14 +160,14 @@ body.light input.sonderpreis-aktiv{
 }
 table{
   width:100%;
+  min-width:1200px;
   border-collapse:collapse;
-  min-width:1250px;
 }
 th,td{
-  border-bottom:1px solid var(--border);
   padding:10px;
-  font-size:14px;
+  border-bottom:1px solid var(--border);
   white-space:nowrap;
+  font-size:14px;
 }
 th{
   position:sticky;
@@ -183,98 +175,39 @@ th{
   background:var(--card);
   z-index:1;
 }
-.bar{ background:rgba(46,125,50,.12); }
-.ec{ background:rgba(25,118,210,.12); }
-.rechnung{ background:rgba(239,108,0,.16); }
-.summe{ font-weight:900; }
-
+.bar{background:rgba(46,125,50,.12)}
+.ec{background:rgba(25,118,210,.12)}
+.rechnung{background:rgba(239,108,0,.16)}
+.summe{font-weight:900}
 .actionBtn{
-  padding:8px 10px;
-  font-size:13px;
   width:auto;
-  border-radius:10px;
-  margin-right:6px;
-  margin-bottom:6px;
-}
-
-.filterGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-@media (max-width:520px){
-  .filterGrid{ grid-template-columns:1fr; }
-}
-.smallRow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.smallRow > button{
-  flex:1;
-  min-width:160px;
-}
-.badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  color:var(--muted);
-  font-size:12px;
-  margin-top:8px;
-}
-.view{ display:none; }
-.view.active{ display:block; }
-
-.detailsRow td{
-  white-space:normal;
-  font-size:13px;
-  color:var(--text);
-}
-.detailsBox{
-  padding:10px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:rgba(255,255,255,.02);
-}
-.detailsGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-@media(max-width:720px){
-  .detailsGrid{ grid-template-columns:1fr; }
-}
-.kv{
-  border:1px solid var(--border);
-  border-radius:10px;
   padding:8px 10px;
+  font-size:13px;
+  border-radius:10px;
+  margin:0 6px 6px 0;
 }
-.kv .k{ color:var(--muted); font-size:12px; font-weight:700; }
-.kv .v{ margin-top:2px; font-size:13px; font-weight:800; }
-
-hr.sep{
-  border:none;
-  border-top:1px solid var(--border);
-  margin:12px 0;
-}
-
 .orderRow{
   border:1px solid var(--border);
-  background:var(--card2);
   border-radius:14px;
   padding:12px;
   margin-top:10px;
+  background:var(--card2);
 }
 .orderTop{
   display:flex;
-  align-items:flex-start;
   justify-content:space-between;
+  align-items:flex-start;
   gap:10px;
 }
-.orderTitle{
-  font-weight:900;
-  font-size:15px;
+.orderTitle{font-size:15px;font-weight:900}
+.orderMeta{font-size:13px;color:var(--muted);line-height:1.35;margin-top:6px}
+.orderBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.orderBtns button{
+  width:auto;
+  padding:10px 12px;
+  font-size:13px;
+  border-radius:12px;
+  margin-top:0;
 }
 .pill{
   display:inline-block;
@@ -284,60 +217,61 @@ hr.sep{
   font-size:12px;
   color:var(--muted);
 }
-.pill.neu{ border-color:rgba(239,108,0,.6); color:#ffcc80; }
-.pill.intour{ border-color:rgba(25,118,210,.6); color:#90caf9; }
-.pill.erledigt{ border-color:rgba(46,125,50,.6); color:#a5d6a7; }
-.orderMeta{
-  margin-top:6px;
-  font-size:13px;
-  color:var(--muted);
-  line-height:1.35;
-}
-.orderBtns{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:10px;
-}
-.orderBtns button{
-  width:auto;
-  padding:10px 12px;
-  border-radius:12px;
-  font-size:13px;
-}
+.pill.neu{border-color:rgba(239,108,0,.6);color:#ffcc80}
+.pill.intour{border-color:rgba(25,118,210,.6);color:#90caf9}
+.pill.erledigt{border-color:rgba(46,125,50,.6);color:#a5d6a7}
 
+.submenu{
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .25s ease;
+}
+.submenu.open{max-height:2000px}
+.sep{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:12px 0;
+}
+input.sonderpreis-aktiv{
+  background:#3a0f12 !important;
+  border:2px solid #c62828 !important;
+  color:#fff !important;
+}
+body.light input.sonderpreis-aktiv{
+  background:#ffd6d6 !important;
+  color:#000 !important;
+}
 .toast{
   position:fixed;
   left:12px;
   right:12px;
   bottom:12px;
   z-index:9999;
+  display:none;
   background:rgba(17,28,47,.96);
   color:var(--text);
   border:1px solid var(--border);
   border-radius:14px;
   padding:12px 14px;
   box-shadow:var(--shadow);
-  display:none;
 }
-body.light .toast{ background:rgba(255,255,255,.96); }
+body.light .toast{background:rgba(255,255,255,.96)}
 .toastRow{
   display:flex;
-  align-items:flex-start;
   justify-content:space-between;
+  align-items:flex-start;
   gap:10px;
 }
-.toastMsg{ font-weight:800; }
-.toastSmall{ margin-top:2px; color:var(--muted); font-size:12px; }
+.toastMsg{font-weight:800}
+.toastSmall{font-size:12px;color:var(--muted);margin-top:2px}
 .toast button{
   width:auto;
   padding:8px 10px;
-  border-radius:12px;
-  font-size:13px;
+  border-radius:10px;
+  margin-top:0;
 }
 </style>
 </head>
-
 <body>
 
 <div class="topbar">
@@ -348,11 +282,11 @@ body.light .toast{ background:rgba(255,255,255,.96); }
 <div class="tabs">
   <button id="tabEinsatz" class="tabBtn active" onclick="showView('einsatz')">Einsatz</button>
   <button id="tabDB" class="tabBtn" onclick="showView('db')">Datenbank</button>
-  <button id="tabOrders" class="tabBtn" onclick="showView('orders')">
-    Bestellungen <span id="orderBadge" style="color:var(--orange); font-weight:900;"></span>
-  </button>
+  <button id="tabOrders" class="tabBtn" onclick="showView('orders')">Bestellungen <span id="orderBadge" style="color:var(--orange);font-weight:900;"></span></button>
+  <button id="tabInvoices" class="tabBtn" onclick="showView('invoices')">Rechnungen <span id="invoiceBadge" style="color:var(--red);font-weight:900;"></span></button>
 </div>
 
+<!-- ===================== EINSATZ ===================== -->
 <div id="viewEinsatz" class="view active">
   <div class="card">
     <input type="hidden" id="editId">
@@ -386,12 +320,12 @@ body.light .toast{ background:rgba(255,255,255,.96); }
 
     <div class="priceGrid">
       <div>
-        <label>Rasen Sonderpreis €/Sack (optional)</label>
+        <label>Rasen Sonderpreis €/Sack</label>
         <input id="rasenPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 45">
         <div class="hint">Leer lassen = 45 €/Sack</div>
       </div>
       <div>
-        <label>Bio Sonderpreis €/Sack (optional)</label>
+        <label>Bio Sonderpreis €/Sack</label>
         <input id="bioPreis" type="number" step="0.01" inputmode="decimal" placeholder="leer = 30">
         <div class="hint">Leer lassen = 30 €/Sack</div>
       </div>
@@ -411,8 +345,7 @@ body.light .toast{ background:rgba(255,255,255,.96); }
     </select>
 
     <div id="rechnungInfoBox" style="display:none;">
-      <label>Rechnungshinweis</label>
-      <div class="hint">Bei „Rechnung“ wird der Betrag nicht als erhaltenes Geld gezählt, sondern als offene Forderung gespeichert.</div>
+      <div class="hint">Bei Rechnung wird der Betrag als Forderung gespeichert und nicht als direkt erhaltenes Geld gerechnet.</div>
     </div>
 
     <button class="blue" onclick="gpsHolen()">📍 GPS holen (Adresse füllen)</button>
@@ -427,12 +360,7 @@ body.light .toast{ background:rgba(255,255,255,.96); }
       <button class="gray" onclick="exportTagesCSV()">📄 Tages-CSV</button>
       <button class="orange" onclick="exportXLSX()">📊 Excel-XLSX</button>
       <button class="purple" onclick="exportZusammenfassung()">📊 Tageszusammenfassung CSV</button>
-
-      <button class="blue" onclick="previewPreisGruppierung()">📄 Preis-Gruppierung Vorschau</button>
-      <button class="orange" onclick="exportPreisGruppierungXLSX()">📊 Preis-Gruppierung XLSX</button>
-
       <hr class="sep">
-
       <button class="orange" onclick="backupDownload()">📦 Komplettes Backup herunterladen (JSON)</button>
       <input id="backupFile" type="file" accept="application/json" style="display:none" onchange="backupImportFromInput()">
       <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
@@ -448,16 +376,16 @@ body.light .toast{ background:rgba(255,255,255,.96); }
     <div class="tableWrap">
       <table>
         <thead>
-        <tr>
-          <th>Uhrzeit</th>
-          <th>Ort – Name</th>
-          <th>Zahlung</th>
-          <th>Rasen</th>
-          <th>Bio</th>
-          <th>€</th>
-          <th>Rechnung</th>
-          <th>Aktion</th>
-        </tr>
+          <tr>
+            <th>Uhrzeit</th>
+            <th>Ort – Name</th>
+            <th>Zahlung</th>
+            <th>Rasen</th>
+            <th>Bio</th>
+            <th>€</th>
+            <th>Rechnung</th>
+            <th>Aktion</th>
+          </tr>
         </thead>
         <tbody id="tabelleHeute"></tbody>
         <tfoot id="summenHeute"></tfoot>
@@ -466,10 +394,10 @@ body.light .toast{ background:rgba(255,255,255,.96); }
   </div>
 </div>
 
+<!-- ===================== DATENBANK ===================== -->
 <div id="viewDB" class="view">
   <div class="card">
     <h2>📂 Datenbank durchsuchen</h2>
-
     <div class="filterGrid">
       <div>
         <label>Von Datum</label>
@@ -479,21 +407,18 @@ body.light .toast{ background:rgba(255,255,255,.96); }
         <label>Bis Datum</label>
         <input id="fBis" type="date">
       </div>
-
       <div>
         <label>Name enthält</label>
-        <input id="fName" placeholder="z.B. Müller">
+        <input id="fName">
       </div>
       <div>
         <label>Ort enthält</label>
-        <input id="fOrt" placeholder="z.B. Kirchen">
+        <input id="fOrt">
       </div>
-
       <div>
         <label>PLZ</label>
-        <input id="fPLZ" inputmode="numeric" placeholder="z.B. 57548">
+        <input id="fPLZ">
       </div>
-
       <div>
         <label>Zahlung</label>
         <select id="fZahlung">
@@ -503,16 +428,6 @@ body.light .toast{ background:rgba(255,255,255,.96); }
           <option value="Rechnung">Rechnung</option>
         </select>
       </div>
-
-      <div>
-        <label>Nur Sonderpreis</label>
-        <select id="fSonder">
-          <option value="">Alle</option>
-          <option value="1">Ja (mind. 1 Sonderpreis)</option>
-          <option value="0">Nein (nur Standard)</option>
-        </select>
-      </div>
-
       <div>
         <label>Rechnungsstatus</label>
         <select id="fInvoiceStatus">
@@ -521,7 +436,14 @@ body.light .toast{ background:rgba(255,255,255,.96); }
           <option value="bezahlt">bezahlt</option>
         </select>
       </div>
-
+      <div>
+        <label>Nur Sonderpreis</label>
+        <select id="fSonder">
+          <option value="">Alle</option>
+          <option value="1">Ja</option>
+          <option value="0">Nein</option>
+        </select>
+      </div>
       <div>
         <label>Sortierung</label>
         <select id="fSort">
@@ -529,48 +451,16 @@ body.light .toast{ background:rgba(255,255,255,.96); }
           <option value="datum_asc">Datum alt → neu</option>
           <option value="summe_desc">Summe hoch → niedrig</option>
           <option value="summe_asc">Summe niedrig → hoch</option>
-          <option value="dist_asc">Entfernung nah → fern</option>
-          <option value="dist_desc">Entfernung fern → nah</option>
         </select>
       </div>
-
       <div>
-        <label>Umkreis (km) – frei</label>
-        <input id="fRadius" type="number" inputmode="numeric" placeholder="z.B. 30">
-        <div class="hint">Für Umkreissuche brauchst du „📍 Aktueller Ort“.</div>
+        <label>Umkreis (km)</label>
+        <input id="fRadius" type="number" inputmode="numeric" placeholder="optional">
       </div>
-
       <div>
-        <label>Aktueller Ort (für Umkreis)</label>
+        <label>Aktueller Ort</label>
         <button class="blue" onclick="dbSetCurrentLocation()">📍 Aktueller Ort</button>
         <div class="status" id="dbLocStatus">Noch kein aktueller Ort gesetzt.</div>
-      </div>
-
-      <div>
-        <label>Navi-App auswählen</label>
-        <select id="mapProvider" onchange="setMapProvider(this.value)">
-          <option value="ask">Jedes Mal fragen</option>
-          <option value="google">Google Maps</option>
-          <option value="apple">Apple Karten</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Route aus Treffern (optional)</label>
-        <button class="green" onclick="openMultiStopRouteFromResults()">🧭 Route aus Treffern öffnen</button>
-      </div>
-
-      <div>
-        <label>Alte Einträge umkreistauglich machen</label>
-        <button class="orange" onclick="anreichernGPS()">🔄 Alte Einträge mit GPS anreichern</button>
-        <div class="status" id="gpsBatchStatus">Noch nicht gestartet.</div>
-      </div>
-
-      <div>
-        <label>Backup</label>
-        <button class="orange" onclick="backupDownload()">📦 Backup herunterladen (JSON)</button>
-        <button class="blue" onclick="backupPickFile()">📥 Backup importieren (JSON)</button>
-        <div class="status" id="backupStatus2">Backup: noch nicht verwendet.</div>
       </div>
     </div>
 
@@ -595,7 +485,7 @@ body.light .toast{ background:rgba(255,255,255,.96); }
             <th>Name</th>
             <th>Ort</th>
             <th>PLZ</th>
-            <th>Entfernung (km)</th>
+            <th>Entf. km</th>
             <th>Rasen</th>
             <th>Bio</th>
             <th>Rasen €</th>
@@ -613,65 +503,45 @@ body.light .toast{ background:rgba(255,255,255,.96); }
   </div>
 </div>
 
+<!-- ===================== BESTELLUNGEN ===================== -->
 <div id="viewOrders" class="view">
   <div class="card">
-    <h2>📥 Bestellung anlegen (Telefon / WhatsApp)</h2>
+    <h2>📥 Bestellung anlegen</h2>
 
     <label>Name</label>
-    <input id="o_name" placeholder="z.B. Müller">
+    <input id="o_name">
 
     <label>Telefon</label>
-    <input id="o_telefon" inputmode="tel" placeholder="z.B. 0171...">
+    <input id="o_telefon">
 
     <label>E-Mail</label>
-    <input id="o_email" type="email" placeholder="optional">
+    <input id="o_email" type="email">
 
     <label>Straße</label>
-    <input id="o_strasse" placeholder="optional">
+    <input id="o_strasse">
 
     <label>Hausnummer</label>
-    <input id="o_hausnr" placeholder="optional">
+    <input id="o_hausnr">
 
     <label>PLZ</label>
-    <input id="o_plz" inputmode="numeric" placeholder="optional">
+    <input id="o_plz">
 
     <label>Ort</label>
-    <input id="o_ort" placeholder="z.B. Kirchen">
+    <input id="o_ort">
 
     <div class="priceGrid">
       <div>
         <label>Rasen – Säcke</label>
-        <input id="o_rasen" type="number" value="0" inputmode="numeric">
+        <input id="o_rasen" type="number" value="0">
       </div>
       <div>
         <label>Bio – Säcke</label>
-        <input id="o_bio" type="number" value="0" inputmode="numeric">
+        <input id="o_bio" type="number" value="0">
       </div>
     </div>
 
     <button class="green" onclick="orderSpeichern()">➕ Bestellung speichern</button>
     <div class="status" id="orderCreateStatus">Noch keine Bestellung angelegt.</div>
-  </div>
-
-  <div class="card">
-    <h2>🌐 Bestellungen abrufen (Webshop)</h2>
-
-    <label>Webshop-JSON URL (später)</label>
-    <input id="ordersUrl" placeholder="https://.../orders.json">
-    <div class="hint">Die URL muss JSON liefern (Array oder {orders:[...]}) – CORS muss erlaubt sein.</div>
-
-    <div class="smallRow" style="margin-top:10px;">
-      <button class="blue" onclick="saveOrdersUrl()">💾 URL speichern</button>
-      <button class="green" onclick="fetchOrdersNow()">🔄 Bestellungen abrufen</button>
-    </div>
-
-    <hr class="sep">
-
-    <label>Oder JSON manuell einfügen</label>
-    <textarea id="ordersJsonPaste" placeholder='[{"orderId":"123","name":"Müller","telefon":"...","email":"...","strasse":"...","hausnr":"...","plz":"57548","ort":"Kirchen","rasen":2,"bio":1}]'></textarea>
-    <button class="orange" onclick="importOrdersFromPaste()">📥 JSON importieren</button>
-
-    <div class="status" id="ordersFetchStatus">Noch nicht abgerufen.</div>
   </div>
 
   <div class="card">
@@ -681,9 +551,119 @@ body.light .toast{ background:rgba(255,255,255,.96); }
   </div>
 
   <div class="card">
-    <h2>✅ Erledigte Bestellungen (kurz)</h2>
+    <h2>✅ Erledigte Bestellungen</h2>
     <div class="status" id="ordersDoneStatus">Lade…</div>
     <div id="ordersDoneList"></div>
+  </div>
+</div>
+
+<!-- ===================== RECHNUNGEN ===================== -->
+<div id="viewInvoices" class="view">
+  <div class="card">
+    <h2>⚙️ Rechnungsdaten / Absender</h2>
+
+    <label>Firmenname</label>
+    <input id="cfgFirma" value="Hümix">
+
+    <label>Untertitel</label>
+    <input id="cfgUntertitel" value="Bio Volldünger">
+
+    <label>Zeile 1</label>
+    <input id="cfgLine1" value="Herstellung und Vertrieb">
+
+    <label>Zeile 2</label>
+    <input id="cfgLine2" value="Gerhard Schulz">
+
+    <label>Straße</label>
+    <input id="cfgStrasse" value="Auf der Hub 1">
+
+    <label>PLZ / Ort</label>
+    <input id="cfgOrtLine" value="57548 Kirchen">
+
+    <label>Telefon / Fax</label>
+    <input id="cfgKontakt" value="Tel.:02741/63976  Fax:02741/931020">
+
+    <label>Steuernummer</label>
+    <input id="cfgSteuer" value="Steuer-Nr.18/230/41434">
+
+    <label>Bankverbindung</label>
+    <input id="cfgBank" value="Bankverbindung: Westerwaldbank eG | IBAN: DE28573918000015039701 | BIC: GENODE51WW1">
+
+    <label>Zahlungsziel in Tagen</label>
+    <input id="cfgDueDays" type="number" value="14">
+
+    <button class="green" onclick="saveInvoiceConfig()">💾 Rechnungsdaten speichern</button>
+    <div class="status" id="invoiceCfgStatus">Noch nicht gespeichert.</div>
+  </div>
+
+  <div class="card">
+    <h2>🔎 Rechnungen filtern</h2>
+    <div class="filterGrid">
+      <div>
+        <label>Status</label>
+        <select id="invFilterStatus">
+          <option value="">Alle</option>
+          <option value="offen">offen</option>
+          <option value="bezahlt">bezahlt</option>
+        </select>
+      </div>
+      <div>
+        <label>Mahnstufe</label>
+        <select id="invFilterMahn">
+          <option value="">Alle</option>
+          <option value="0">keine</option>
+          <option value="1">Mahnung 1</option>
+          <option value="2">Mahnung 2</option>
+          <option value="3">Letzte Mahnung</option>
+        </select>
+      </div>
+      <div>
+        <label>Name enthält</label>
+        <input id="invFilterName">
+      </div>
+      <div>
+        <label>Rechnungsnummer</label>
+        <input id="invFilterNr">
+      </div>
+      <div>
+        <label>Von Datum</label>
+        <input id="invFilterVon" type="date">
+      </div>
+      <div>
+        <label>Bis Datum</label>
+        <input id="invFilterBis" type="date">
+      </div>
+    </div>
+
+    <div class="smallRow" style="margin-top:10px;">
+      <button class="blue" onclick="ladeRechnungenUI()">🔄 Anzeigen</button>
+      <button class="gray" onclick="resetInvoiceFilter()">↩️ Filter zurücksetzen</button>
+    </div>
+
+    <div class="status" id="invoiceListStatus">Noch nicht geladen.</div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Rechnungsübersicht</h2>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nr.</th>
+            <th>Datum</th>
+            <th>Fällig</th>
+            <th>Name</th>
+            <th>Ort</th>
+            <th>Status</th>
+            <th>Mahnstufe</th>
+            <th>Betrag</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceTbody"></tbody>
+        <tfoot id="invoiceTfoot"></tfoot>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -698,313 +678,204 @@ body.light .toast{ background:rgba(255,255,255,.96); }
 </div>
 
 <script>
-function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("humix_theme", document.body.classList.contains("light") ? "light" : "dark");
-}
-(function(){
-  if(localStorage.getItem("humix_theme")==="light") document.body.classList.add("light");
-})();
+const STORAGE_KEY = "humix";
+const ORDERS_KEY = "humix_orders";
+const THEME_KEY = "humix_theme";
+const MAP_PROVIDER_KEY = "humix_map_provider";
+const LAST_GPS_KEY = "humix_lastgps";
+const INVOICE_CFG_KEY = "humix_invoice_cfg";
+const INVOICE_COUNTER_KEY = "humix_invoice_counter";
 
-function showView(which){
-  const ve = document.getElementById("viewEinsatz");
-  const vd = document.getElementById("viewDB");
-  const vo = document.getElementById("viewOrders");
+const STANDARD_RASEN = 45;
+const STANDARD_BIO = 30;
 
-  const te = document.getElementById("tabEinsatz");
-  const td = document.getElementById("tabDB");
-  const to = document.getElementById("tabOrders");
-
-  [ve,vd,vo].forEach(v=>v.classList.remove("active"));
-  [te,td,to].forEach(t=>t.classList.remove("active"));
-
-  if(which==="einsatz"){
-    ve.classList.add("active"); te.classList.add("active");
-  }else if(which==="db"){
-    vd.classList.add("active"); td.classList.add("active");
-  }else if(which==="orders"){
-    vo.classList.add("active"); to.classList.add("active");
-    initOrdersUI();
-    ladeOrdersUI();
-    markNewOrdersAsViewed();
-    updateOrderBadge();
-  }else{
-    ve.classList.add("active"); te.classList.add("active");
-  }
-  window.scrollTo({top:0, behavior:"smooth"});
-}
-
-function toggleSubmenu(){ document.getElementById("submenu").classList.toggle("open"); }
-
+let dbCurrentPos = null;
+let dbLastResults = [];
+let pendingOrderId = null;
+let lastGpsFix = null;
 let toastTimer = null;
-function showToast(msg, small){
-  const t = el("toast");
-  el("toastMsg").innerText = msg || "";
-  el("toastSmall").innerText = small || "";
-  t.style.display = "block";
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=> hideToast(), 4500);
-}
-function hideToast(){ el("toast").style.display = "none"; }
 
+/* ================= ALLGEMEIN ================= */
 function el(id){ return document.getElementById(id); }
+function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 function heuteDatum(){ return new Date().toLocaleDateString("de-DE"); }
 function heuteISO(){ return new Date().toISOString().slice(0,10); }
-function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
-function fmtEUR(n){ return (Number(n||0)).toLocaleString("de-DE",{minimumFractionDigits:2, maximumFractionDigits:2}) + " €"; }
+function fmtEUR(n){ return Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
 function normStr(s){ return String(s||"").trim().toLowerCase(); }
 
 function deToISO(de){
   const m = String(de||"").match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
   if(!m) return "";
-  const dd = String(m[1]).padStart(2,"0");
-  const mm = String(m[2]).padStart(2,"0");
-  const yyyy = m[3];
-  return `${yyyy}-${mm}-${dd}`;
+  return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
 }
-function entryISO(e){
-  if(e && e.datumISO) return e.datumISO;
-  const iso = deToISO(e?.datum);
-  return iso || "";
-}
-function ensureDatumISO(daten){
-  let changed=false;
-  daten.forEach(e=>{
-    if(e && !e.datumISO){
-      const iso = deToISO(e.datum);
-      if(iso){ e.datumISO = iso; changed = true; }
-    }
-    if(e && !e.createdAt){
-      e.createdAt = Date.now();
-      changed = true;
-    }
-    if(e && !("email" in e)){
-      e.email = "";
-      changed = true;
-    }
-    if(e && e.zahlung === "Rechnung"){
-      if(!e.invoice){
-        e.invoice = {
-          nummer: nextInvoiceNumber(true),
-          datum: e.datumISO || heuteISO(),
-          status: "offen"
-        };
-        changed = true;
-      }else{
-        if(!e.invoice.status){ e.invoice.status = "offen"; changed = true; }
-        if(!e.invoice.datum){ e.invoice.datum = e.datumISO || heuteISO(); changed = true; }
-        if(!e.invoice.nummer){ e.invoice.nummer = nextInvoiceNumber(true); changed = true; }
-      }
-    }
-  });
-  return changed;
-}
+function entryISO(e){ return e?.datumISO || deToISO(e?.datum) || ""; }
 
-const STANDARD_RASEN = 45;
-const STANDARD_BIO = 30;
-const ORDERS_KEY = "humix_orders";
-const ORDERS_URL_KEY = "humix_orders_url";
-const INVOICE_COUNTER_KEY = "humix_invoice_counter";
+function showToast(msg, small=""){
+  el("toastMsg").innerText = msg || "";
+  el("toastSmall").innerText = small || "";
+  el("toast").style.display = "block";
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 4500);
+}
+function hideToast(){ el("toast").style.display = "none"; }
 
+/* ================= THEME ================= */
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  localStorage.setItem(THEME_KEY, document.body.classList.contains("light") ? "light" : "dark");
+}
+(function(){
+  if(localStorage.getItem(THEME_KEY)==="light") document.body.classList.add("light");
+})();
+
+/* ================= VIEWS ================= */
+function showView(which){
+  ["viewEinsatz","viewDB","viewOrders","viewInvoices"].forEach(id=>el(id).classList.remove("active"));
+  ["tabEinsatz","tabDB","tabOrders","tabInvoices"].forEach(id=>el(id).classList.remove("active"));
+
+  if(which==="einsatz"){
+    el("viewEinsatz").classList.add("active");
+    el("tabEinsatz").classList.add("active");
+  }else if(which==="db"){
+    el("viewDB").classList.add("active");
+    el("tabDB").classList.add("active");
+  }else if(which==="orders"){
+    el("viewOrders").classList.add("active");
+    el("tabOrders").classList.add("active");
+    ladeOrdersUI();
+    markNewOrdersAsViewed();
+    updateOrderBadge();
+  }else if(which==="invoices"){
+    el("viewInvoices").classList.add("active");
+    el("tabInvoices").classList.add("active");
+    loadInvoiceConfigToUI();
+    ladeRechnungenUI();
+    updateInvoiceBadge();
+  }else{
+    el("viewEinsatz").classList.add("active");
+    el("tabEinsatz").classList.add("active");
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function toggleSubmenu(){ el("submenu").classList.toggle("open"); }
+
+/* ================= PREISE ================= */
 function getPreisRasen(){ const p = toNum(el("rasenPreis").value); return p > 0 ? p : STANDARD_RASEN; }
 function getPreisBio(){ const p = toNum(el("bioPreis").value); return p > 0 ? p : STANDARD_BIO; }
-
 function isSonderpreisEintrag(e){
   const rp = toNum(e?.rasenPreis) || STANDARD_RASEN;
   const bp = toNum(e?.bioPreis) || STANDARD_BIO;
-  return (rp !== STANDARD_RASEN) || (bp !== STANDARD_BIO);
+  return rp !== STANDARD_RASEN || bp !== STANDARD_BIO;
 }
 function updateSonderpreisHighlight(){
-  const rasen = el("rasenPreis");
-  const bio = el("bioPreis");
-  if(!rasen || !bio) return;
-  if(toNum(rasen.value) > 0) rasen.classList.add("sonderpreis-aktiv"); else rasen.classList.remove("sonderpreis-aktiv");
-  if(toNum(bio.value) > 0) bio.classList.add("sonderpreis-aktiv"); else bio.classList.remove("sonderpreis-aktiv");
+  if(toNum(el("rasenPreis").value) > 0) el("rasenPreis").classList.add("sonderpreis-aktiv");
+  else el("rasenPreis").classList.remove("sonderpreis-aktiv");
+
+  if(toNum(el("bioPreis").value) > 0) el("bioPreis").classList.add("sonderpreis-aktiv");
+  else el("bioPreis").classList.remove("sonderpreis-aktiv");
 }
 function onZahlungsartChange(){
-  const isRechnung = el("zahlung").value === "Rechnung";
-  el("rechnungInfoBox").style.display = isRechnung ? "block" : "none";
+  el("rechnungInfoBox").style.display = el("zahlung").value === "Rechnung" ? "block" : "none";
 }
 
+/* ================= DATEN ================= */
+function ensureData(arr){
+  let changed = false;
+  arr.forEach(e=>{
+    if(!e.datumISO && e.datum){ e.datumISO = deToISO(e.datum); changed = true; }
+    if(!e.createdAt){ e.createdAt = Date.now(); changed = true; }
+    if(e.zahlung === "Rechnung"){
+      e.invoice = e.invoice || {};
+      if(!e.invoice.datum){ e.invoice.datum = e.datumISO || heuteISO(); changed = true; }
+      if(!e.invoice.status){ e.invoice.status = "offen"; changed = true; }
+      if(e.invoice.mahnstufe === undefined){ e.invoice.mahnstufe = 0; changed = true; }
+      if(!e.invoice.nummer){ e.invoice.nummer = nextInvoiceNumber(); changed = true; }
+    }
+  });
+  if(changed) saveAll(arr);
+}
 function loadAll(){
-  const daten = JSON.parse(localStorage.getItem("humix") || "[]");
-  const changed = ensureDatumISO(daten);
-  if(changed) localStorage.setItem("humix", JSON.stringify(daten));
-  return daten;
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  ensureData(arr);
+  return arr;
 }
-function saveAll(daten){ localStorage.setItem("humix", JSON.stringify(daten)); }
+function saveAll(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 
+/* ================= BACKUP ================= */
 function setBackupStatus(msg){
-  const a = el("backupStatus"); if(a) a.innerText = msg;
-  const b = el("backupStatus2"); if(b) b.innerText = msg;
+  if(el("backupStatus")) el("backupStatus").innerText = msg;
 }
 function backupDownload(){
-  const daten = loadAll();
-  const orders = loadOrders();
   const payload = {
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    count: daten.length,
-    ordersCount: orders.length,
-    data: daten,
-    orders,
-    ordersUrl: getOrdersUrl(),
-    settings: {
-      mapProvider: getMapProvider(),
-      theme: localStorage.getItem("humix_theme") || "dark",
-      invoiceCounter: JSON.parse(localStorage.getItem(INVOICE_COUNTER_KEY) || "{}")
-    }
+    version: 1,
+    data: loadAll(),
+    orders: loadOrders(),
+    invoiceCfg: getInvoiceConfig(),
+    invoiceCounter: JSON.parse(localStorage.getItem(INVOICE_COUNTER_KEY) || "{}"),
+    exportedAt: new Date().toISOString()
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `humix_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `humix_backup_${heuteISO()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setBackupStatus(`Backup heruntergeladen (${daten.length} Einträge / ${orders.length} Bestellungen).`);
+  setBackupStatus("Backup heruntergeladen.");
 }
 function backupPickFile(){
-  const inp = el("backupFile");
-  inp.value = "";
-  inp.click();
+  el("backupFile").value = "";
+  el("backupFile").click();
 }
 function backupImportFromInput(){
-  const inp = el("backupFile");
-  if(!inp.files || !inp.files.length) return;
-  const file = inp.files[0];
+  const f = el("backupFile").files?.[0];
+  if(!f) return;
   const reader = new FileReader();
   reader.onload = () => {
     try{
       const parsed = JSON.parse(String(reader.result || ""));
-      let incoming = null;
-      let incomingOrders = [];
-      if(Array.isArray(parsed)) incoming = parsed;
-      else if(parsed && Array.isArray(parsed.data)) incoming = parsed.data;
-      if(parsed && Array.isArray(parsed.orders)) incomingOrders = parsed.orders;
-      if(!incoming) throw new Error("Ungültiges Backup");
+      if(!parsed || !Array.isArray(parsed.data)) throw new Error("Ungültiges Format");
       const overwrite = confirm("Bestehende Daten überschreiben?\nOK = überschreiben\nAbbrechen = zusammenführen");
       if(overwrite){
-        ensureDatumISO(incoming);
-        saveAll(incoming);
-        saveOrders(incomingOrders);
-        if(parsed.ordersUrl) setOrdersUrl(parsed.ordersUrl);
-        if(parsed.settings?.mapProvider) setMapProvider(parsed.settings.mapProvider);
-        if(parsed.settings?.invoiceCounter) localStorage.setItem(INVOICE_COUNTER_KEY, JSON.stringify(parsed.settings.invoiceCounter));
+        saveAll(parsed.data);
+        saveOrders(Array.isArray(parsed.orders) ? parsed.orders : []);
       }else{
         const existing = loadAll();
-        const map = new Map();
-        existing.forEach(e=>map.set(String(e.id), e));
-        incoming.forEach(e=>{
-          if(!e.id) e.id = Date.now()+"_"+Math.random();
-          map.set(String(e.id), e);
-        });
-        const combined = Array.from(map.values());
-        ensureDatumISO(combined);
-        saveAll(combined);
+        const map = new Map(existing.map(x=>[String(x.id), x]));
+        parsed.data.forEach(x=>map.set(String(x.id || Date.now()+"_"+Math.random()), x));
+        saveAll(Array.from(map.values()));
 
-        const existingOrders = loadOrders();
-        const orderMap = new Map();
-        existingOrders.forEach(o=>orderMap.set(String(o.id), o));
-        incomingOrders.forEach(o=>orderMap.set(String(o.id || Date.now()+"_"+Math.random()), o));
-        saveOrders(Array.from(orderMap.values()));
+        const oMap = new Map(loadOrders().map(x=>[String(x.id), x]));
+        (parsed.orders || []).forEach(x=>oMap.set(String(x.id || Date.now()+"_"+Math.random()), x));
+        saveOrders(Array.from(oMap.values()));
       }
+      if(parsed.invoiceCfg) localStorage.setItem(INVOICE_CFG_KEY, JSON.stringify(parsed.invoiceCfg));
+      if(parsed.invoiceCounter) localStorage.setItem(INVOICE_COUNTER_KEY, JSON.stringify(parsed.invoiceCounter));
       ladeHeute();
       ladeOrdersUI();
-      if(el("viewDB")?.classList.contains("active")) dbSuchen();
+      ladeRechnungenUI();
+      dbSuchen();
       setBackupStatus("Backup importiert.");
-      alert("Backup importiert.");
+      showToast("Backup importiert");
     }catch(err){
+      alert("Import fehlgeschlagen.");
       console.log(err);
-      alert("Fehler beim Import. Bitte richtige JSON-Datei wählen.");
     }
   };
-  reader.readAsText(file);
+  reader.readAsText(f);
 }
 
-function getMapProvider(){ return localStorage.getItem("humix_map_provider") || "ask"; }
-function setMapProvider(v){ localStorage.setItem("humix_map_provider", v); }
-function initMapProviderUI(){ el("mapProvider").value = getMapProvider(); }
-function pickProviderInteractive(){
-  const current = getMapProvider();
-  if(current !== "ask") return current;
-  const ans = prompt("Navigation öffnen mit:\n1 = Google Maps\n2 = Apple Karten", "1");
-  if(ans === null) return null;
-  if(String(ans).trim()==="1") return "google";
-  if(String(ans).trim()==="2") return "apple";
-  return null;
-}
-function buildDestinationFromEntry(e){
-  if(typeof e.lat==="number" && typeof e.lon==="number") return {type:"coords", value:`${e.lat},${e.lon}`};
-  const addr = [e.strasse||"", e.hausnr||"", e.plz||"", e.ort||""].join(" ").trim();
-  if(addr) return {type:"addr", value:addr};
-  return null;
-}
-function openSingleNavigationForEntryId(id){
-  const daten = loadAll();
-  const e = daten.find(x => String(x.id) === String(id));
-  if(!e) return alert("Eintrag nicht gefunden.");
-  const dest = buildDestinationFromEntry(e);
-  if(!dest) return alert("Keine Navigationsdaten vorhanden.");
-  const provider = pickProviderInteractive();
-  if(!provider) return;
-  openNavigation(provider, dest);
-}
-function openNavigation(provider, dest){
-  let url = "";
-  if(provider === "google"){
-    const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
-    url = `https://www.google.com/maps/dir/?api=1&destination=${d}`;
-  }else if(provider === "apple"){
-    const d = (dest.type==="coords") ? dest.value : encodeURIComponent(dest.value);
-    url = `https://maps.apple.com/?daddr=${d}`;
-  }else return;
-  window.open(url, "_blank");
-}
-let dbLastResults = [];
-function openMultiStopRouteFromResults(){
-  if(!dbLastResults.length) return alert("Keine Treffer. Bitte zuerst suchen.");
-  const provider = pickProviderInteractive();
-  if(!provider) return;
-  if(provider !== "google"){
-    alert("Mehrere Stopps sind hier am zuverlässigsten mit Google Maps.");
-    return;
-  }
-  const stops = [];
-  dbLastResults.forEach(({e})=>{
-    const d = buildDestinationFromEntry(e);
-    if(!d) return;
-    stops.push(d.type==="coords" ? d.value : d.value);
-  });
-  if(!stops.length) return alert("Keine Ziele in den Treffern.");
-  if(stops.length === 1){
-    openNavigation("google", {type:"addr", value:stops[0]});
-    return;
-  }
-  const MAX_STOPS = 10;
-  const sliced = stops.slice(0, MAX_STOPS);
-  const origin = (dbCurrentPos) ? `${dbCurrentPos.lat},${dbCurrentPos.lon}` : "";
-  const destination = sliced[sliced.length-1];
-  const waypoints = sliced.slice(0, sliced.length-1);
-  const params = new URLSearchParams();
-  params.set("api","1");
-  if(origin) params.set("origin", origin);
-  params.set("destination", destination);
-  if(waypoints.length) params.set("waypoints", waypoints.join("|"));
-  window.open(`https://www.google.com/maps/dir/?${params.toString()}`, "_blank");
-}
-
-let lastGpsFix = null;
-function setLastGpsFix(lat, lon){
-  lastGpsFix = {lat, lon, ts: Date.now()};
-  localStorage.setItem("humix_lastgps", JSON.stringify(lastGpsFix));
-}
+/* ================= GPS ================= */
 (function(){
   try{
-    const x = JSON.parse(localStorage.getItem("humix_lastgps") || "null");
+    const x = JSON.parse(localStorage.getItem(LAST_GPS_KEY) || "null");
     if(x && typeof x.lat==="number" && typeof x.lon==="number") lastGpsFix = x;
   }catch(_){}
 })();
+function setLastGpsFix(lat, lon){
+  lastGpsFix = {lat, lon, ts: Date.now()};
+  localStorage.setItem(LAST_GPS_KEY, JSON.stringify(lastGpsFix));
+}
 function getCurrentPositionPromise(opts){
   return new Promise((resolve, reject)=>{
     if(!navigator.geolocation) return reject(new Error("Geolocation nicht verfügbar"));
@@ -1013,48 +884,436 @@ function getCurrentPositionPromise(opts){
 }
 async function tryAutoGPS(){
   try{
-    const pos = await getCurrentPositionPromise({enableHighAccuracy:true, timeout:7000, maximumAge:30000});
+    const pos = await getCurrentPositionPromise({enableHighAccuracy:true,timeout:7000,maximumAge:30000});
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
     setLastGpsFix(lat, lon);
     return {gpsOk:true, lat, lon, msg:`Auto-GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`};
   }catch(err){
-    if(lastGpsFix && (Date.now() - lastGpsFix.ts) < 1000*60*60*6){
-      return {gpsOk:true, lat:lastGpsFix.lat, lon:lastGpsFix.lon, msg:`Auto-GPS (letzter Fix) OK: ${lastGpsFix.lat.toFixed(5)}, ${lastGpsFix.lon.toFixed(5)}`};
+    if(lastGpsFix && Date.now() - lastGpsFix.ts < 1000*60*60*6){
+      return {gpsOk:true, lat:lastGpsFix.lat, lon:lastGpsFix.lon, msg:`Auto-GPS (letzter Fix): ${lastGpsFix.lat.toFixed(5)}, ${lastGpsFix.lon.toFixed(5)}`};
     }
-    return {gpsOk:false, lat:null, lon:null, msg:`Auto-GPS nicht verfügbar (${err?.message || "unbekannt"})`};
+    return {gpsOk:false, lat:null, lon:null, msg:"Auto-GPS nicht verfügbar"};
   }
 }
 function gpsHolen(){
   neuerEintrag();
-  el("gpsStatus").innerText="GPS wird ermittelt…";
-  navigator.geolocation.getCurrentPosition(pos=>{
+  el("gpsStatus").innerText = "GPS wird ermittelt…";
+  navigator.geolocation.getCurrentPosition(async pos=>{
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
     setLastGpsFix(lat, lon);
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-      .then(r=>r.json())
-      .then(d=>{
-        el("strasse").value = d.address?.road || "";
-        el("hausnr").value = d.address?.house_number || "";
-        el("plz").value = d.address?.postcode || "";
-        el("ort").value = d.address?.city || d.address?.town || d.address?.village || "";
-        el("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      })
-      .catch(()=>{
-        el("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)} (Adresse nicht geladen)`;
-      });
+    try{
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+      const d = await res.json();
+      el("strasse").value = d.address?.road || "";
+      el("hausnr").value = d.address?.house_number || "";
+      el("plz").value = d.address?.postcode || "";
+      el("ort").value = d.address?.city || d.address?.town || d.address?.village || "";
+      el("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    }catch(_){
+      el("gpsStatus").innerText = `GPS OK: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    }
   }, ()=>{
-    el("gpsStatus").innerText="GPS nicht verfügbar";
-    alert("GPS nicht verfügbar");
-  }, {enableHighAccuracy:true, timeout:7000, maximumAge:30000});
+    el("gpsStatus").innerText = "GPS nicht verfügbar";
+  }, {enableHighAccuracy:true,timeout:7000,maximumAge:30000});
 }
 
+/* ================= NAVIGATION / DISTANZ ================= */
+function toRad(x){ return x * Math.PI / 180; }
+function haversineKm(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = toRad(lat2-lat1);
+  const dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
+async function dbSetCurrentLocation(){
+  el("dbLocStatus").innerText = "Aktueller Ort wird geholt…";
+  try{
+    const pos = await getCurrentPositionPromise({enableHighAccuracy:true,timeout:7000,maximumAge:30000});
+    dbCurrentPos = {lat:pos.coords.latitude, lon:pos.coords.longitude};
+    el("dbLocStatus").innerText = `Aktueller Ort gesetzt: ${dbCurrentPos.lat.toFixed(5)}, ${dbCurrentPos.lon.toFixed(5)}`;
+  }catch(err){
+    el("dbLocStatus").innerText = "Aktueller Ort nicht verfügbar.";
+  }
+}
+function openSingleNavigationForEntryId(id){
+  const e = loadAll().find(x=>String(x.id)===String(id));
+  if(!e) return alert("Eintrag nicht gefunden.");
+  const addr = [e.strasse||"", e.hausnr||"", e.plz||"", e.ort||""].join(" ").trim();
+  if(!addr && !(typeof e.lat==="number" && typeof e.lon==="number")) return alert("Keine Adresse/GPS vorhanden.");
+  let url = "";
+  if(typeof e.lat==="number" && typeof e.lon==="number"){
+    url = `https://www.google.com/maps/dir/?api=1&destination=${e.lat},${e.lon}`;
+  }else{
+    url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`;
+  }
+  window.open(url, "_blank");
+}
+
+/* ================= EINSATZ ================= */
+function neuerEintrag(){
+  el("editId").value = "";
+  ["name","telefon","email","strasse","hausnr","plz","ort"].forEach(id=>el(id).value="");
+  el("rasen").value = 0;
+  el("bio").value = 0;
+  el("rasenPreis").value = "";
+  el("bioPreis").value = "";
+  el("ausgestreut").value = "Ja";
+  el("zahlung").value = "Bar";
+  onZahlungsartChange();
+  el("gpsStatus").innerText = "GPS noch nicht ermittelt";
+  el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: noch nicht versucht";
+  el("editHint").innerText = "Neuer Eintrag";
+  el("orderLinkHint").style.display = "none";
+  el("orderLinkHint").innerText = "";
+  pendingOrderId = null;
+  updateSonderpreisHighlight();
+}
+async function speichern(){
+  el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: wird versucht…";
+  const gps = await tryAutoGPS();
+  el("gpsAutoStatus").innerText = gps.msg;
+
+  const daten = loadAll();
+  const id = el("editId").value || (Date.now()+"_"+Math.random());
+  const alt = daten.find(x=>String(x.id)===String(id));
+
+  const eintrag = {
+    id,
+    datum: alt?.datum || heuteDatum(),
+    datumISO: alt?.datumISO || heuteISO(),
+    uhrzeit: alt?.uhrzeit || new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+    createdAt: alt?.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    name: (el("name").value || "").trim() || "(kein Name)",
+    telefon: el("telefon").value || "",
+    email: el("email").value || "",
+    strasse: el("strasse").value || "",
+    hausnr: el("hausnr").value || "",
+    plz: el("plz").value || "",
+    ort: el("ort").value || "",
+    rasen: toNum(el("rasen").value),
+    bio: toNum(el("bio").value),
+    rasenPreis: getPreisRasen(),
+    bioPreis: getPreisBio(),
+    ausgestreut: el("ausgestreut").value,
+    zahlung: el("zahlung").value,
+    summe: toNum(el("rasen").value) * getPreisRasen() + toNum(el("bio").value) * getPreisBio(),
+    gpsOk: !!gps.gpsOk,
+    lat: gps.gpsOk ? gps.lat : (alt?.lat ?? null),
+    lon: gps.gpsOk ? gps.lon : (alt?.lon ?? null),
+    invoice: alt?.invoice || null
+  };
+
+  if(eintrag.zahlung === "Rechnung"){
+    ensureInvoiceMeta(eintrag);
+  }else{
+    eintrag.invoice = null;
+  }
+
+  const idx = daten.findIndex(x=>String(x.id)===String(id));
+  if(idx >= 0) daten[idx] = eintrag;
+  else daten.push(eintrag);
+
+  saveAll(daten);
+  onOrderLinkedSaved(id);
+  ladeHeute();
+  dbSuchen();
+  ladeRechnungenUI();
+  updateInvoiceBadge();
+  neuerEintrag();
+  showToast("Eintrag gespeichert");
+}
+function bearbeiten(id){
+  const e = loadAll().find(x=>String(x.id)===String(id));
+  if(!e) return;
+  el("editId").value = e.id;
+  el("name").value = e.name === "(kein Name)" ? "" : (e.name || "");
+  el("telefon").value = e.telefon || "";
+  el("email").value = e.email || "";
+  el("strasse").value = e.strasse || "";
+  el("hausnr").value = e.hausnr || "";
+  el("plz").value = e.plz || "";
+  el("ort").value = e.ort || "";
+  el("rasen").value = toNum(e.rasen);
+  el("bio").value = toNum(e.bio);
+  el("rasenPreis").value = (toNum(e.rasenPreis) || STANDARD_RASEN) !== STANDARD_RASEN ? toNum(e.rasenPreis) : "";
+  el("bioPreis").value = (toNum(e.bioPreis) || STANDARD_BIO) !== STANDARD_BIO ? toNum(e.bioPreis) : "";
+  el("ausgestreut").value = e.ausgestreut || "Ja";
+  el("zahlung").value = e.zahlung || "Bar";
+  onZahlungsartChange();
+  updateSonderpreisHighlight();
+  el("editHint").innerText = "Bearbeiten aktiv";
+  showView("einsatz");
+}
+function loeschen(id){
+  if(!confirm("Eintrag löschen?")) return;
+  saveAll(loadAll().filter(x=>String(x.id)!==String(id)));
+  ladeHeute();
+  dbSuchen();
+  ladeRechnungenUI();
+  updateInvoiceBadge();
+}
+function ladeHeute(){
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
+  const tb = el("tabelleHeute");
+  const tf = el("summenHeute");
+  tb.innerHTML = "";
+  tf.innerHTML = "";
+
+  let bS=0,eS=0,rS=0,rOffen=0,rBezahlt=0,total=0,bR=0,bB=0,eR=0,eB=0,rR=0,rB=0;
+
+  daten.forEach(e=>{
+    const safeId = String(e.id).replace(/'/g,"\\'");
+    const rowClass = e.zahlung==="Bar" ? "bar" : e.zahlung==="EC" ? "ec" : "rechnung";
+    const invText = e.zahlung==="Rechnung" ? `${e.invoice?.nummer || ""} / ${e.invoice?.status || "offen"}` : "—";
+
+    total += toNum(e.summe);
+    if(e.zahlung==="Bar"){ bS += toNum(e.summe); bR += toNum(e.rasen); bB += toNum(e.bio); }
+    if(e.zahlung==="EC"){ eS += toNum(e.summe); eR += toNum(e.rasen); eB += toNum(e.bio); }
+    if(e.zahlung==="Rechnung"){
+      rS += toNum(e.summe); rR += toNum(e.rasen); rB += toNum(e.bio);
+      if((e.invoice?.status || "offen")==="bezahlt") rBezahlt += toNum(e.summe);
+      else rOffen += toNum(e.summe);
+    }
+
+    tb.innerHTML += `
+      <tr class="${rowClass}">
+        <td>${e.uhrzeit || ""}</td>
+        <td>${e.ort || ""} – ${e.name || ""}</td>
+        <td>${e.zahlung || ""}</td>
+        <td>${toNum(e.rasen)}</td>
+        <td>${toNum(e.bio)}</td>
+        <td>${toNum(e.summe).toFixed(2)}</td>
+        <td>${invText}</td>
+        <td>
+          ${e.zahlung==="Rechnung" ? `<button class="orange actionBtn" onclick="generateInvoicePDF('${safeId}')">PDF</button>` : ""}
+          <button class="blue actionBtn" onclick="bearbeiten('${safeId}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${safeId}')">🗑</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tf.innerHTML = `
+    <tr class="summe bar"><td colspan="3">BAR</td><td>${bR}</td><td>${bB}</td><td>${bS.toFixed(2)}</td><td>erhalten</td><td></td></tr>
+    <tr class="summe ec"><td colspan="3">EC</td><td>${eR}</td><td>${eB}</td><td>${eS.toFixed(2)}</td><td>erhalten</td><td></td></tr>
+    <tr class="summe rechnung"><td colspan="3">RECHNUNG</td><td>${rR}</td><td>${rB}</td><td>${rS.toFixed(2)}</td><td>offen: ${rOffen.toFixed(2)} / bezahlt: ${rBezahlt.toFixed(2)}</td><td></td></tr>
+    <tr class="summe"><td colspan="3">GELD ERHALTEN</td><td>${bR+eR}</td><td>${bB+eB}</td><td>${(bS+eS).toFixed(2)}</td><td>nur Bar + EC</td><td></td></tr>
+    <tr class="summe"><td colspan="3">GESAMTER WARENWERT</td><td>${bR+eR+rR}</td><td>${bB+eB+rB}</td><td>${total.toFixed(2)}</td><td>inkl. Rechnung</td><td></td></tr>
+  `;
+}
+
+/* ================= DATENBANK ================= */
+function dbResetFilter(){
+  ["fVon","fBis","fName","fOrt","fPLZ","fRadius"].forEach(id=>el(id).value="");
+  el("fZahlung").value = "";
+  el("fInvoiceStatus").value = "";
+  el("fSonder").value = "";
+  el("fSort").value = "datum_desc";
+  el("dbTbody").innerHTML = "";
+  el("dbTfoot").innerHTML = "";
+  el("dbStatus").innerText = "Filter zurückgesetzt.";
+}
+function dbGetFiltered(){
+  const von = el("fVon").value;
+  const bis = el("fBis").value;
+  const nameF = normStr(el("fName").value);
+  const ortF = normStr(el("fOrt").value);
+  const plzF = normStr(el("fPLZ").value);
+  const zahlF = el("fZahlung").value;
+  const invF = el("fInvoiceStatus").value;
+  const sonderF = el("fSonder").value;
+  const sortF = el("fSort").value;
+
+  let list = loadAll().map(e=>{
+    let dist = null;
+    if(dbCurrentPos && typeof e.lat==="number" && typeof e.lon==="number"){
+      dist = haversineKm(dbCurrentPos.lat, dbCurrentPos.lon, e.lat, e.lon);
+    }
+    return {e, dist};
+  }).filter(({e, dist})=>{
+    const iso = entryISO(e);
+    if(von && (!iso || iso < von)) return false;
+    if(bis && (!iso || iso > bis)) return false;
+    if(nameF && !normStr(e.name).includes(nameF)) return false;
+    if(ortF && !normStr(e.ort).includes(ortF)) return false;
+    if(plzF && !normStr(e.plz).includes(plzF)) return false;
+    if(zahlF && e.zahlung !== zahlF) return false;
+    if(invF){
+      if(e.zahlung !== "Rechnung") return false;
+      if((e.invoice?.status || "offen") !== invF) return false;
+    }
+    if(sonderF==="1" && !isSonderpreisEintrag(e)) return false;
+    if(sonderF==="0" && isSonderpreisEintrag(e)) return false;
+    const radius = toNum(el("fRadius").value);
+    if(radius > 0){
+      if(dist === null || dist > radius) return false;
+    }
+    return true;
+  });
+
+  list.sort((A,B)=>{
+    if(sortF==="datum_asc") return entryISO(A.e).localeCompare(entryISO(B.e));
+    if(sortF==="summe_desc") return toNum(B.e.summe) - toNum(A.e.summe);
+    if(sortF==="summe_asc") return toNum(A.e.summe) - toNum(B.e.summe);
+    return entryISO(B.e).localeCompare(entryISO(A.e));
+  });
+
+  return list;
+}
+function dbSuchen(){
+  const list = dbGetFiltered();
+  dbLastResults = list;
+  const tb = el("dbTbody");
+  const tf = el("dbTfoot");
+  tb.innerHTML = "";
+  tf.innerHTML = "";
+
+  let warenwert = 0;
+  let erhalten = 0;
+  let offen = 0;
+  let bezahlt = 0;
+  let sumRasen = 0;
+  let sumBio = 0;
+
+  list.forEach(({e, dist})=>{
+    const safeId = String(e.id).replace(/'/g,"\\'");
+    const rowClass = e.zahlung==="Bar" ? "bar" : e.zahlung==="EC" ? "ec" : "rechnung";
+    const invStatus = e.zahlung==="Rechnung" ? (e.invoice?.status || "offen") : "—";
+    warenwert += toNum(e.summe);
+    sumRasen += toNum(e.rasen);
+    sumBio += toNum(e.bio);
+    if(e.zahlung==="Bar" || e.zahlung==="EC") erhalten += toNum(e.summe);
+    if(e.zahlung==="Rechnung"){
+      if((e.invoice?.status || "offen")==="bezahlt") bezahlt += toNum(e.summe);
+      else offen += toNum(e.summe);
+    }
+
+    tb.innerHTML += `
+      <tr class="${rowClass}">
+        <td>${e.datum || ""}</td>
+        <td>${e.uhrzeit || ""}</td>
+        <td>${e.name || ""}</td>
+        <td>${e.ort || ""}</td>
+        <td>${e.plz || ""}</td>
+        <td style="text-align:right">${dist===null ? "—" : dist.toFixed(1)}</td>
+        <td style="text-align:right">${toNum(e.rasen)}</td>
+        <td style="text-align:right">${toNum(e.bio)}</td>
+        <td style="text-align:right">${(toNum(e.rasenPreis)||STANDARD_RASEN).toFixed(2)}</td>
+        <td style="text-align:right">${(toNum(e.bioPreis)||STANDARD_BIO).toFixed(2)}</td>
+        <td>${e.zahlung || ""}</td>
+        <td>${invStatus}</td>
+        <td style="text-align:right"><b>${toNum(e.summe).toFixed(2)}</b></td>
+        <td>
+          <button class="green actionBtn" onclick="openSingleNavigationForEntryId('${safeId}')">🧭</button>
+          ${e.zahlung==="Rechnung" ? `<button class="orange actionBtn" onclick="generateInvoicePDF('${safeId}')">PDF</button>` : ""}
+          <button class="blue actionBtn" onclick="bearbeiten('${safeId}')">✏️</button>
+          <button class="red actionBtn" onclick="loeschen('${safeId}')">🗑</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tf.innerHTML = `
+    <tr class="summe"><td colspan="6">GESAMT</td><td>${sumRasen}</td><td>${sumBio}</td><td></td><td></td><td></td><td></td><td>${warenwert.toFixed(2)}</td><td></td></tr>
+    <tr class="summe bar"><td colspan="12">GELD ERHALTEN</td><td>${erhalten.toFixed(2)}</td><td></td></tr>
+    <tr class="summe rechnung"><td colspan="12">RECHNUNG OFFEN</td><td>${offen.toFixed(2)}</td><td></td></tr>
+    <tr class="summe rechnung"><td colspan="12">RECHNUNG BEZAHLT</td><td>${bezahlt.toFixed(2)}</td><td></td></tr>
+  `;
+
+  el("dbStatus").innerText = list.length
+    ? `Treffer: ${list.length} | Warenwert: ${fmtEUR(warenwert)} | Erhalten: ${fmtEUR(erhalten)} | Offen: ${fmtEUR(offen)}`
+    : "Keine Treffer.";
+}
+
+/* ================= EXPORT ================= */
+function downloadCSV(text, name){
+  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+function exportTagesCSV(){
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
+  if(!daten.length) return alert("Keine Daten für heute");
+  let csv = "Datum;Uhrzeit;Name;Telefon;E-Mail;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Rechnungsnummer;Rechnungsstatus;Summe\n";
+  daten.forEach(e=>{
+    csv += `${e.datum};${e.uhrzeit};${e.name||""};${e.telefon||""};${e.email||""};${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${toNum(e.rasenPreis)||STANDARD_RASEN};${toNum(e.bio)};${toNum(e.bioPreis)||STANDARD_BIO};${e.ausgestreut||""};${e.zahlung||""};${e.invoice?.nummer||""};${e.invoice?.status||""};${toNum(e.summe)}\n`;
+  });
+  downloadCSV(csv, `humix_tagesliste_${heuteISO()}.csv`);
+}
+function exportXLSX(){
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
+  if(!daten.length) return alert("Keine Daten für heute");
+  const rows = [[
+    "Datum","Uhrzeit","Name","Telefon","E-Mail","Straße","Hausnr","PLZ","Ort","Rasen","RasenPreis","Bio","BioPreis","Ausgestreut","Zahlung","Rechnungsnummer","Rechnungsstatus","Summe"
+  ]];
+  daten.forEach(e=>{
+    rows.push([
+      e.datum,e.uhrzeit,e.name||"",e.telefon||"",e.email||"",e.strasse||"",e.hausnr||"",e.plz||"",e.ort||"",
+      toNum(e.rasen),toNum(e.rasenPreis)||STANDARD_RASEN,toNum(e.bio),toNum(e.bioPreis)||STANDARD_BIO,e.ausgestreut||"",e.zahlung||"",e.invoice?.nummer||"",e.invoice?.status||"",toNum(e.summe)
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
+  XLSX.writeFile(wb, `humix_tagesliste_${heuteISO()}.xlsx`);
+}
+function exportZusammenfassung(){
+  const daten = loadAll().filter(e=>e.datum===heuteDatum());
+  if(!daten.length) return alert("Keine Daten für heute");
+  let b=0, ec=0, r=0, offen=0, bezahlt=0, total=0;
+  daten.forEach(e=>{
+    total += toNum(e.summe);
+    if(e.zahlung==="Bar") b += toNum(e.summe);
+    else if(e.zahlung==="EC") ec += toNum(e.summe);
+    else if(e.zahlung==="Rechnung"){
+      r += toNum(e.summe);
+      if((e.invoice?.status || "offen")==="bezahlt") bezahlt += toNum(e.summe);
+      else offen += toNum(e.summe);
+    }
+  });
+  let csv = "Datum;Kategorie;Betrag\n";
+  csv += `${heuteDatum()};Bar;${b.toFixed(2)}\n`;
+  csv += `${heuteDatum()};EC;${ec.toFixed(2)}\n`;
+  csv += `${heuteDatum()};Rechnung;${r.toFixed(2)}\n`;
+  csv += `${heuteDatum()};Rechnung offen;${offen.toFixed(2)}\n`;
+  csv += `${heuteDatum()};Rechnung bezahlt;${bezahlt.toFixed(2)}\n`;
+  csv += `${heuteDatum()};Gesamtwarenwert;${total.toFixed(2)}\n`;
+  downloadCSV(csv, `humix_tageszusammenfassung_${heuteISO()}.csv`);
+}
+function exportDB_CSV(){
+  const list = dbGetFiltered();
+  if(!list.length) return alert("Keine Treffer.");
+  let csv = "Datum;Uhrzeit;Name;Ort;PLZ;Rasen;Bio;Zahlung;Rechnungsnummer;Rechnungsstatus;Summe\n";
+  list.forEach(({e})=>{
+    csv += `${e.datum||""};${e.uhrzeit||""};${e.name||""};${e.ort||""};${e.plz||""};${toNum(e.rasen)};${toNum(e.bio)};${e.zahlung||""};${e.invoice?.nummer||""};${e.invoice?.status||""};${toNum(e.summe)}\n`;
+  });
+  downloadCSV(csv, `humix_db_export_${heuteISO()}.csv`);
+}
+function exportDB_XLSX(){
+  const list = dbGetFiltered();
+  if(!list.length) return alert("Keine Treffer.");
+  const rows = [["Datum","Uhrzeit","Name","Ort","PLZ","Rasen","Bio","Zahlung","Rechnungsnummer","Rechnungsstatus","Summe"]];
+  list.forEach(({e})=>{
+    rows.push([e.datum||"",e.uhrzeit||"",e.name||"",e.ort||"",e.plz||"",toNum(e.rasen),toNum(e.bio),e.zahlung||"",e.invoice?.nummer||"",e.invoice?.status||"",toNum(e.summe)]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DB");
+  XLSX.writeFile(wb, `humix_db_export_${heuteISO()}.xlsx`);
+}
+
+/* ================= BESTELLUNGEN ================= */
 function loadOrders(){ return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]"); }
 function saveOrders(arr){ localStorage.setItem(ORDERS_KEY, JSON.stringify(arr)); }
-function getOrdersUrl(){ return localStorage.getItem(ORDERS_URL_KEY) || ""; }
-function setOrdersUrl(v){ localStorage.setItem(ORDERS_URL_KEY, (v||"").trim()); }
-
 function orderStatusLabel(s){
   if(s==="neu") return "Neu";
   if(s==="intour") return "In Tour";
@@ -1067,117 +1326,43 @@ function pillClass(s){
   if(s==="erledigt") return "pill erledigt";
   return "pill";
 }
-function normalizeOrder(raw){
-  const o = raw && typeof raw==="object" ? raw : {};
-  const orderId = (o.orderId || o.id || o.externalId || o.number || "").toString();
-  const now = Date.now();
+function normalizeOrder(o){
   return {
-    id: o.localId ? String(o.localId) : (orderId ? `ext_${orderId}` : `man_${now}_${Math.random()}`),
-    externalId: orderId || "",
-    source: o.source || (orderId ? "webshop" : "manuell"),
-    createdAt: toNum(o.createdAt) || now,
-    updatedAt: now,
-    name: (o.name || o.kunde || o.customer || "").toString().trim() || "(kein Name)",
-    telefon: (o.telefon || o.phone || "").toString().trim(),
-    email: (o.email || "").toString().trim(),
-    strasse: (o.strasse || o.street || "").toString().trim(),
-    hausnr: (o.hausnr || o.houseNr || o.house_number || "").toString().trim(),
-    plz: (o.plz || o.zip || o.postcode || "").toString().trim(),
-    ort: (o.ort || o.city || "").toString().trim(),
-    rasen: toNum(o.rasen ?? o.rasen_saecke ?? o.rasenSaecke ?? o.rasen_qty ?? 0),
-    bio: toNum(o.bio ?? o.bio_saecke ?? o.bioSaecke ?? o.bio_qty ?? 0),
-    status: (o.status || "neu"),
+    id: o.id || ("man_"+Date.now()+"_"+Math.random()),
+    createdAt: o.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    name: (o.name || "").trim() || "(kein Name)",
+    telefon: (o.telefon || "").trim(),
+    email: (o.email || "").trim(),
+    strasse: (o.strasse || "").trim(),
+    hausnr: (o.hausnr || "").trim(),
+    plz: (o.plz || "").trim(),
+    ort: (o.ort || "").trim(),
+    rasen: toNum(o.rasen),
+    bio: toNum(o.bio),
+    status: o.status || "neu",
     viewed: !!o.viewed,
-    humixEntryId: o.humixEntryId || "",
-    note: (o.note || "").toString()
+    humixEntryId: o.humixEntryId || ""
   };
 }
-function mergeIncomingOrders(incomingArr){
-  const existing = loadOrders();
-  const map = new Map();
-  existing.forEach(x=>map.set(String(x.id), x));
+function mergeIncomingOrders(arr){
+  const map = new Map(loadOrders().map(x=>[String(x.id), x]));
   let newCount = 0;
-  incomingArr.forEach(raw=>{
+  arr.forEach(raw=>{
     const n = normalizeOrder(raw);
-    const key = String(n.id);
-    if(map.has(key)){
-      const old = map.get(key);
-      const keepStatus = old.status === "erledigt" ? "erledigt" : (n.status || old.status || "neu");
-      map.set(key, {...old, ...n, status:keepStatus, viewed:old.viewed || n.viewed, updatedAt:Date.now()});
+    if(map.has(String(n.id))){
+      const alt = map.get(String(n.id));
+      map.set(String(n.id), {...alt, ...n, status: alt.status === "erledigt" ? "erledigt" : n.status});
     }else{
-      map.set(key, n);
+      map.set(String(n.id), n);
       newCount++;
     }
   });
-  const combined = Array.from(map.values()).sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-  saveOrders(combined);
+  saveOrders(Array.from(map.values()).sort((a,b)=>b.createdAt-a.createdAt));
   return newCount;
-}
-function countNewOrders(){ return loadOrders().filter(o => o.status==="neu" && !o.viewed).length; }
-function updateOrderBadge(){ const c = countNewOrders(); el("orderBadge").innerText = c > 0 ? `(${c})` : ""; }
-function markNewOrdersAsViewed(){
-  const orders = loadOrders();
-  let changed = false;
-  orders.forEach(o=>{
-    if(o.status==="neu" && !o.viewed){ o.viewed = true; changed = true; }
-  });
-  if(changed) saveOrders(orders);
-}
-function initOrdersUI(){ el("ordersUrl").value = getOrdersUrl(); }
-function saveOrdersUrl(){ setOrdersUrl(el("ordersUrl").value); showToast("Webshop-URL gespeichert", "Du kannst jetzt abrufen."); }
-async function fetchOrdersNow(){
-  const url = (el("ordersUrl").value || getOrdersUrl()).trim();
-  if(!url) return alert("Bitte zuerst eine Webshop-JSON URL eintragen.");
-  setOrdersUrl(url);
-  el("ordersFetchStatus").innerText = "Abruf läuft…";
-  try{
-    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {method:"GET", cache:"no-store"});
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    let arr = null;
-    if(Array.isArray(data)) arr = data;
-    else if(data && Array.isArray(data.orders)) arr = data.orders;
-    else if(data && Array.isArray(data.data)) arr = data.data;
-    if(!arr) throw new Error("Unerwartetes JSON-Format");
-    const newCount = mergeIncomingOrders(arr);
-    ladeOrdersUI();
-    updateOrderBadge();
-    if(newCount>0){
-      showToast("Neue Bestellungen eingetroffen!", `${newCount} neue Bestellung(en) hinzugefügt.`);
-      el("ordersFetchStatus").innerText = `OK: ${arr.length} geladen, ${newCount} neu.`;
-    }else{
-      el("ordersFetchStatus").innerText = `OK: ${arr.length} geladen, keine neuen.`;
-      showToast("Abruf fertig", "Keine neuen Bestellungen.");
-    }
-  }catch(err){
-    console.log(err);
-    el("ordersFetchStatus").innerText = `Fehler beim Abrufen: ${err?.message || "unbekannt"}`;
-    alert("Abrufen fehlgeschlagen. CORS und JSON prüfen.");
-  }
-}
-function importOrdersFromPaste(){
-  const txt = (el("ordersJsonPaste").value || "").trim();
-  if(!txt) return alert("Bitte JSON einfügen.");
-  try{
-    const parsed = JSON.parse(txt);
-    let arr = null;
-    if(Array.isArray(parsed)) arr = parsed;
-    else if(parsed && Array.isArray(parsed.orders)) arr = parsed.orders;
-    else if(parsed && Array.isArray(parsed.data)) arr = parsed.data;
-    if(!arr) return alert("JSON-Format nicht erkannt.");
-    const newCount = mergeIncomingOrders(arr);
-    ladeOrdersUI();
-    updateOrderBadge();
-    el("ordersFetchStatus").innerText = `Import OK: ${arr.length} verarbeitet, ${newCount} neu.`;
-    showToast("Bestellungen importiert", newCount>0 ? `${newCount} neue Bestellung(en).` : "Keine neuen Bestellungen.");
-  }catch(e){
-    console.log(e);
-    alert("JSON ungültig.");
-  }
 }
 function orderSpeichern(){
   const raw = {
-    source:"manuell",
     name: el("o_name").value,
     telefon: el("o_telefon").value,
     email: el("o_email").value,
@@ -1187,37 +1372,49 @@ function orderSpeichern(){
     ort: el("o_ort").value,
     rasen: el("o_rasen").value,
     bio: el("o_bio").value,
-    status:"neu",
-    viewed:false,
-    createdAt:Date.now()
+    status: "neu",
+    viewed: false
   };
-  const newCount = mergeIncomingOrders([raw]);
-  ladeOrdersUI();
-  updateOrderBadge();
-  ["o_name","o_telefon","o_email","o_strasse","o_hausnr","o_plz","o_ort"].forEach(i=>el(i).value="");
+  mergeIncomingOrders([raw]);
+  ["o_name","o_telefon","o_email","o_strasse","o_hausnr","o_plz","o_ort"].forEach(id=>el(id).value="");
   el("o_rasen").value = 0;
   el("o_bio").value = 0;
   el("orderCreateStatus").innerText = "Bestellung angelegt.";
-  showToast("Neue Bestellung angelegt", newCount>0 ? "In „Offene Bestellungen“ sichtbar." : "Aktualisiert.");
+  ladeOrdersUI();
+  updateOrderBadge();
+}
+function countNewOrders(){ return loadOrders().filter(o=>o.status==="neu" && !o.viewed).length; }
+function updateOrderBadge(){ el("orderBadge").innerText = countNewOrders() > 0 ? `(${countNewOrders()})` : ""; }
+function markNewOrdersAsViewed(){
+  const arr = loadOrders();
+  let changed = false;
+  arr.forEach(o=>{
+    if(o.status==="neu" && !o.viewed){ o.viewed = true; changed = true; }
+  });
+  if(changed) saveOrders(arr);
 }
 function setOrderStatus(id, status){
-  const orders = loadOrders();
-  const o = orders.find(x => String(x.id)===String(id));
+  const arr = loadOrders();
+  const o = arr.find(x=>String(x.id)===String(id));
   if(!o) return;
   o.status = status;
   o.updatedAt = Date.now();
   if(status !== "neu") o.viewed = true;
-  saveOrders(orders);
+  saveOrders(arr);
   ladeOrdersUI();
   updateOrderBadge();
 }
-let pendingOrderId = null;
+function deleteOrder(id){
+  if(!confirm("Bestellung löschen?")) return;
+  saveOrders(loadOrders().filter(x=>String(x.id)!==String(id)));
+  ladeOrdersUI();
+  updateOrderBadge();
+}
 function takeOrderToEinsatz(id){
-  const orders = loadOrders();
-  const o = orders.find(x => String(x.id)===String(id));
-  if(!o) return alert("Bestellung nicht gefunden.");
+  const o = loadOrders().find(x=>String(x.id)===String(id));
+  if(!o) return;
   el("editId").value = "";
-  el("name").value = (o.name && o.name !== "(kein Name)") ? o.name : "";
+  el("name").value = o.name === "(kein Name)" ? "" : o.name;
   el("telefon").value = o.telefon || "";
   el("email").value = o.email || "";
   el("strasse").value = o.strasse || "";
@@ -1231,1016 +1428,7 @@ function takeOrderToEinsatz(id){
   el("zahlung").value = "Bar";
   onZahlungsartChange();
   updateSonderpreisHighlight();
+
   pendingOrderId = String(o.id);
   el("orderLinkHint").style.display = "block";
-  el("orderLinkHint").innerText = "⚠️ Diese Eingabe ist mit einer Bestellung verknüpft. Beim Speichern wird sie automatisch als erledigt markiert.";
-  el("editHint").innerText = "Bestellung übernommen (Speichern = erledigt + Tagesverlauf)";
-  if(o.status==="neu") setOrderStatus(o.id, "intour");
-  showView("einsatz");
-  showToast("Bestellung in Einsatz übernommen", "Jetzt prüfen und Speichern drücken.");
-}
-function navigateOrder(id){
-  const orders = loadOrders();
-  const o = orders.find(x => String(x.id)===String(id));
-  if(!o) return alert("Bestellung nicht gefunden.");
-  const addr = [o.strasse||"", o.hausnr||"", o.plz||"", o.ort||""].join(" ").trim();
-  if(!addr) return alert("Keine Adresse für Navigation vorhanden.");
-  const provider = pickProviderInteractive();
-  if(!provider) return;
-  openNavigation(provider, {type:"addr", value:addr});
-}
-function ladeOrdersUI(){
-  const orders = loadOrders();
-  const open = orders.filter(o => o.status!=="erledigt");
-  const done = orders.filter(o => o.status==="erledigt");
-  const list = el("ordersList");
-  const st = el("ordersListStatus");
-  list.innerHTML = "";
-  if(!open.length){
-    st.innerText = "Keine offenen Bestellungen.";
-  }else{
-    st.innerText = `Offen: ${open.length}`;
-    open.forEach(o=>{
-      const safeId = String(o.id).replace(/'/g,"\\'");
-      list.innerHTML += `
-        <div class="orderRow">
-          <div class="orderTop">
-            <div>
-              <div class="orderTitle">${o.name || ""} ${o.externalId ? `(#${o.externalId})` : ""}</div>
-              <div class="orderMeta">
-                ${o.telefon ? `📞 ${o.telefon}<br>` : ""}
-                ${o.email ? `✉️ ${o.email}<br>` : ""}
-                ${(o.strasse||o.ort) ? `📍 ${(o.strasse||"")} ${(o.hausnr||"")}, ${(o.plz||"")} ${(o.ort||"")}<br>` : ""}
-                🧺 Rasen: <b>${toNum(o.rasen)}</b> | Bio: <b>${toNum(o.bio)}</b>
-              </div>
-            </div>
-            <div><span class="${pillClass(o.status)}">${orderStatusLabel(o.status)}</span></div>
-          </div>
-          <div class="orderBtns">
-            <button class="green" onclick="takeOrderToEinsatz('${safeId}')">➡️ In Einsatz übernehmen</button>
-            <button class="purple" onclick="navigateOrder('${safeId}')">🧭 Navigation</button>
-            <button class="blue" onclick="setOrderStatus('${safeId}', 'intour')">🚚 In Tour</button>
-            <button class="orange" onclick="setOrderStatus('${safeId}', 'neu')">🟧 Neu</button>
-            <button class="red" onclick="deleteOrder('${safeId}')">🗑</button>
-          </div>
-        </div>
-      `;
-    });
-  }
-  const dList = el("ordersDoneList");
-  const dSt = el("ordersDoneStatus");
-  dList.innerHTML = "";
-  const last = done.slice(0,20);
-  if(!last.length){
-    dSt.innerText = "Noch keine erledigten Bestellungen.";
-  }else{
-    dSt.innerText = `Erledigt: ${done.length} (zeige letzte ${last.length})`;
-    last.forEach(o=>{
-      dList.innerHTML += `
-        <div class="orderRow" style="opacity:.9;">
-          <div class="orderTop">
-            <div>
-              <div class="orderTitle">${o.name || ""} ${o.externalId ? `(#${o.externalId})` : ""}</div>
-              <div class="orderMeta">🧺 Rasen: <b>${toNum(o.rasen)}</b> | Bio: <b>${toNum(o.bio)}</b>${o.humixEntryId ? `<br>📌 Tages-Eintrag: ${o.humixEntryId}` : ""}</div>
-            </div>
-            <div><span class="${pillClass(o.status)}">${orderStatusLabel(o.status)}</span></div>
-          </div>
-        </div>
-      `;
-    });
-  }
-}
-function deleteOrder(id){
-  if(!confirm("Bestellung löschen?")) return;
-  saveOrders(loadOrders().filter(o => String(o.id)!==String(id)));
-  ladeOrdersUI();
-  updateOrderBadge();
-}
-function onOrderLinkedSaved(humixEntryId){
-  if(!pendingOrderId) return;
-  const orders = loadOrders();
-  const o = orders.find(x=>String(x.id)===String(pendingOrderId));
-  if(o){
-    o.status = "erledigt";
-    o.humixEntryId = String(humixEntryId || "");
-    o.updatedAt = Date.now();
-    o.viewed = true;
-    saveOrders(orders);
-    showToast("Bestellung erledigt & übernommen", "Sie ist jetzt im Tagesverlauf enthalten.");
-  }
-  pendingOrderId = null;
-  el("orderLinkHint").style.display = "none";
-  el("orderLinkHint").innerText = "";
-  updateOrderBadge();
-}
-function initOrdersPolling(){
-  const url = getOrdersUrl();
-  if(!url) return;
-  setInterval(async ()=>{ try{ await fetchOrdersSilent(); }catch(_){ } }, 60000);
-}
-async function fetchOrdersSilent(){
-  const url = getOrdersUrl();
-  if(!url) return;
-  try{
-    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {cache:"no-store"});
-    if(!res.ok) return;
-    const data = await res.json();
-    let arr = null;
-    if(Array.isArray(data)) arr = data;
-    else if(data && Array.isArray(data.orders)) arr = data.orders;
-    else if(data && Array.isArray(data.data)) arr = data.data;
-    if(!arr) return;
-    const newCount = mergeIncomingOrders(arr);
-    if(newCount > 0){
-      updateOrderBadge();
-      showToast("Neue Bestellungen eingetroffen!", `${newCount} neue Bestellung(en).`);
-      if(el("viewOrders")?.classList.contains("active")){
-        ladeOrdersUI();
-        markNewOrdersAsViewed();
-        updateOrderBadge();
-      }
-    }
-  }catch(_){}
-}
-
-function getInvoiceCounterObj(){
-  return JSON.parse(localStorage.getItem(INVOICE_COUNTER_KEY) || "{}");
-}
-function setInvoiceCounterObj(obj){
-  localStorage.setItem(INVOICE_COUNTER_KEY, JSON.stringify(obj));
-}
-function nextInvoiceNumber(peekOnly = false){
-  const year = new Date().getFullYear();
-  const obj = getInvoiceCounterObj();
-  const next = (toNum(obj[year]) || 0) + 1;
-  const nr = `R-${year}-${String(next).padStart(4,"0")}`;
-  if(!peekOnly){
-    obj[year] = next;
-    setInvoiceCounterObj(obj);
-  }
-  return nr;
-}
-function getInvoiceStatusText(e){
-  if(e.zahlung !== "Rechnung") return "—";
-  return e.invoice?.status || "offen";
-}
-function ensureInvoiceForEntry(e){
-  if(e.zahlung !== "Rechnung") return e;
-  if(!e.invoice) e.invoice = {};
-  if(!e.invoice.nummer) e.invoice.nummer = nextInvoiceNumber();
-  if(!e.invoice.datum) e.invoice.datum = e.datumISO || heuteISO();
-  if(!e.invoice.status) e.invoice.status = "offen";
-  return e;
-}
-function setInvoicePaid(id, isPaid){
-  const daten = loadAll();
-  const e = daten.find(x=>String(x.id)===String(id));
-  if(!e || e.zahlung !== "Rechnung") return;
-  e.invoice = e.invoice || {};
-  e.invoice.status = isPaid ? "bezahlt" : "offen";
-  e.invoice.paidAt = isPaid ? new Date().toISOString() : "";
-  saveAll(daten);
-  ladeHeute();
-  if(el("viewDB").classList.contains("active")) dbSuchen();
-  showToast(isPaid ? "Rechnung als bezahlt markiert" : "Rechnung wieder auf offen gesetzt", e.invoice?.nummer || "");
-}
-
-function escPdfText(s){
-  return String(s || "").replace(/[^\x20-\x7EÄÖÜäöüß€]/g, " ");
-}
-async function generateInvoicePDF(entryId, autoDownload = true){
-  const daten = loadAll();
-  const e = daten.find(x=>String(x.id)===String(entryId));
-  if(!e) return alert("Eintrag nicht gefunden.");
-  if(e.zahlung !== "Rechnung") return alert("Dieser Eintrag ist keine Rechnung.");
-  ensureInvoiceForEntry(e);
-  saveAll(daten);
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:"mm", format:"a4"});
-  let y = 18;
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(18);
-  doc.text("Rechnung", 14, y);
-  y += 10;
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(10);
-  doc.text("HÜMIX", 14, y);
-  y += 5;
-  doc.text("Bitte eigene Firmenanschrift ergänzen", 14, y);
-  y += 5;
-  doc.text("Telefon / E-Mail ergänzen", 14, y);
-
-  doc.text(`Rechnungsnummer: ${escPdfText(e.invoice.nummer)}`, 130, 28);
-  doc.text(`Rechnungsdatum: ${escPdfText(e.invoice.datum || "")}`, 130, 33);
-  doc.text(`Status: ${escPdfText(e.invoice.status || "offen")}`, 130, 38);
-
-  y = 55;
-  doc.setFont("helvetica","bold");
-  doc.text("Rechnung an:", 14, y);
-  y += 6;
-  doc.setFont("helvetica","normal");
-  doc.text(escPdfText(e.name || ""), 14, y); y += 5;
-  if(e.strasse || e.hausnr) doc.text(escPdfText(`${e.strasse || ""} ${e.hausnr || ""}`.trim()), 14, y), y += 5;
-  if(e.plz || e.ort) doc.text(escPdfText(`${e.plz || ""} ${e.ort || ""}`.trim()), 14, y), y += 5;
-  if(e.telefon) doc.text(escPdfText(`Telefon: ${e.telefon}`), 14, y), y += 5;
-  if(e.email) doc.text(escPdfText(`E-Mail: ${e.email}`), 14, y), y += 5;
-
-  y += 8;
-  doc.setFont("helvetica","bold");
-  doc.text("Pos.", 14, y);
-  doc.text("Bezeichnung", 24, y);
-  doc.text("Menge", 122, y, {align:"right"});
-  doc.text("Einzelpreis", 155, y, {align:"right"});
-  doc.text("Gesamt", 196, y, {align:"right"});
-  doc.line(14, y+2, 196, y+2);
-  y += 10;
-
-  doc.setFont("helvetica","normal");
-  let pos = 1;
-  let sum = 0;
-
-  if(toNum(e.rasen) > 0){
-    const menge = toNum(e.rasen);
-    const preis = toNum(e.rasenPreis) || STANDARD_RASEN;
-    const ges = menge * preis;
-    doc.text(String(pos++), 14, y);
-    doc.text("HÜMIX Rasen Spezial", 24, y);
-    doc.text(String(menge), 122, y, {align:"right"});
-    doc.text(fmtEUR(preis), 155, y, {align:"right"});
-    doc.text(fmtEUR(ges), 196, y, {align:"right"});
-    y += 8;
-    sum += ges;
-  }
-  if(toNum(e.bio) > 0){
-    const menge = toNum(e.bio);
-    const preis = toNum(e.bioPreis) || STANDARD_BIO;
-    const ges = menge * preis;
-    doc.text(String(pos++), 14, y);
-    doc.text("HÜMIX Bio-Volldünger", 24, y);
-    doc.text(String(menge), 122, y, {align:"right"});
-    doc.text(fmtEUR(preis), 155, y, {align:"right"});
-    doc.text(fmtEUR(ges), 196, y, {align:"right"});
-    y += 8;
-    sum += ges;
-  }
-
-  y += 8;
-  doc.line(120, y, 196, y);
-  y += 8;
-  doc.setFont("helvetica","bold");
-  doc.text("Rechnungsbetrag:", 155, y, {align:"right"});
-  doc.text(fmtEUR(sum), 196, y, {align:"right"});
-  y += 14;
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(10);
-  doc.text("Vielen Dank fuer Ihren Auftrag.", 14, y); y += 6;
-  doc.text("Bitte Zahlungsziel und Bankverbindung nach Bedarf ergaenzen.", 14, y); y += 6;
-  doc.text("Hinweis: Diese Rechnung wurde aus dem HÜMIX Einsatzsystem erzeugt.", 14, y);
-
-  const fileName = `Rechnung_${escPdfText(e.invoice.nummer).replace(/[^A-Za-z0-9_-]/g,"_")}.pdf`;
-  if(autoDownload) doc.save(fileName);
-  return {doc, fileName, entry:e};
-}
-async function openMailForInvoice(id){
-  const daten = loadAll();
-  const e = daten.find(x=>String(x.id)===String(id));
-  if(!e || e.zahlung !== "Rechnung") return alert("Keine Rechnung gefunden.");
-  ensureInvoiceForEntry(e);
-  saveAll(daten);
-  const subject = encodeURIComponent(`Ihre HÜMIX Rechnung ${e.invoice.nummer}`);
-  const body = encodeURIComponent(
-`Guten Tag ${e.name || ""},
-
-anbei bzw. im Nachgang erhalten Sie Ihre Rechnung ${e.invoice.nummer} über ${fmtEUR(e.summe)}.
-
-Bitte beachten:
-Die PDF-Rechnung bitte vorher über den Button „PDF“ herunterladen und dann manuell als Anhang mitsenden.
-
-Viele Grüße
-HÜMIX`
-  );
-  const to = encodeURIComponent(e.email || "");
-  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
-}
-function openWhatsAppForInvoice(id){
-  const daten = loadAll();
-  const e = daten.find(x=>String(x.id)===String(id));
-  if(!e || e.zahlung !== "Rechnung") return alert("Keine Rechnung gefunden.");
-  ensureInvoiceForEntry(e);
-  saveAll(daten);
-  const text =
-`Hallo ${e.name || ""},
-Ihre HÜMIX Rechnung ${e.invoice.nummer} über ${fmtEUR(e.summe)} ist erstellt.
-
-Die PDF bitte ich separat zu senden.`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-}
-
-async function speichern(){
-  el("gpsAutoStatus").innerText="Auto-GPS beim Speichern: wird versucht…";
-  const gps = await tryAutoGPS();
-  el("gpsAutoStatus").innerText = gps.msg;
-
-  const daten = loadAll();
-  const rasen = toNum(el("rasen").value || 0);
-  const bio = toNum(el("bio").value || 0);
-  const rasenPreis = getPreisRasen();
-  const bioPreis = getPreisBio();
-  const summe = rasen * rasenPreis + bio * bioPreis;
-
-  const existingId = el("editId").value;
-  const existing = existingId ? daten.find(e=>String(e.id)===String(existingId)) : null;
-  const id = existingId || (Date.now()+"_"+Math.random());
-
-  const datum = existing?.datum || heuteDatum();
-  const datumISO = existing?.datumISO || heuteISO();
-  const uhrzeit = existing?.uhrzeit || new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
-  const createdAt = existing?.createdAt || Date.now();
-  const zahlung = el("zahlung").value;
-
-  const eintrag = {
-    id,
-    datum,
-    datumISO,
-    uhrzeit,
-    name: (el("name").value || "").trim() || "(kein Name)",
-    telefon: el("telefon").value || "",
-    email: el("email").value || "",
-    strasse: el("strasse").value || "",
-    hausnr: el("hausnr").value || "",
-    plz: el("plz").value || "",
-    ort: el("ort").value || "",
-    rasen, bio,
-    rasenPreis, bioPreis,
-    ausgestreut: el("ausgestreut").value,
-    zahlung,
-    summe,
-    createdAt,
-    updatedAt: Date.now(),
-    gpsOk: !!gps.gpsOk,
-    lat: gps.gpsOk ? gps.lat : (existing?.lat ?? null),
-    lon: gps.gpsOk ? gps.lon : (existing?.lon ?? null),
-    invoice: existing?.invoice ? {...existing.invoice} : null
-  };
-
-  if(zahlung === "Rechnung"){
-    ensureInvoiceForEntry(eintrag);
-  }else{
-    eintrag.invoice = null;
-  }
-
-  const i = daten.findIndex(e=>String(e.id)===String(id));
-  if(i>=0) daten[i] = eintrag; else daten.push(eintrag);
-  saveAll(daten);
-
-  onOrderLinkedSaved(id);
-  ladeHeute();
-  if(el("viewDB").classList.contains("active")) dbSuchen();
-
-  const wasInvoice = zahlung === "Rechnung";
-  neuerEintrag();
-
-  if(wasInvoice){
-    showToast("Rechnungseintrag gespeichert", "PDF kann jetzt über die Tabelle oder Datenbank erstellt werden.");
-  }else{
-    showToast("Eintrag gespeichert", "");
-  }
-}
-
-function neuerEintrag(){
-  el("editId").value = "";
-  ["name","telefon","email","strasse","hausnr","plz","ort"].forEach(i=>el(i).value="");
-  el("rasen").value = 0;
-  el("bio").value = 0;
-  el("rasenPreis").value = "";
-  el("bioPreis").value = "";
-  el("ausgestreut").value = "Ja";
-  el("zahlung").value = "Bar";
-  onZahlungsartChange();
-  el("gpsStatus").innerText = "GPS noch nicht ermittelt";
-  el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: noch nicht versucht";
-  el("editHint").innerText = "Neuer Eintrag";
-  pendingOrderId = null;
-  el("orderLinkHint").style.display = "none";
-  el("orderLinkHint").innerText = "";
-  updateSonderpreisHighlight();
-}
-
-function ladeHeute(){
-  const daten = loadAll().filter(e=>e.datum===heuteDatum());
-  const tbody = el("tabelleHeute");
-  const tfoot = el("summenHeute");
-  tbody.innerHTML = "";
-  tfoot.innerHTML = "";
-
-  let bR=0,bB=0,bS=0,eR=0,eB=0,eS=0,rR=0,rB=0,rS=0,rOffen=0,rBezahlt=0,totalWare=0;
-
-  daten.forEach(e=>{
-    const ras = toNum(e.rasen);
-    const bi = toNum(e.bio);
-    const su = toNum(e.summe);
-    totalWare += su;
-
-    if(e.zahlung==="Bar"){ bR+=ras; bB+=bi; bS+=su; }
-    if(e.zahlung==="EC"){ eR+=ras; eB+=bi; eS+=su; }
-    if(e.zahlung==="Rechnung"){
-      rR += ras; rB += bi; rS += su;
-      if((e.invoice?.status || "offen") === "bezahlt") rBezahlt += su; else rOffen += su;
-    }
-
-    const rowClass = e.zahlung==="Bar" ? "bar" : e.zahlung==="EC" ? "ec" : "rechnung";
-    const invoiceText = e.zahlung==="Rechnung" ? `${e.invoice?.nummer || ""} / ${e.invoice?.status || "offen"}` : "—";
-    const safeId = String(e.id).replace(/'/g,"\\'");
-    tbody.innerHTML += `
-      <tr class="${rowClass}">
-        <td>${e.uhrzeit || ""}</td>
-        <td>${(e.ort||"")} – ${(e.name||"")}</td>
-        <td>${e.zahlung || ""}</td>
-        <td>${ras}</td>
-        <td>${bi}</td>
-        <td>${su.toFixed(2)}</td>
-        <td>${invoiceText}</td>
-        <td>
-          ${e.zahlung==="Rechnung" ? `
-            <button class="orange actionBtn" onclick="generateInvoicePDF('${safeId}')">PDF</button>
-            <button class="blue actionBtn" onclick="openMailForInvoice('${safeId}')">Mail</button>
-          ` : ``}
-          <button class="blue actionBtn" onclick="bearbeiten('${safeId}')">✏️</button>
-          <button class="red actionBtn" onclick="loeschen('${safeId}')">🗑</button>
-        </td>
-      </tr>`;
-  });
-
-  tfoot.innerHTML = `
-    <tr class="summe bar">
-      <td colspan="3">BAR</td><td>${bR}</td><td>${bB}</td><td>${bS.toFixed(2)}</td><td>erhalten</td><td></td>
-    </tr>
-    <tr class="summe ec">
-      <td colspan="3">EC</td><td>${eR}</td><td>${eB}</td><td>${eS.toFixed(2)}</td><td>erhalten</td><td></td>
-    </tr>
-    <tr class="summe rechnung">
-      <td colspan="3">RECHNUNG</td><td>${rR}</td><td>${rB}</td><td>${rS.toFixed(2)}</td><td>offen: ${rOffen.toFixed(2)} / bezahlt: ${rBezahlt.toFixed(2)}</td><td></td>
-    </tr>
-    <tr class="summe">
-      <td colspan="3">GELD ERHALTEN</td><td>${bR+eR}</td><td>${bB+eB}</td><td>${(bS+eS).toFixed(2)}</td><td>nur Bar + EC</td><td></td>
-    </tr>
-    <tr class="summe">
-      <td colspan="3">GESAMTER WARENWERT</td><td>${bR+eR+rR}</td><td>${bB+eB+rB}</td><td>${totalWare.toFixed(2)}</td><td>inkl. Rechnung</td><td></td>
-    </tr>`;
-}
-
-function bearbeiten(id){
-  const daten = loadAll();
-  const e = daten.find(x=>String(x.id)===String(id));
-  if(!e) return;
-  el("editId").value = e.id;
-  el("name").value = (e.name && e.name !== "(kein Name)") ? e.name : "";
-  el("telefon").value = e.telefon || "";
-  el("email").value = e.email || "";
-  el("strasse").value = e.strasse || "";
-  el("hausnr").value = e.hausnr || "";
-  el("plz").value = e.plz || "";
-  el("ort").value = e.ort || "";
-  el("rasen").value = toNum(e.rasen);
-  el("bio").value = toNum(e.bio);
-  el("ausgestreut").value = e.ausgestreut || "Ja";
-  el("zahlung").value = e.zahlung || "Bar";
-  onZahlungsartChange();
-  const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
-  const bp = toNum(e.bioPreis) || STANDARD_BIO;
-  el("rasenPreis").value = (rp !== STANDARD_RASEN) ? rp : "";
-  el("bioPreis").value = (bp !== STANDARD_BIO) ? bp : "";
-  updateSonderpreisHighlight();
-  el("gpsAutoStatus").innerText = "Auto-GPS beim Speichern: wird beim Speichern erneut versucht";
-  el("editHint").innerText = "Bearbeiten aktiv (Speichern überschreibt diesen Eintrag)";
-  showView("einsatz");
-}
-function loeschen(id){
-  if(!confirm("Eintrag löschen?")) return;
-  saveAll(loadAll().filter(e=>String(e.id)!==String(id)));
-  ladeHeute();
-  if(el("viewDB").classList.contains("active")) dbSuchen();
-}
-
-function downloadCSV(text, name){
-  const blob = new Blob(["\uFEFF"+text], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-function exportTagesCSV(){
-  const daten = loadAll().filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-  let csv = "Datum;Uhrzeit;Name;Telefon;Email;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Rechnungsnummer;Rechnungsstatus;Summe €;GPS_OK;Lat;Lon\n";
-  daten.forEach(e=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
-    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
-    const bp = toNum(e.bioPreis) || STANDARD_BIO;
-    csv += `${e.datum};${e.uhrzeit};${e.name||""};="${tel}";${e.email||""};${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${e.invoice?.nummer||""};${e.invoice?.status||""};${toNum(e.summe)};${e.gpsOk?1:0};${e.lat ?? ""};${e.lon ?? ""}\n`;
-  });
-  downloadCSV(csv, `humix_tagesliste_${new Date().toISOString().slice(0,10)}.csv`);
-}
-function exportXLSX(){
-  const daten = loadAll().filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-  const sheetData = [[
-    "Datum","Uhrzeit","Name","Telefon","Email","Straße","Hausnr","PLZ","Ort","Rasen","RasenPreis","Bio","BioPreis","Ausgestreut","Zahlung","Rechnungsnummer","Rechnungsstatus","Summe €","GPS_OK","Lat","Lon"
-  ]];
-  daten.forEach(e=>{
-    sheetData.push([
-      e.datum, e.uhrzeit, e.name || "", e.telefon || "", e.email || "", e.strasse || "", e.hausnr || "", e.plz || "", e.ort || "",
-      toNum(e.rasen), (toNum(e.rasenPreis)||STANDARD_RASEN), toNum(e.bio), (toNum(e.bioPreis)||STANDARD_BIO),
-      e.ausgestreut || "", e.zahlung || "", e.invoice?.nummer || "", e.invoice?.status || "", toNum(e.summe), e.gpsOk ? 1 : 0, e.lat ?? "", e.lon ?? ""
-    ]);
-  });
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-  ws["!cols"] = sheetData[0].map((_, i) => ({ wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2 }));
-  for(let r=2; r<=sheetData.length; r++){
-    const addr = XLSX.utils.encode_cell({r:r-1, c:17});
-    if(ws[addr] && typeof ws[addr].v==="number") ws[addr].z = '#,##0.00" €"';
-  }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "HÜMIX");
-  XLSX.writeFile(wb, `humix_tagesliste_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-function exportZusammenfassung(){
-  const daten = loadAll().filter(e=>e.datum===heuteDatum());
-  if(!daten.length) return alert("Keine Daten für heute");
-
-  const datum = heuteDatum();
-  let bS=0,eS=0,rS=0,rOffen=0,rBezahlt=0,total=0;
-  let bR=0,bB=0,eR=0,eB=0,rR=0,rB=0;
-
-  daten.forEach(e=>{
-    const ras = toNum(e.rasen), bio = toNum(e.bio), su = toNum(e.summe);
-    total += su;
-    if(e.zahlung==="Bar"){ bS+=su; bR+=ras; bB+=bio; }
-    if(e.zahlung==="EC"){ eS+=su; eR+=ras; eB+=bio; }
-    if(e.zahlung==="Rechnung"){
-      rS+=su; rR+=ras; rB+=bio;
-      if((e.invoice?.status || "offen")==="bezahlt") rBezahlt += su; else rOffen += su;
-    }
-  });
-
-  let csv = "Datum;Kategorie;Rasen Säcke;Bio Säcke;Betrag €;Hinweis\n";
-  csv += `${datum};Bar;${bR};${bB};${bS.toFixed(2)};erhalten\n`;
-  csv += `${datum};EC;${eR};${eB};${eS.toFixed(2)};erhalten\n`;
-  csv += `${datum};Rechnung;${rR};${rB};${rS.toFixed(2)};gesamt Rechnung\n`;
-  csv += `${datum};Rechnung offen;;;${rOffen.toFixed(2)};noch nicht bezahlt\n`;
-  csv += `${datum};Rechnung bezahlt;;;${rBezahlt.toFixed(2)};bereits bezahlt\n`;
-  csv += `${datum};Geld erhalten;;;${(bS+eS).toFixed(2)};nur Bar + EC\n`;
-  csv += `${datum};Gesamtwarenwert;;;${total.toFixed(2)};inkl. Rechnung\n`;
-
-  downloadCSV(csv, `humix_tageszusammenfassung_${new Date().toISOString().slice(0,10)}.csv`);
-}
-
-function buildPreisGruppierung(){
-  const daten = loadAll().filter(e=>e.datum===heuteDatum());
-  const datum = heuteDatum();
-  const groups = new Map();
-  let barGes=0, ecGes=0, reGes=0;
-
-  function add(prod, preis, zahlung, menge){
-    menge = toNum(menge);
-    if(!menge) return;
-    const p = Number(preis)||0;
-    const u = menge * p;
-    const key = `${prod}|${p.toFixed(2)}|${zahlung}`;
-    if(!groups.has(key)) groups.set(key, {prod, preis:p, zahlung, menge:0, umsatz:0});
-    const g = groups.get(key);
-    g.menge += menge;
-    g.umsatz += u;
-    if(zahlung==="Bar") barGes += u;
-    else if(zahlung==="EC") ecGes += u;
-    else if(zahlung==="Rechnung") reGes += u;
-  }
-
-  daten.forEach(e=>{
-    add("Rasen", (toNum(e.rasenPreis)||STANDARD_RASEN), e.zahlung||"", e.rasen);
-    add("Bio", (toNum(e.bioPreis)||STANDARD_BIO), e.zahlung||"", e.bio);
-  });
-
-  const detail = Array.from(groups.values()).sort((a,b)=> a.prod.localeCompare(b.prod) || a.preis-b.preis || a.zahlung.localeCompare(b.zahlung));
-  return {datum, detail, barGes, ecGes, reGes, gesGes: barGes+ecGes+reGes, datenCount:daten.length};
-}
-function previewPreisGruppierung(){
-  const pack = buildPreisGruppierung();
-  if(!pack.datenCount) return alert("Keine Daten für heute");
-  const rows = pack.detail.map(r=>`
-    <tr>
-      <td>${r.datum}</td>
-      <td>${r.prod}</td>
-      <td>${r.zahlung}</td>
-      <td style="text-align:right">${fmtEUR(r.preis)}</td>
-      <td style="text-align:right">${r.menge}</td>
-      <td style="text-align:right"><b>${fmtEUR(r.umsatz)}</b></td>
-    </tr>`).join("");
-  const html = `
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HÜMIX Preis-Gruppierung</title>
-<style>
-body{font-family:Arial,sans-serif;padding:18px;color:#111;}
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
-.title{font-size:20px;font-weight:800;margin:0;}
-.meta{font-size:12px;color:#444;text-align:right;}
-.btn{padding:10px 12px;border:0;border-radius:10px;background:#1976d2;color:#fff;font-weight:700;cursor:pointer;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th,td{border:1px solid #222;padding:6px 6px;vertical-align:middle;}
-th{background:#f2f2f2;text-align:center;}
-@media print{.btnrow{display:none;} @page{ size:A4 landscape; margin:10mm; }}
-</style></head><body>
-<div class="top">
-<div><p class="title">HÜMIX – Preis-Gruppierung</p><div class="meta">Datum: ${pack.datum}</div></div>
-<div class="btnrow"><button class="btn" onclick="window.print()">🖨 Drucken</button></div>
-</div>
-<table>
-<thead><tr><th>Datum</th><th>Produkt</th><th>Zahlung</th><th>Preis</th><th>Menge</th><th>Umsatz</th></tr></thead>
-<tbody>${rows}</tbody>
-</table>
-<br>
-<table>
-<thead><tr><th>Bar</th><th>EC</th><th>Rechnung</th><th>Gesamt</th></tr></thead>
-<tbody><tr><td>${fmtEUR(pack.barGes)}</td><td>${fmtEUR(pack.ecGes)}</td><td>${fmtEUR(pack.reGes)}</td><td><b>${fmtEUR(pack.gesGes)}</b></td></tr></tbody>
-</table>
-</body></html>`;
-  const win = window.open("", "_blank");
-  if(!win) return alert("Popup blockiert.");
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-}
-function exportPreisGruppierungXLSX(){
-  const pack = buildPreisGruppierung();
-  if(!pack.datenCount) return alert("Keine Daten für heute");
-  const sheet = [];
-  sheet.push(["DETAIL – PREISSTUFEN"]);
-  sheet.push(["Datum","Produkt","Zahlung","Preis","Menge","Umsatz"]);
-  pack.detail.forEach(r=> sheet.push([pack.datum, r.prod, r.zahlung, r.preis, r.menge, r.umsatz]));
-  sheet.push([]);
-  sheet.push(["ÜBERSICHT"]);
-  sheet.push(["Bar","EC","Rechnung","Gesamt"]);
-  sheet.push([pack.barGes, pack.ecGes, pack.reGes, pack.gesGes]);
-
-  const ws = XLSX.utils.aoa_to_sheet(sheet);
-  ws["!cols"] = [15,18,14,12,10,14].map(w=>({wch:w}));
-  for(let r=3; r<=2+pack.detail.length; r++){
-    [3,5].forEach(c=>{
-      const addr = XLSX.utils.encode_cell({r:r-1,c});
-      if(ws[addr] && typeof ws[addr].v==="number") ws[addr].z = '#,##0.00" €"';
-    });
-  }
-  const lastRow = 6 + pack.detail.length;
-  [0,1,2,3].forEach(c=>{
-    const addr = XLSX.utils.encode_cell({r:lastRow-1,c});
-    if(ws[addr] && typeof ws[addr].v==="number") ws[addr].z = '#,##0.00" €"';
-  });
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Preis Gruppierung");
-  XLSX.writeFile(wb, `humix_preis_gruppierung_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
-let dbCurrentPos = null;
-function toRad(x){ return x * Math.PI / 180; }
-function haversineKm(lat1, lon1, lat2, lon2){
-  const R = 6371;
-  const dLat = toRad(lat2-lat1);
-  const dLon = toRad(lon2-lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-async function dbSetCurrentLocation(){
-  el("dbLocStatus").innerText = "Aktueller Ort wird geholt…";
-  try{
-    const pos = await getCurrentPositionPromise({enableHighAccuracy:true, timeout:7000, maximumAge:30000});
-    dbCurrentPos = {lat:pos.coords.latitude, lon:pos.coords.longitude};
-    setLastGpsFix(dbCurrentPos.lat, dbCurrentPos.lon);
-    el("dbLocStatus").innerText = `Aktueller Ort gesetzt: ${dbCurrentPos.lat.toFixed(5)}, ${dbCurrentPos.lon.toFixed(5)}`;
-  }catch(err){
-    dbCurrentPos = null;
-    el("dbLocStatus").innerText = `Aktueller Ort nicht verfügbar (${err?.message || "unbekannt"})`;
-    alert("Aktueller Ort nicht verfügbar.");
-  }
-}
-function dbResetFilter(){
-  el("fVon").value="";
-  el("fBis").value="";
-  el("fName").value="";
-  el("fOrt").value="";
-  el("fPLZ").value="";
-  el("fZahlung").value="";
-  el("fSonder").value="";
-  el("fInvoiceStatus").value="";
-  el("fSort").value="datum_desc";
-  el("fRadius").value="";
-  el("dbStatus").innerText="Filter zurückgesetzt. Bitte Suchen drücken.";
-  el("dbTbody").innerHTML="";
-  el("dbTfoot").innerHTML="";
-  dbLastResults = [];
-  el("gpsBatchStatus").innerText = "Noch nicht gestartet.";
-}
-function dbGetFiltered(){
-  const daten = loadAll();
-  const von = el("fVon").value;
-  const bis = el("fBis").value;
-  const nameF = normStr(el("fName").value);
-  const ortF = normStr(el("fOrt").value);
-  const plzF = normStr(el("fPLZ").value);
-  const payF = el("fZahlung").value;
-  const sonderF = el("fSonder").value;
-  const invStatusF = el("fInvoiceStatus").value;
-  const sortF = el("fSort").value;
-  const radiusKm = toNum(el("fRadius").value);
-  const radiusActive = radiusKm > 0;
-
-  let out = daten.map(e=>{
-    let dist = null;
-    if(dbCurrentPos && typeof e.lat==="number" && typeof e.lon==="number"){
-      dist = haversineKm(dbCurrentPos.lat, dbCurrentPos.lon, e.lat, e.lon);
-    }
-    return {e, dist};
-  }).filter(({e, dist})=>{
-    const iso = entryISO(e);
-    if(von && (!iso || iso < von)) return false;
-    if(bis && (!iso || iso > bis)) return false;
-    if(nameF && !normStr(e.name).includes(nameF)) return false;
-    if(ortF && !normStr(e.ort).includes(ortF)) return false;
-    if(plzF && !normStr(e.plz).includes(plzF)) return false;
-    if(payF && e.zahlung !== payF) return false;
-    if(sonderF==="1" && !isSonderpreisEintrag(e)) return false;
-    if(sonderF==="0" && isSonderpreisEintrag(e)) return false;
-    if(invStatusF){
-      if(e.zahlung !== "Rechnung") return false;
-      if((e.invoice?.status || "offen") !== invStatusF) return false;
-    }
-    if(radiusActive){
-      if(!dbCurrentPos || dist === null || dist > radiusKm) return false;
-    }
-    return true;
-  });
-
-  out.sort((A,B)=>{
-    const a = A.e, b = B.e;
-    const aISO = entryISO(a) || "";
-    const bISO = entryISO(b) || "";
-    if(sortF==="datum_desc"){
-      if(aISO!==bISO) return bISO.localeCompare(aISO);
-      return String(b.uhrzeit||"").localeCompare(String(a.uhrzeit||""));
-    }
-    if(sortF==="datum_asc"){
-      if(aISO!==bISO) return aISO.localeCompare(bISO);
-      return String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||""));
-    }
-    if(sortF==="summe_desc") return toNum(b.summe)-toNum(a.summe);
-    if(sortF==="summe_asc") return toNum(a.summe)-toNum(b.summe);
-    if(sortF==="dist_asc"){
-      const da = (A.dist===null) ? Number.POSITIVE_INFINITY : A.dist;
-      const db = (B.dist===null) ? Number.POSITIVE_INFINITY : B.dist;
-      return da - db;
-    }
-    if(sortF==="dist_desc"){
-      const da = (A.dist===null) ? Number.NEGATIVE_INFINITY : A.dist;
-      const db = (B.dist===null) ? Number.NEGATIVE_INFINITY : B.dist;
-      return db - da;
-    }
-    return 0;
-  });
-
-  return out;
-}
-function dbToggleDetails(id){
-  const row = document.getElementById("dbDetails_"+String(id));
-  if(!row) return;
-  row.style.display = (row.style.display==="none" || !row.style.display) ? "table-row" : "none";
-}
-function dbSuchen(){
-  const list = dbGetFiltered();
-  dbLastResults = list;
-  const tbody = el("dbTbody");
-  const tfoot = el("dbTfoot");
-  tbody.innerHTML = "";
-  tfoot.innerHTML = "";
-
-  let sum = 0, cashIn = 0, openInv = 0, paidInv = 0;
-  let rS=0,bS=0;
-
-  list.forEach(({e, dist})=>{
-    const s = toNum(e.summe);
-    sum += s;
-    const ras = toNum(e.rasen);
-    const bio = toNum(e.bio);
-    rS += ras; bS += bio;
-
-    if(e.zahlung==="Bar" || e.zahlung==="EC") cashIn += s;
-    if(e.zahlung==="Rechnung"){
-      if((e.invoice?.status || "offen")==="bezahlt") paidInv += s; else openInv += s;
-    }
-
-    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
-    const bp = toNum(e.bioPreis) || STANDARD_BIO;
-    let distTxt = "—";
-    if(dbCurrentPos){
-      if(typeof e.lat==="number" && typeof e.lon==="number" && dist!==null) distTxt = dist.toFixed(1);
-      else distTxt = "Kein GPS";
-    }else{
-      distTxt = (typeof e.lat==="number" && typeof e.lon==="number") ? "GPS OK" : "Kein GPS";
-    }
-
-    const safeId = String(e.id).replace(/'/g,"\\'");
-    const invStatus = e.zahlung==="Rechnung" ? (e.invoice?.status || "offen") : "—";
-    const rowClass = e.zahlung==="Bar" ? "bar" : e.zahlung==="EC" ? "ec" : "rechnung";
-
-    tbody.innerHTML += `
-      <tr class="${rowClass}">
-        <td>${e.datum || ""}</td>
-        <td>${e.uhrzeit || ""}</td>
-        <td>${e.name || ""}</td>
-        <td>${e.ort || ""}</td>
-        <td>${e.plz || ""}</td>
-        <td style="text-align:right">${distTxt}</td>
-        <td style="text-align:right">${ras}</td>
-        <td style="text-align:right">${bio}</td>
-        <td style="text-align:right">${rp.toFixed(2)}</td>
-        <td style="text-align:right">${bp.toFixed(2)}</td>
-        <td>${e.zahlung || ""}</td>
-        <td>${invStatus}</td>
-        <td style="text-align:right"><b>${s.toFixed(2)}</b></td>
-        <td>
-          <button class="gray actionBtn" onclick="dbToggleDetails('${safeId}')">▼</button>
-          <button class="green actionBtn" onclick="openSingleNavigationForEntryId('${safeId}')">🧭</button>
-          ${e.zahlung==="Rechnung" ? `<button class="orange actionBtn" onclick="generateInvoicePDF('${safeId}')">PDF</button>` : ``}
-          <button class="blue actionBtn" onclick="bearbeiten('${safeId}')">✏️</button>
-          <button class="red actionBtn" onclick="loeschen('${safeId}')">🗑</button>
-        </td>
-      </tr>
-      <tr class="detailsRow" id="dbDetails_${safeId}" style="display:none">
-        <td colspan="14">
-          <div class="detailsBox">
-            <div class="detailsGrid">
-              <div class="kv"><div class="k">Telefon</div><div class="v">${e.telefon || "—"}</div></div>
-              <div class="kv"><div class="k">E-Mail</div><div class="v">${e.email || "—"}</div></div>
-              <div class="kv"><div class="k">Adresse</div><div class="v">${(e.strasse||"—")} ${(e.hausnr||"")} , ${(e.plz||"")} ${(e.ort||"")}</div></div>
-              <div class="kv"><div class="k">Ausgestreut</div><div class="v">${e.ausgestreut || "—"}</div></div>
-              <div class="kv"><div class="k">Sonderpreis</div><div class="v">${isSonderpreisEintrag(e) ? "Ja" : "Nein"}</div></div>
-              <div class="kv"><div class="k">Rasen</div><div class="v">${ras} Sack / ${rp.toFixed(2)} €</div></div>
-              <div class="kv"><div class="k">Bio</div><div class="v">${bio} Sack / ${bp.toFixed(2)} €</div></div>
-              <div class="kv"><div class="k">GPS</div><div class="v">${(typeof e.lat==="number" && typeof e.lon==="number") ? `${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}` : "Kein GPS vorhanden"}</div></div>
-              <div class="kv"><div class="k">Rechnung</div><div class="v">${e.zahlung==="Rechnung" ? `${e.invoice?.nummer || "—"} / ${e.invoice?.status || "offen"}` : "—"}</div></div>
-              <div class="kv"><div class="k">Navigation</div><div class="v"><button class="green" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openSingleNavigationForEntryId('${safeId}')">🧭 Navigation starten</button></div></div>
-              ${e.zahlung==="Rechnung" ? `
-              <div class="kv"><div class="k">Rechnungsaktionen</div><div class="v">
-                <button class="orange" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="generateInvoicePDF('${safeId}')">📄 PDF Rechnung</button>
-                <button class="blue" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openMailForInvoice('${safeId}')">✉️ Mail vorbereiten</button>
-                <button class="purple" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="openWhatsAppForInvoice('${safeId}')">💬 WhatsApp Text</button>
-                <button class="green" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="setInvoicePaid('${safeId}', true)">✅ Als bezahlt markieren</button>
-                <button class="red" style="margin-top:6px; width:auto; padding:10px 12px; border-radius:10px;" onclick="setInvoicePaid('${safeId}', false)">↩️ Wieder offen</button>
-              </div></div>` : ``}
-            </div>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  tfoot.innerHTML = `
-    <tr class="summe">
-      <td colspan="6">GESAMT (Treffer: ${list.length})</td>
-      <td style="text-align:right">${rS}</td>
-      <td style="text-align:right">${bS}</td>
-      <td></td><td></td><td></td><td></td>
-      <td style="text-align:right">${sum.toFixed(2)}</td>
-      <td></td>
-    </tr>
-    <tr class="summe bar">
-      <td colspan="12">Geld erhalten (nur Bar + EC)</td>
-      <td style="text-align:right">${cashIn.toFixed(2)}</td>
-      <td></td>
-    </tr>
-    <tr class="summe rechnung">
-      <td colspan="12">Rechnung offen</td>
-      <td style="text-align:right">${openInv.toFixed(2)}</td>
-      <td></td>
-    </tr>
-    <tr class="summe rechnung">
-      <td colspan="12">Rechnung bezahlt</td>
-      <td style="text-align:right">${paidInv.toFixed(2)}</td>
-      <td></td>
-    </tr>
-  `;
-
-  const radiusKm = toNum(el("fRadius").value);
-  const radiusActive = radiusKm > 0;
-  const radiusInfo = radiusActive ? (dbCurrentPos ? ` | Umkreis: ${radiusKm} km` : " | Umkreis aktiv, aber kein aktueller Ort gesetzt") : "";
-
-  el("dbStatus").innerText =
-    list.length
-      ? `Treffer: ${list.length} | Warenwert: ${fmtEUR(sum)} | Geld erhalten: ${fmtEUR(cashIn)} | Rechnung offen: ${fmtEUR(openInv)}${radiusInfo}`
-      : `Keine Treffer.${radiusInfo}`;
-}
-
-function exportDB_CSV(){
-  const list = dbGetFiltered();
-  if(!list.length) return alert("Keine Treffer zum Export.");
-  let csv = "Datum;Uhrzeit;Name;Telefon;Email;Straße;Hausnr;PLZ;Ort;Rasen;RasenPreis;Bio;BioPreis;Ausgestreut;Zahlung;Rechnungsnummer;Rechnungsstatus;Summe €;GPS_OK;Lat;Lon;Entfernung_km\n";
-  list.forEach(({e, dist})=>{
-    const tel = String(e.telefon || "").replace(/"/g,'""');
-    const rp = toNum(e.rasenPreis) || STANDARD_RASEN;
-    const bp = toNum(e.bioPreis) || STANDARD_BIO;
-    const distOut = (dbCurrentPos && dist!==null) ? dist.toFixed(2) : "";
-    csv += `${e.datum||""};${e.uhrzeit||""};${e.name||""};="${tel}";${e.email||""};${e.strasse||""};${e.hausnr||""};${e.plz||""};${e.ort||""};${toNum(e.rasen)};${rp};${toNum(e.bio)};${bp};${e.ausgestreut||""};${e.zahlung||""};${e.invoice?.nummer||""};${e.invoice?.status||""};${toNum(e.summe)};${e.gpsOk?1:0};${e.lat ?? ""};${e.lon ?? ""};${distOut}\n`;
-  });
-  downloadCSV(csv, `humix_db_export_${new Date().toISOString().slice(0,10)}.csv`);
-}
-function exportDB_XLSX(){
-  const list = dbGetFiltered();
-  if(!list.length) return alert("Keine Treffer zum Export.");
-  const sheetData = [[
-    "Datum","Uhrzeit","Name","Telefon","Email","Straße","Hausnr","PLZ","Ort","Rasen","RasenPreis","Bio","BioPreis","Ausgestreut","Zahlung","Rechnungsnummer","Rechnungsstatus","Summe €","GPS_OK","Lat","Lon","Entfernung_km"
-  ]];
-  list.forEach(({e, dist})=>{
-    sheetData.push([
-      e.datum || "", e.uhrzeit || "", e.name || "", e.telefon || "", e.email || "", e.strasse || "", e.hausnr || "", e.plz || "", e.ort || "",
-      toNum(e.rasen), (toNum(e.rasenPreis)||STANDARD_RASEN), toNum(e.bio), (toNum(e.bioPreis)||STANDARD_BIO), e.ausgestreut || "", e.zahlung || "",
-      e.invoice?.nummer || "", e.invoice?.status || "", toNum(e.summe), e.gpsOk ? 1 : 0, e.lat ?? "", e.lon ?? "", (dbCurrentPos && dist!==null) ? Number(dist.toFixed(2)) : ""
-    ]);
-  });
-  const ws = XLSX.utils.aoa_to_sheet(sheetData);
-  ws["!cols"] = sheetData[0].map((_, i) => ({ wch: Math.max(...sheetData.map(r => String(r[i] ?? "").length)) + 2 }));
-  for(let r=2; r<=sheetData.length; r++){
-    const addr = XLSX.utils.encode_cell({r:r-1, c:17});
-    if(ws[addr] && typeof ws[addr].v==="number") ws[addr].z = '#,##0.00" €"';
-  }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "DB Export");
-  XLSX.writeFile(wb, `humix_db_export_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
-async function anreichernGPS(){
-  const daten = loadAll();
-  const ohneGPS = daten.filter(e => !(typeof e.lat==="number" && typeof e.lon==="number"));
-  if(!ohneGPS.length){
-    alert("Alle Einträge haben bereits GPS.");
-    el("gpsBatchStatus").innerText = "Alle Einträge haben bereits GPS.";
-    return;
-  }
-  if(!confirm(`${ohneGPS.length} Einträge ohne GPS gefunden.\nJetzt anreichern?`)) return;
-  let count = 0;
-  const total = ohneGPS.length;
-  el("gpsBatchStatus").innerText = "Starte GPS-Anreicherung...";
-  for(const e of ohneGPS){
-    const adresse = [e.strasse || "", e.hausnr || "", e.plz || "", e.ort || ""].join(" ").trim();
-    if(!adresse){
-      count++;
-      el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total} (ohne Adresse übersprungen)`;
-      await new Promise(r=>setTimeout(r,1000));
-      continue;
-    }
-    try{
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adresse)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if(data && data.length){
-        e.lat = parseFloat(data[0].lat);
-        e.lon = parseFloat(data[0].lon);
-        e.gpsOk = true;
-      }
-    }catch(err){
-      console.log("Fehler bei Adresse:", adresse, err);
-    }
-    count++;
-    el("gpsBatchStatus").innerText = `Verarbeitet: ${count} / ${total}`;
-    await new Promise(r=>setTimeout(r,1000));
-  }
-  saveAll(daten);
-  el("gpsBatchStatus").innerText = `Fertig. ${count} Einträge geprüft / ergänzt.`;
-  alert("GPS-Anreicherung abgeschlossen.");
-  if(el("viewDB")?.classList.contains("active")) dbSuchen();
-}
-
-window.onload = function(){
-  ladeHeute();
-  dbResetFilter();
-  initMapProviderUI();
-  setBackupStatus(`Backup: bereit. Aktuell ${loadAll().length} Einträge.`);
-  el("rasenPreis").addEventListener("input", updateSonderpreisHighlight);
-  el("bioPreis").addEventListener("input", updateSonderpreisHighlight);
-  updateSonderpreisHighlight();
-  onZahlungsartChange();
-  updateOrderBadge();
-  initOrdersPolling();
-  const c = countNewOrders();
-  if(c>0) showToast("Neue Bestellungen vorhanden", `${c} neue Bestellung(en). Öffne „Bestellungen“.`);
-};
-</script>
-
-</body>
-</html>
+  el("
